@@ -71,3 +71,34 @@ resource "aws_iam_role_policy_attachment" "ecr_readonly" {
   role       = aws_iam_role.eks_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
+
+#########################
+# SSH Key Pair (Optional)
+#########################
+
+resource "tls_private_key" "eks_key" {
+  count     = var.create_ssh_key ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "eks_keypair" {
+  count      = var.create_ssh_key ? 1 : 0
+  key_name   = "${var.project_name}-eks-key"
+  public_key = tls_private_key.eks_key[0].public_key_openssh
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-eks-keypair"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "local_file" "private_key" {
+  count            = var.create_ssh_key ? 1 : 0
+  content          = tls_private_key.eks_key[0].private_key_pem
+  filename         = "${path.module}/../../keys/${var.project_name}-eks.pem"
+  file_permission  = "0600"
+}
