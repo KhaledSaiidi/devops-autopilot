@@ -1,24 +1,24 @@
-output "VPC_ID" {
-  value = aws_vpc.vpc.id
+output "vpc_id" {
+  description = "The ID of the VPC."
+  value       = aws_vpc.this.id
 }
 
-output "PUB_SUB1_ID" {
-  value = aws_subnet.pub_sub1.id
-}
-output "PUB_SUB2_ID" {
-  value = aws_subnet.pub_sub2.id
-}
-output "PRI_SUB3_ID" {
-  value = aws_subnet.pri_sub3.id
+output "igw_id" {
+  description = "The ID of the Internet Gateway."
+  value       = aws_internet_gateway.this.id
 }
 
-output "PRI_SUB4_ID" {
-  value = aws_subnet.pri_sub4.id
-}
-output "IGW_ID" {
-    value = aws_internet_gateway.igw
+output "public_subnet_ids" {
+  description = "IDs of the public subnets."
+  value       = [for s in aws_subnet.public  : s.id]
 }
 
-output "REGION" {
-  value = var.REGION
+output "private_subnet_ids" {
+  description = "IDs of the private subnets."
+  value       = [for s in aws_subnet.private : s.id]
+}
+
+output "public_route_table_id" {
+  description = "ID of the public route table."
+  value       = aws_route_table.public.id
 }

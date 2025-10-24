@@ -1,45 +1,84 @@
-variable "EKS_CLUSTER_NAME" {}
-variable "NODE_GROUP_ARN" {}
-variable "PRI_SUB3_ID" {}
-variable "PRI_SUB4_ID" {}
+variable "eks_cluster_name" {
+  description = "EKS cluster name to attach the node group to."
+  type        = string
+}
+
+variable "node_group_role_arn" {
+  description = "IAM role ARN for the node group."
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "List of private subnet IDs where nodes will run."
+  type        = list(string)
+}
 
 variable "desired_size" {
-    description = "desired node size value"
-    type = number
-    default = 3
+  description = "Desired number of nodes."
+  type        = number
+  default     = 3
 }
+
 variable "max_size" {
-    description = "desired node size value"
-    type = number
-    default = 5
+  description = "Max number of nodes."
+  type        = number
+  default     = 5
 }
+
 variable "min_size" {
-    description = "desired node size value"
-    type = number
-    default = 2
+  description = "Min number of nodes."
+  type        = number
+  default     = 2
 }
+
 variable "ami_type" {
-  description = "Type of AMI to use for the node group. Common options: AL2_x86_64, AL2_x86_64_GPU, BOTTLEROCKET_x86_64."
+  description = "Node AMI type (e.g., AL2_x86_64, BOTTLEROCKET_x86_64)."
   type        = string
   default     = "AL2_x86_64"
 }
+
 variable "capacity_type" {
-  description = "Node capacity type — either ON_DEMAND or SPOT."
+  description = "Capacity type: ON_DEMAND or SPOT."
   type        = string
   default     = "ON_DEMAND"
+  validation {
+    condition     = contains(["ON_DEMAND", "SPOT"], var.capacity_type)
+    error_message = "capacity_type must be ON_DEMAND or SPOT."
+  }
 }
+
 variable "disk_size" {
-  description = "Disk size in GiB for worker nodes."
+  description = "Node root volume size in GiB."
   type        = number
   default     = 30
 }
-variable "eks_version" {
-    description = "desired eks version"
-    type = string
-    default = "1.33"
-}
+
 variable "instance_types" {
-  description = "EC2 instance types for the EKS node group. Use a list for multiple types."
+  description = "Instance types for the node group."
   type        = list(string)
   default     = ["t3.medium"]
+}
+
+variable "eks_version" {
+  description = "Kubernetes version for the node group."
+  type        = string
+  default     = "1.33"
+}
+
+variable "force_update_version" {
+  description = "Force version update of the node group."
+  type        = bool
+  default     = false
+}
+
+variable "extra_labels" {
+  description = "Additional Kubernetes labels for nodes."
+  type        = map(string)
+  default     = {}
+}
+
+variable "tags" {
+  description = "Extra tags to apply to the node group."
+  type        = map(string)
+  default     = {}
 }

@@ -1,114 +1,112 @@
-resource "aws_vpc" "vpc" {
-  cidr_block       = var.VPC_CIDR
-  instance_tenancy = "default"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  assign_generated_ipv6_cidr_block = false
-
- # tags to assign to the resource.
-  tags = {
-    Name = "${var.PROJECT_NAME}-vpc"
-  }
+##########
+# Data
+##########
+data "aws_availability_zones" "this" {
+  state = "available"
 }
 
-# create internet gateway and attach it to above vpc
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc.id
+locals {
+  # Pick AZs for each subnet list; if caller passes more subnets than AZs, we wrap around.
+  public_azs  = [for i in range(length(var.public_subnet_cidrs))  : data.aws_availability_zones.this.names[i % length(data.aws_availability_zones.this.names)]]
+  private_azs = [for i in range(length(var.private_subnet_cidrs)) : data.aws_availability_zones.this.names[i % length(data.aws_availability_zones.this.names)]]
 
-  tags = {
-    Name = "${var.PROJECT_NAME}-igw"
-  }
+  k8s_public_tags = var.add_k8s_tags ? {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                    = 1
+  } : {}
+
+  k8s_private_tags = var.add_k8s_tags ? {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"           = 1
+  } : {}
 }
 
-# use data source to get avalablility zones in the region
-data "aws_availability_zones" "availability_zones" {}
+##########
+# VPC
+##########
+resource "aws_vpc" "this" {
+  cidr_block                           = var.vpc_cidr
+  instance_tenancy                     = "default"
+  enable_dns_hostnames                 = true
+  enable_dns_support                   = true
+  assign_generated_ipv6_cidr_block     = var.enable_ipv6
 
-# create public subnet pub-sub1
-
-resource "aws_subnet" "pub_sub1" {
-  vpc_id                    = aws_vpc.vpc.id
-  cidr_block                = var.PUB_SUB1_CIDR
-  map_public_ip_on_launch   = true
-  availability_zone         = data.aws_availability_zones.availability_zones.names[0]
-
-    tags = {
-    Name                        = "pub-sub1"
-    "kubernetes.io/cluster/${var.PROJECT_NAME}" = "shared"
-    "kubernetes.io/role/elb" = 1
-  }
+  tags = merge(
+    { Name = "${var.project_name}-vpc" },
+    var.tags
+  )
 }
 
-# create public subnet pub-sub2
+##########
+# Internet Gateway
+##########
+resource "aws_internet_gateway" "this" {
+  vpc_id = aws_vpc.this.id
 
-resource "aws_subnet" "pub_sub2" {
-  vpc_id                    = aws_vpc.vpc.id
-  cidr_block                = var.PUB_SUB2_CIDR
-  map_public_ip_on_launch   = true
-  availability_zone         = data.aws_availability_zones.availability_zones.names[1]
-
-
-  tags = {
-    Name                        = "pub-sub2"
-    "kubernetes.io/cluster/${var.PROJECT_NAME}" = "shared"
-    "kubernetes.io/role/elb" = 1
-  }
+  tags = merge(
+    { Name = "${var.project_name}-igw" },
+    var.tags
+  )
 }
 
-# create public route table
+##########
+# Public Subnets (+ route table & associations)
+##########
+# Create public subnets
+resource "aws_subnet" "public" {
+  for_each = { for idx, cidr in var.public_subnet_cidrs : tostring(idx) => cidr }
 
-resource "aws_route_table" "pub_rt" {
-  vpc_id = aws_vpc.vpc.id
+  vpc_id                          = aws_vpc.this.id
+  cidr_block                      = each.value
+  availability_zone               = local.public_azs[tonumber(each.key)]
+  map_public_ip_on_launch         = true
+  enable_resource_name_dns_a_record_on_launch = false
+
+  tags = merge(
+    { Name = "${var.project_name}-pub-${tonumber(each.key)+1}" },
+    local.k8s_public_tags,
+    var.tags
+  )
+}
+
+# One public route table that points to IGW
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.this.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    gateway_id = aws_internet_gateway.this.id
   }
 
-  tags = {
-    Name = "${var.PROJECT_NAME}-pub_rt"
-  }
+  tags = merge(
+    { Name = "${var.project_name}-public-rt" },
+    var.tags
+  )
 }
 
-# associate public subnet pub-sub1 to "public route table"
+# Associate every public subnet to the public route table
+resource "aws_route_table_association" "public" {
+  for_each = aws_subnet.public
 
-resource "aws_route_table_association" "pub_rt_a" {
-  subnet_id      = aws_subnet.pub_sub1.id
-  route_table_id = aws_route_table.pub_rt.id
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.public.id
 }
 
-# associate public subnet pub-sub2 to "public route table"
+##########
+# Private Subnets
+##########
+resource "aws_subnet" "private" {
+  for_each = { for idx, cidr in var.private_subnet_cidrs : tostring(idx) => cidr }
 
-resource "aws_route_table_association" "pub_rt_b" {
-  subnet_id      = aws_subnet.pub_sub2.id
-  route_table_id = aws_route_table.pub_rt.id
-}
+  vpc_id                          = aws_vpc.this.id
+  cidr_block                      = each.value
+  availability_zone               = local.private_azs[tonumber(each.key)]
+  map_public_ip_on_launch         = false
+  enable_resource_name_dns_a_record_on_launch = false
 
-# create public subnet pri-sub3
-
-resource "aws_subnet" "pri_sub3" {
-  vpc_id             = aws_vpc.vpc.id
-  cidr_block        = var.PRI_SUB3_CIDR
-  availability_zone = data.aws_availability_zones.availability_zones.names[0]
-  map_public_ip_on_launch = false
-  
-  tags = {
-    Name                        = "pri-sub3"
-    "kubernetes.io/cluster/${var.PROJECT_NAME}" = "shared"
-    "kubernetes.io/role/internal-elb" = 1
-  }
-}
-
-# create public subnet pri-sub4
-
-resource "aws_subnet" "pri_sub4" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = var.PRI_SUB4_CIDR
-  availability_zone = data.aws_availability_zones.availability_zones.names[1]
-  map_public_ip_on_launch = false
-
-  tags = {
-    Name                        = "pri-sub4"
-    "kubernetes.io/cluster/${var.PROJECT_NAME}" = "shared"
-    "kubernetes.io/role/internal-elb" = 1
-  }
+  tags = merge(
+    { Name = "${var.project_name}-pri-${tonumber(each.key)+1}" },
+    local.k8s_private_tags,
+    var.tags
+  )
 }
