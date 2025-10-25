@@ -29,6 +29,8 @@ override.tf.json
 terraform.rc
 tfplan
 *.tfplan
+.terraform.lock.hcl
+*.hcl
 
 ############################################
 # ⚙️ Ansible
