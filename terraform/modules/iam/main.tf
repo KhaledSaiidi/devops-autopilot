@@ -7,7 +7,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "eks.amazonaws.com" }
       Action    = "sts:AssumeRole"
     }]
@@ -22,7 +22,6 @@ resource "aws_iam_role" "eks_cluster_role" {
   )
 }
 
-# Attach the recommended AWS managed policies
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
@@ -42,7 +41,7 @@ resource "aws_iam_role" "eks_node_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
       Action    = "sts:AssumeRole"
     }]
@@ -97,8 +96,8 @@ resource "aws_key_pair" "eks_keypair" {
 }
 
 resource "local_file" "private_key" {
-  count            = var.create_ssh_key ? 1 : 0
-  content          = tls_private_key.eks_key[0].private_key_pem
-  filename         = "${path.module}/../../keys/${var.project_name}-eks.pem"
-  file_permission  = "0600"
+  count           = var.create_ssh_key ? 1 : 0
+  content         = tls_private_key.eks_key[0].private_key_pem
+  filename        = "${path.module}/../../keys/${var.project_name}-eks.pem"
+  file_permission = "0600"
 }

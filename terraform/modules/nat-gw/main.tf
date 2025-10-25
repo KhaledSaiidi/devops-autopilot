@@ -1,21 +1,19 @@
 resource "aws_eip" "nat_eip" {
   for_each = toset(var.public_subnet_ids)
-
-  domain = "vpc"
+  domain   = "vpc"
 
   tags = {
-    Name = "nat-eip-${each.key}"
+    Name = "${var.project_name}-nat-eip-${each.key}"
   }
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  for_each = toset(var.public_subnet_ids)
-
+  for_each      = toset(var.public_subnet_ids)
   allocation_id = aws_eip.nat_eip[each.key].id
   subnet_id     = each.value
 
   tags = {
-    Name = "nat-gw-${each.key}"
+    Name = "${var.project_name}-nat-gw-${each.key}"
   }
 
   depends_on = [var.igw_id]
@@ -32,7 +30,7 @@ resource "aws_route_table" "private_rt" {
   }
 
   tags = {
-    Name = "private-rt-${each.key}"
+    Name = "${var.project_name}-private-rt-${each.key}"
   }
 }
 
