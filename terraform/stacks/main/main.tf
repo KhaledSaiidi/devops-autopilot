@@ -1,5 +1,5 @@
 ############################################
-# 1️⃣ Create VPC
+# 1️⃣ VPC
 ############################################
 module "vpc" {
   source               = "../../modules/vpc"
@@ -14,7 +14,7 @@ module "vpc" {
 }
 
 ############################################
-# 2️⃣ Create NAT Gateways
+# 2️⃣ NAT (1 per AZ)
 ############################################
 module "nat_gw" {
   source               = "../../modules/nat-gw"
@@ -27,17 +27,48 @@ module "nat_gw" {
 }
 
 ############################################
-# 3️⃣ Create IAM Roles and SSH Key
+# 3️⃣ IAM (cluster role & node role, + optional SSH key)
 ############################################
 module "iam" {
   source         = "../../modules/iam"
   project_name   = var.project_name
   create_ssh_key = var.create_ssh_key
   tags           = var.tags
+
+  # Your IAM module expects these to attach the inline KMS policy
+  kms_key_arn  = "" # empty for now; IAM will still create roles
+  cluster_name = var.cluster_name
 }
 
 ############################################
-# 4️⃣ Create EKS Cluster
+# 4️⃣ KMS (requires the cluster role ARN)
+############################################
+module "kms" {
+  source           = "../../modules/kms"
+  project_name     = var.project_name
+  cluster_name     = var.cluster_name
+  cluster_role_arn = module.iam.eks_cluster_role_arn # <— REQUIRED by your KMS module
+  tags             = var.tags
+}
+
+# (Optional) Let IAM know the concrete key ARN now (so your inline policy uses the exact ARN).
+# If your IAM module's kms policy uses var.kms_key_arn (not the key policy), you can update it via a separate call:
+module "iam_kms_bind" {
+  source         = "../../modules/iam"
+  project_name   = var.project_name
+  create_ssh_key = false # don't recreate keypair
+  tags           = var.tags
+
+  kms_key_arn  = module.kms.key_arn
+  cluster_name = var.cluster_name
+
+  # If your IAM module creates resources unconditionally, skip this block
+  # and keep only the first "iam" module. Otherwise, you can merge this logic
+  # back into a single IAM module by making the inline kms policy conditional.
+}
+
+############################################
+# 5️⃣ EKS (uses the KMS key for secrets encryption)
 ############################################
 module "eks" {
   source = "../../modules/eks"
@@ -56,11 +87,13 @@ module "eks" {
   service_ipv4_cidr         = var.service_ipv4_cidr
   enabled_cluster_log_types = var.enabled_cluster_log_types
 
+  kms_key_arn = module.kms.key_arn # <— enables the dynamic encryption_config in your EKS module
+
   tags = var.tags
 }
 
 ############################################
-# 5️⃣ Create Node Group
+# 6️⃣ Node Group (private subnets)
 ############################################
 module "nodegroup" {
   source = "../../modules/nodegroup"

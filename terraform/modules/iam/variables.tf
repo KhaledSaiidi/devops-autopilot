@@ -14,3 +14,14 @@ variable "create_ssh_key" {
   type        = bool
   default     = false
 }
+
+variable "kms_key_arn" {
+  description = "KMS key ARN used to encrypt Kubernetes Secrets"
+  type        = string
+  default     = ""
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name used in KMS condition"
+  type        = string
+}

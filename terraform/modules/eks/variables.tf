@@ -64,7 +64,11 @@ variable "aws_region" {
   description = "AWS region of the EKS cluster."
   type        = string
 }
-
+variable "kms_key_arn" {
+  description = "KMS key ARN to encrypt Kubernetes Secrets (optional)."
+  type        = string
+  default     = ""
+}
 variable "tags" {
   description = "Common tags applied to all resources."
   type        = map(string)

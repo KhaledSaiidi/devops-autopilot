@@ -101,3 +101,41 @@ resource "local_file" "private_key" {
   filename        = "${path.module}/../../keys/${var.project_name}-eks.pem"
   file_permission = "0600"
 }
+
+############################################
+# Grant EKS Cluster Role access to the KMS key (for Secrets Encryption)
+############################################
+resource "aws_iam_role_policy" "eks_cluster_kms" {
+  count = var.kms_key_arn != "" ? 1 : 0
+
+  name = "${var.project_name}-eks-kms-policy"
+  role = aws_iam_role.eks_cluster_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "AllowEKSClusterRoleUseOfKMSKey"
+        Effect   = "Allow"
+        Action   = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:ReEncryptFrom",
+          "kms:ReEncryptTo",
+          "kms:CreateGrant",
+          "kms:ListGrants",
+          "kms:RevokeGrant"
+        ]
+        Resource  = var.kms_key_arn
+        Condition = {
+          StringEquals = {
+            "kms:EncryptionContext:aws:eks:cluster-name" = var.cluster_name
+          }
+        }
+      }
+    ]
+  })
+}
