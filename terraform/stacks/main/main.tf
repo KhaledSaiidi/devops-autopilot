@@ -49,10 +49,10 @@ module "eks" {
   generate_kubeconfig = var.generate_kubeconfig
   cluster_user        = var.cluster_user
 
-  endpoint_private_access  = var.endpoint_private_access
-  endpoint_public_access   = var.endpoint_public_access
-  public_access_cidrs      = var.public_access_cidrs
-  service_ipv4_cidr        = var.service_ipv4_cidr
+  endpoint_private_access   = var.endpoint_private_access
+  endpoint_public_access    = var.endpoint_public_access
+  public_access_cidrs       = var.public_access_cidrs
+  service_ipv4_cidr         = var.service_ipv4_cidr
   enabled_cluster_log_types = var.enabled_cluster_log_types
 
   tags = var.tags
