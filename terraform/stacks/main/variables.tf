@@ -11,24 +11,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "bucket" {
-  description = "AWS region of the EKS cluster."
-  type        = string
-  default     = "devops-autopilot-bucket"
-}
-
-variable "state_key" {
-  description = "AWS region of the EKS cluster."
-  type        = string
-  default     = "devops-autopilot.tfstate"
-}
-
-variable "dynamodb_table" {
-  description = "AWS region of the EKS cluster."
-  type        = string
-  default     = "devops-autopilot-dynamo-table"
-}
-
 variable "tags" {
   description = "Common tags to apply to all resources."
   type        = map(any)

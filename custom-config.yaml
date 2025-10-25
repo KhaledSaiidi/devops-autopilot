@@ -8,7 +8,7 @@ project:
   tags:
     Owner: "Khaled Saidi"
     ManagedBy: "Terraform"
-    Environment: "staging"
+    Environment: "devops-autopilot"
 
 vpc:
   cidr: "10.0.0.0/16"
@@ -39,7 +39,7 @@ nodegroup:
   ami_type: "AL2_x86_64"
   capacity_type: "ON_DEMAND"
   disk_size: 30
-  instance_types: [ "t3.medium" ]
+  instance_types: [ "t2.micro" ]
   force_update_version: false
   extra_labels:
     role: "node"
