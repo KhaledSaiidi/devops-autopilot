@@ -1,5 +1,7 @@
-# create VPC
-module "VPC" {
+############################################
+# 1️⃣ Create VPC
+############################################
+module "vpc" {
   source               = "../../modules/vpc"
   project_name         = var.project_name
   vpc_cidr             = var.vpc_cidr
@@ -11,41 +13,64 @@ module "VPC" {
   tags                 = var.tags
 }
 
-# create NAT GATEWAY
-module "Nat-GW" {
+############################################
+# 2️⃣ Create NAT Gateways
+############################################
+module "nat_gw" {
   source             = "../../modules/nat-gw"
-  vpc_id             = var.vpc_id
-  igw_id             = var.igw_id
-  public_subnet_ids  = var.public_subnet_ids
-  private_subnet_ids = var.private_subnet_ids
+  project_name       = var.project_name
+  vpc_id             = module.vpc.vpc_id
+  igw_id             = module.vpc.igw_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
 }
 
-# create IAM
-module "IAM" {
-  source       = "../../modules/iam"
-  PROJECT_NAME = var.PROJECT_NAME
+############################################
+# 3️⃣ Create IAM Roles and SSH Key
+############################################
+module "iam" {
+  source         = "../../modules/iam"
+  project_name   = var.project_name
+  create_ssh_key = var.create_ssh_key
+  tags           = var.tags
 }
 
-# create EKS Cluster
-module "EKS" {
-  source               = "../../modules/eks"
-  PROJECT_NAME         = var.PROJECT_NAME
-  EKS_CLUSTER_ROLE_ARN = module.IAM.EKS_CLUSTER_ROLE_ARN
-  PUB_SUB1_ID          = module.VPC.PUB_SUB1_ID
-  PUB_SUB2_ID          = module.VPC.PUB_SUB2_ID
-  PRI_SUB3_ID          = module.VPC.PRI_SUB3_ID
-  PRI_SUB4_ID          = module.VPC.PRI_SUB4_ID
+############################################
+# 4️⃣ Create EKS Cluster
+############################################
+module "eks" {
+  source = "../../modules/eks"
+
+  cluster_name        = var.cluster_name
+  cluster_role_arn    = module.iam.eks_cluster_role_arn
+  subnet_ids          = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
+  eks_version         = var.eks_version
+  aws_region          = var.aws_region
+  generate_kubeconfig = var.generate_kubeconfig
+  cluster_user        = var.cluster_user
+
+  endpoint_private_access  = var.endpoint_private_access
+  endpoint_public_access   = var.endpoint_public_access
+  public_access_cidrs      = var.public_access_cidrs
+  service_ipv4_cidr        = var.service_ipv4_cidr
+  enabled_cluster_log_types = var.enabled_cluster_log_types
+
+  tags = var.tags
 }
 
-# create Node Group
-module "NodeGroup" {
-  source               = "../../modules/nodegroup"
-  eks_cluster_name     = var.eks_cluster_name
-  node_group_role_arn  = var.node_group_role_arn
-  private_subnet_ids   = var.private_subnet_ids
+############################################
+# 5️⃣ Create Node Group
+############################################
+module "nodegroup" {
+  source = "../../modules/nodegroup"
+
+  cluster_name        = module.eks.cluster_name
+  node_group_role_arn = module.iam.eks_node_role_arn
+  private_subnet_ids  = module.vpc.private_subnet_ids
+
   desired_size         = var.desired_size
-  max_size             = var.max_size
   min_size             = var.min_size
+  max_size             = var.max_size
   ami_type             = var.ami_type
   capacity_type        = var.capacity_type
   disk_size            = var.disk_size
