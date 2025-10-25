@@ -33,7 +33,7 @@ resource "aws_eks_cluster" "this" {
 resource "local_file" "kubeconfig" {
   count    = var.generate_kubeconfig ? 1 : 0
   filename = "${path.module}/../../kubeconfig/${aws_eks_cluster.this.name}-kubeconfig.yaml"
-
+  file_permission = "0600"
   content = templatefile("${path.module}/templates/kubeconfig.tpl", {
     cluster_name = aws_eks_cluster.this.name
     cluster_user = var.cluster_user

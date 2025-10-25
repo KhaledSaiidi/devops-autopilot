@@ -8,11 +8,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "igw_id" {
-  description = "Internet Gateway ID that NAT gateways depend on."
-  type        = string
-}
-
 variable "public_subnet_ids" {
   description = "List of public subnet IDs for deploying NAT gateways."
   type        = list(string)

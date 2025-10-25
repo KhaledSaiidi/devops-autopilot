@@ -10,7 +10,7 @@ locals {
 # EIPs (one per public subnet / AZ)
 ############################################
 resource "aws_eip" "nat_eip" {
-  for_each = toset(var.public_subnet_ids)
+  for_each = local.public_indexes
   domain   = "vpc"
 
   tags = {
@@ -29,9 +29,6 @@ resource "aws_nat_gateway" "nat_gw" {
   tags = {
     Name = "${var.project_name}-nat-gw-${each.key}"
   }
-
-  # NOTE: a string isn't a real dependency; keep or drop. NAT creation doesn't require IGW.
-  # depends_on = [var.igw_id]  # <- not useful; strings don't create deps
 }
 
 ############################################
@@ -39,12 +36,10 @@ resource "aws_nat_gateway" "nat_gw" {
 ############################################
 resource "aws_route_table" "private_rt" {
   for_each = local.private_indexes
-
-  vpc_id = var.vpc_id
+  vpc_id   = var.vpc_id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    # match NAT in the same index/AZ
     nat_gateway_id = aws_nat_gateway.nat_gw[each.key].id
   }
 
@@ -54,8 +49,7 @@ resource "aws_route_table" "private_rt" {
 }
 
 resource "aws_route_table_association" "private_assoc" {
-  for_each = local.private_indexes
-
+  for_each       = local.private_indexes
   subnet_id      = var.private_subnet_ids[each.key]
   route_table_id = aws_route_table.private_rt[each.key].id
 }
