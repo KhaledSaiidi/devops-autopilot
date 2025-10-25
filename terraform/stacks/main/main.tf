@@ -70,6 +70,9 @@ module "nodegroup" {
   node_group_role_arn = module.iam.eks_node_role_arn
   private_subnet_ids  = module.vpc.private_subnet_ids
 
+  enable_ssh   = var.create_ssh_key
+  ssh_key_name = module.iam.ssh_key_name
+
   desired_size         = var.desired_size
   min_size             = var.min_size
   max_size             = var.max_size

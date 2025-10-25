@@ -81,3 +81,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_ssh" {
+  description = "Enable SSH access to worker nodes via EC2 key pair."
+  type        = bool
+  default     = false
+}
+
+variable "ssh_key_name" {
+  description = "Name of the EC2 key pair to use for SSH (from IAM module)."
+  type        = string
+  default     = null
+}
+
+variable "source_security_group_ids" {
+  description = "Optional source SGs allowed for SSH (22/tcp)."
+  type        = list(string)
+  default     = []
+}
