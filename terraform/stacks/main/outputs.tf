@@ -56,3 +56,8 @@ output "kubeconfig_path" {
   value       = module.eks.kubeconfig_path
   description = "Local path to the generated kubeconfig file."
 }
+
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL for the EKS cluster (used by IRSA)."
+  value       = module.eks.oidc_issuer_url
+}

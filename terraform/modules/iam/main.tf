@@ -82,13 +82,18 @@ locals {
 
 # Get OIDC root CA fingerprint
 data "tls_certificate" "eks_oidc" {
-  count = var.enable_irsa && var.oidc_issuer_url != "" ? 1 : 0
+  count = var.enable_irsa ? 1 : 0
   url   = var.oidc_issuer_url
+  lifecycle {
+    precondition {
+      condition     = var.enable_irsa ? (var.oidc_issuer_url != "" && can(regex("^https://", var.oidc_issuer_url))) : true
+      error_message = "IRSA enabled but oidc_issuer_url is empty or invalid. Wire module.eks.oidc_issuer_url into this module."
+    }
+  }
 }
 
 resource "aws_iam_openid_connect_provider" "eks" {
-  count = var.enable_irsa && var.oidc_issuer_url != "" ? 1 : 0
-
+  count            = var.enable_irsa ? 1 : 0
   url = var.oidc_issuer_url
 
   client_id_list  = ["sts.amazonaws.com"]
