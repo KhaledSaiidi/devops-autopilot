@@ -15,13 +15,14 @@ locals {
   detected_admin_cidr   = format("%s/32", chomp(data.http.my_ip.response_body))
   effective_admin_cidrs = length(var.bastion_admin_cidrs) > 0 ? var.bastion_admin_cidrs : [local.detected_admin_cidr]
 }
+
 resource "aws_eks_node_group" "this" {
   cluster_name    = var.cluster_name
   node_group_name = "${var.cluster_name}-node-group"
   node_role_arn   = var.node_group_role_arn
   subnet_ids      = var.private_subnet_ids
 
-  # --- SSH remote access (optional) ---
+  # --- SSH remote access ---
   dynamic "remote_access" {
     for_each = (var.enable_ssh && local.effective_ssh_key_name != null && var.enable_bastion) ? [1] : []
     content {
@@ -29,6 +30,7 @@ resource "aws_eks_node_group" "this" {
       source_security_group_ids = [aws_security_group.bastion_sg[0].id]
     }
   }
+
   scaling_config {
     desired_size = var.desired_size
     max_size     = var.max_size
@@ -58,10 +60,26 @@ resource "aws_eks_node_group" "this" {
     },
     var.tags
   )
+
+  # ---- Guardrails ----
+  lifecycle {
+    precondition {
+      condition     = !(var.enable_ssh && !var.enable_bastion)
+      error_message = "enable_ssh=true requires enable_bastion=true to avoid exposing SSH."
+    }
+    precondition {
+      condition     = (!var.enable_ssh) || (local.effective_ssh_key_name != null && local.effective_ssh_key_name != "")
+      error_message = "SSH is enabled but no EC2 key pair name is available. Either enable create_ssh_key or provide ssh_key_name."
+    }
+    precondition {
+      condition     = length(var.private_subnet_ids) > 0
+      error_message = "private_subnet_ids must contain at least one subnet."
+    }
+  }
 }
 
 #########################
-# SSH Key Pair (Optional)
+# SSH Key Pair
 #########################
 
 resource "tls_private_key" "eks_key" {
@@ -118,9 +136,13 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   tags = merge({ Name = "${var.project_name}-bastion-sg" }, var.tags)
+  lifecycle {
+    precondition {
+      condition     = length(local.effective_admin_cidrs) > 0
+      error_message = "bastion_sg requires at least one admin CIDR (auto-detect should provide caller /32)."
+    }
+  }
 }
-
-# We need the VPC id to create SGs – fetch from any of the provided subnets
 data "aws_subnet" "pub0" {
   id = var.public_subnet_ids[0]
 }
@@ -147,4 +169,14 @@ resource "aws_instance" "bastion" {
     },
     var.tags
   )
+  lifecycle {
+    precondition {
+      condition     = (!var.enable_bastion) || length(var.public_subnet_ids) > 0
+      error_message = "enable_bastion=true requires at least one public subnet ID."
+    }
+    precondition {
+      condition     = (!var.enable_bastion) || (local.effective_ssh_key_name != null && local.effective_ssh_key_name != "")
+      error_message = "enable_bastion=true requires a valid EC2 key pair (create_ssh_key=true or provide ssh_key_name)."
+    }
+  }
 }

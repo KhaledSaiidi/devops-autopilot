@@ -132,17 +132,3 @@ variable "bastion_admin_cidrs" {
 variable "public_subnet_ids" {
   type = list(string)
 }
-
-variable "config_guardrails" {
-  description = "Internal guardrails to validate SSH/bastion configuration."
-  type        = bool
-  default     = true
-  validation {
-    condition     = !(var.enable_ssh && !var.enable_bastion)
-    error_message = "enable_ssh=true requires enable_bastion=true to avoid exposing SSH."
-  }
-  validation {
-    condition     = (!var.enable_bastion) || length(var.bastion_admin_cidrs) > 0
-    error_message = "enable_bastion=true requires bastion_admin_cidrs to be non-empty."
-  }
-}
