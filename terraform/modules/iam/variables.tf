@@ -8,9 +8,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "create_ssh_key" {
-  description = "Whether to create an SSH key pair for EC2 access."
-  type        = bool
-  default     = false
-}
