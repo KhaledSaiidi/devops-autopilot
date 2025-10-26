@@ -27,9 +27,9 @@ module "nat_gw" {
 # 2) IAM (roles only)
 ############################################
 module "iam" {
-  source         = "../../modules/iam"
-  project_name   = var.project_name
-  tags           = var.tags
+  source       = "../../modules/iam"
+  project_name = var.project_name
+  tags         = var.tags
 }
 
 ############################################
@@ -47,55 +47,53 @@ module "kms" {
 # 4) EKS (enable secrets encryption)
 ############################################
 module "eks" {
-  source = "../../modules/eks"
-
-  cluster_name        = var.cluster_name
-  cluster_role_arn    = module.iam.eks_cluster_role_arn
-  subnet_ids          = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
-  eks_version         = var.eks_version
-  aws_region          = var.aws_region
-  generate_kubeconfig = var.generate_kubeconfig
-  cluster_user        = var.cluster_user
-
+  source                    = "../../modules/eks"
+  cluster_name              = var.cluster_name
+  cluster_role_arn          = module.iam.eks_cluster_role_arn
+  subnet_ids                = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
+  eks_version               = var.eks_version
+  aws_region                = var.aws_region
+  generate_kubeconfig       = var.generate_kubeconfig
+  cluster_user              = var.cluster_user
   endpoint_private_access   = var.endpoint_private_access
   endpoint_public_access    = var.endpoint_public_access
   public_access_cidrs       = var.public_access_cidrs
   service_ipv4_cidr         = var.service_ipv4_cidr
   enabled_cluster_log_types = var.enabled_cluster_log_types
   kms_key_arn               = module.kms.key_arn
-
-  tags = var.tags
+  tags                      = var.tags
 }
 
 ############################################
 # 5) Nodegroup (private subnets)
 ############################################
 module "nodegroup" {
-  source = "../../modules/nodegroup"
-  project_name         = var.project_name
+  source              = "../../modules/nodegroup"
+  project_name        = var.project_name
   cluster_name        = module.eks.cluster_name
   node_group_role_arn = module.iam.eks_node_role_arn
   private_subnet_ids  = module.vpc.private_subnet_ids
 
-  enable_ssh           = var.enable_ssh
-  create_ssh_key       = var.create_ssh_key
-  ssh_key_name         = var.ssh_key_name
+  # SSH control
+  enable_ssh     = var.enable_ssh
+  create_ssh_key = var.create_ssh_key
+  ssh_key_name   = var.ssh_key_name
 
-  enable_bastion       = true
-  public_subnet_ids    = module.vpc.public_subnet_ids
-  bastion_admin_cidrs  = var.bastion_admin_cidrs
+  # Bastion
+  enable_bastion        = true
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  bastion_admin_cidrs   = var.bastion_admin_cidrs
   bastion_instance_type = var.bastion_instance_type
-  bastion_ami_id       = var.bastion_ami_id
-
-  desired_size         = var.desired_size
-  min_size             = var.min_size
-  max_size             = var.max_size
-  ami_type             = var.ami_type
-  capacity_type        = var.capacity_type
-  disk_size            = var.disk_size
-  instance_types       = var.instance_types
-  eks_version          = var.eks_version
-  force_update_version = var.force_update_version
-  extra_labels         = var.extra_labels
-  tags                 = var.tags
+  bastion_ami_id        = var.bastion_ami_id
+  desired_size          = var.desired_size
+  min_size              = var.min_size
+  max_size              = var.max_size
+  ami_type              = var.ami_type
+  capacity_type         = var.capacity_type
+  disk_size             = var.disk_size
+  instance_types        = var.instance_types
+  eks_version           = var.eks_version
+  force_update_version  = var.force_update_version
+  extra_labels          = var.extra_labels
+  tags                  = var.tags
 }

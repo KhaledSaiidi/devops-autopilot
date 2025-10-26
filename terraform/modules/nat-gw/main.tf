@@ -2,7 +2,7 @@
 # Index sets
 ############################################
 locals {
-  public_indexes  = { for idx in range(length(var.public_subnet_cidrs))  : idx => idx }
+  public_indexes  = { for idx in range(length(var.public_subnet_cidrs)) : idx => idx }
   private_indexes = { for idx in range(length(var.private_subnet_cidrs)) : idx => idx }
 }
 

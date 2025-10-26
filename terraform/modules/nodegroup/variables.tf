@@ -113,24 +113,24 @@ variable "create_ssh_key" {
 }
 
 # Bastion
-variable "enable_bastion"   {
-   type = bool
-   default = true 
+variable "enable_bastion" {
+  type    = bool
+  default = true
 }
 variable "bastion_instance_type" {
-   type = string
-   default = "t3.micro" 
+  type    = string
+  default = "t3.micro"
 }
-variable "bastion_ami_id"   {
-   type = string 
-   default     = "AL2_x86_64"
+variable "bastion_ami_id" {
+  type    = string
+  default = ""
 }
 variable "bastion_admin_cidrs" {
-   type = list(string)
-   default = [] 
+  type    = list(string)
+  default = []
 }
 variable "public_subnet_ids" {
-   type = list(string) 
+  type = list(string)
 }
 
 variable "config_guardrails" {

@@ -19,15 +19,15 @@ resource "aws_kms_key" "eks_secrets" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "AllowRootAccountAdmin"
-        Effect   = "Allow"
+        Sid       = "AllowRootAccountAdmin"
+        Effect    = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action   = "kms:*"
-        Resource = "*"
+        Action    = "kms:*"
+        Resource  = "*"
       },
       {
-        Sid    = "AllowEKSClusterRoleUseOfTheKey"
-        Effect = "Allow"
+        Sid       = "AllowEKSClusterRoleUseOfTheKey"
+        Effect    = "Allow"
         Principal = { AWS = var.cluster_role_arn }
         Action = [
           "kms:Encrypt",
@@ -52,8 +52,8 @@ resource "aws_kms_key" "eks_secrets" {
   })
 
   tags = merge({
-    Name       = "${var.project_name}-eks-secrets-kms"
-    Component  = "security"
+    Name      = "${var.project_name}-eks-secrets-kms"
+    Component = "security"
   }, var.tags)
 }
 

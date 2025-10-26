@@ -3,8 +3,8 @@ data "http" "my_ip" {
 }
 
 locals {
-  detected_api_cidr     = format("%s/32", chomp(data.http.my_ip.response_body))
-  effective_api_cidrs   = length(var.public_access_cidrs) > 0 ? var.public_access_cidrs : [local.detected_api_cidr]
+  detected_api_cidr   = format("%s/32", chomp(data.http.my_ip.response_body))
+  effective_api_cidrs = length(var.public_access_cidrs) > 0 ? var.public_access_cidrs : [local.detected_api_cidr]
 }
 
 resource "aws_eks_cluster" "this" {
@@ -31,7 +31,7 @@ resource "aws_eks_cluster" "this" {
       }
     }
   }
-  
+
   enabled_cluster_log_types = var.enabled_cluster_log_types
 
   tags = merge(
@@ -49,8 +49,8 @@ resource "aws_eks_cluster" "this" {
 #########################
 
 resource "local_file" "kubeconfig" {
-  count    = var.generate_kubeconfig ? 1 : 0
-  filename = "${path.module}/../../kubeconfig/${aws_eks_cluster.this.name}-kubeconfig.yaml"
+  count           = var.generate_kubeconfig ? 1 : 0
+  filename        = "${path.module}/../../kubeconfig/${aws_eks_cluster.this.name}-kubeconfig.yaml"
   file_permission = "0600"
   content = templatefile("${path.module}/templates/kubeconfig.tpl", {
     cluster_name = aws_eks_cluster.this.name

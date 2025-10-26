@@ -2,6 +2,15 @@ data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
 
+data "aws_ami" "al2023" {
+  most_recent = true
+  owners      = ["879755317616"] # Amazon
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*/x86_64"]
+  }
+}
+
 locals {
   detected_admin_cidr   = format("%s/32", chomp(data.http.my_ip.response_body))
   effective_admin_cidrs = length(var.bastion_admin_cidrs) > 0 ? var.bastion_admin_cidrs : [local.detected_admin_cidr]
@@ -14,12 +23,12 @@ resource "aws_eks_node_group" "this" {
 
   # --- SSH remote access (optional) ---
   dynamic "remote_access" {
-  for_each = (var.enable_ssh && local.effective_ssh_key_name != null && var.enable_bastion) ? [1] : []
-  content {
-    ec2_ssh_key               = local.effective_ssh_key_name
-    source_security_group_ids = [aws_security_group.bastion_sg[0].id]
+    for_each = (var.enable_ssh && local.effective_ssh_key_name != null && var.enable_bastion) ? [1] : []
+    content {
+      ec2_ssh_key               = local.effective_ssh_key_name
+      source_security_group_ids = [aws_security_group.bastion_sg[0].id]
+    }
   }
-}
   scaling_config {
     desired_size = var.desired_size
     max_size     = var.max_size
@@ -122,7 +131,7 @@ data "aws_vpc" "selected" {
 
 resource "aws_instance" "bastion" {
   count                       = var.enable_bastion ? 1 : 0
-  ami                         = var.bastion_ami_id
+  ami                         = var.bastion_ami_id != "" ? var.bastion_ami_id : data.aws_ami.al2023.id
   instance_type               = var.bastion_instance_type
   subnet_id                   = var.public_subnet_ids[0]
   associate_public_ip_address = true

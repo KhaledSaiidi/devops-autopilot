@@ -17,37 +17,42 @@ output "private_subnet_ids" {
 }
 
 ############################################
-# IAM / SSH Key Outputs
+# IAM Outputs
 ############################################
 output "eks_cluster_role_arn" {
-  description = "IAM role ARN for the EKS control plane."
   value       = module.iam.eks_cluster_role_arn
+  description = "IAM role ARN for the EKS control plane."
+}
+output "eks_node_role_arn" {
+  value       = module.iam.eks_node_role_arn
+  description = "IAM role ARN for the EKS worker nodes."
 }
 
-output "eks_node_role_arn" {
-  description = "IAM role ARN for the EKS worker nodes."
-  value       = module.iam.eks_node_role_arn
+############################################
+# Nodegroup / Bastion Outputs
+############################################
+output "bastion_public_ip" {
+  value       = module.nodegroup.bastion_public_ip
+  description = "Public IP of the bastion host (if enabled)."
 }
 
 output "ssh_private_key_path" {
+  value       = module.nodegroup.ssh_private_key_path
   description = "Path to the generated SSH private key (if created)."
-  value       = module.iam.ssh_private_key_path
 }
 
 ############################################
 # EKS Outputs
 ############################################
 output "eks_cluster_name" {
-  description = "The name of the EKS cluster."
   value       = module.eks.cluster_name
+  description = "The name of the EKS cluster."
 }
-
 output "eks_cluster_endpoint" {
-  description = "EKS cluster API endpoint URL."
   value       = module.eks.cluster_endpoint
+  description = "EKS cluster API endpoint URL."
 }
-
 output "kubeconfig_path" {
-  description = "Local path to the generated kubeconfig file."
   value       = module.eks.kubeconfig_path
+  description = "Local path to the generated kubeconfig file."
 }

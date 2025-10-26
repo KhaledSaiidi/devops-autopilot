@@ -28,11 +28,13 @@ eks:
   generate_kubeconfig: true
   endpoint_private_access: true
   endpoint_public_access: true
-  public_access_cidrs: [ "0.0.0.0/0" ]
+  # Leave [] to auto-restrict to caller /32 at apply-time
+  public_access_cidrs: []
   service_ipv4_cidr: "172.20.0.0/16"
-  enabled_cluster_log_types: [ "api", "audit", "authenticator" ]
+  enabled_cluster_log_types: [ "api", "audit", "authenticator", "controllerManager", "scheduler" ]
 
 nodegroup:
+  # Scaling & shape
   desired_size: 3
   min_size: 2
   max_size: 5
@@ -45,5 +47,10 @@ nodegroup:
     role: "node"
     tier: "app"
 
-iam:
+  # SSH & Bastion (moved here)
   create_ssh_key: true
+  enable_ssh: true
+  ssh_key_name: ""
+  bastion_instance_type: "t3.micro"
+  bastion_ami_id: ""
+  bastion_admin_cidrs: []
