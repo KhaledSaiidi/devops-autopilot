@@ -9,6 +9,6 @@ output "ssh_key_name" {
 }
 
 output "ssh_private_key_path" {
-  value       = try(local_file.private_key[0].filename, null)
   description = "Local path to the generated private key (if create_ssh_key=true)."
+  value       = var.create_ssh_key ? abspath(local_file.private_key[0].filename) : null
 }
