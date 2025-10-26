@@ -1,3 +1,12 @@
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com/"
+}
+
+locals {
+  detected_api_cidr     = format("%s/32", chomp(data.http.my_ip.response_body))
+  effective_api_cidrs   = length(var.public_access_cidrs) > 0 ? var.public_access_cidrs : [local.detected_api_cidr]
+}
+
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = var.cluster_role_arn
@@ -6,7 +15,7 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     endpoint_private_access = var.endpoint_private_access
     endpoint_public_access  = var.endpoint_public_access
-    public_access_cidrs     = var.public_access_cidrs
+    public_access_cidrs     = local.effective_api_cidrs
     subnet_ids              = var.subnet_ids
   }
 

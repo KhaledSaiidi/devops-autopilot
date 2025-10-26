@@ -77,8 +77,15 @@ module "nodegroup" {
   node_group_role_arn = module.iam.eks_node_role_arn
   private_subnet_ids  = module.vpc.private_subnet_ids
 
-  enable_ssh   = var.create_ssh_key
-  ssh_key_name = module.iam.ssh_key_name
+  enable_ssh           = var.enable_ssh
+  create_ssh_key       = var.create_ssh_key
+  ssh_key_name         = var.ssh_key_name
+
+  enable_bastion       = true
+  public_subnet_ids    = module.vpc.public_subnet_ids
+  bastion_admin_cidrs  = var.bastion_admin_cidrs
+  bastion_instance_type = var.bastion_instance_type
+  bastion_ami_id       = var.bastion_ami_id
 
   desired_size         = var.desired_size
   min_size             = var.min_size
@@ -90,6 +97,5 @@ module "nodegroup" {
   eks_version          = var.eks_version
   force_update_version = var.force_update_version
   extra_labels         = var.extra_labels
-  create_ssh_key = var.create_ssh_key
   tags                 = var.tags
 }

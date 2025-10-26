@@ -54,12 +54,23 @@ variable "cluster_name" {
 }
 
 ############################################
-# IAM / SSH Key Settings
+#  SSH Key Settings
 ############################################
 variable "create_ssh_key" {
   description = "Whether to create an SSH key pair for EC2 access."
   type        = bool
   default     = false
+}
+variable "enable_ssh" {
+  description = "Enable SSH access to worker nodes (restricted to bastion SG)."
+  type        = bool
+  default     = true
+}
+
+variable "ssh_key_name" {
+  description = "Existing EC2 key pair name to use (ignored if create_ssh_key=true)."
+  type        = string
+  default     = null
 }
 
 ############################################
@@ -80,7 +91,7 @@ variable "eks_version" {
 variable "endpoint_private_access" {
   description = "Indicates whether the EKS API endpoint is private."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "endpoint_public_access" {
@@ -140,6 +151,13 @@ variable "ami_type" {
   default     = "AL2_x86_64"
 }
 
+variable "bastion_ami_id" {
+  description = "Node AMI type (e.g., AL2_x86_64, BOTTLEROCKET_x86_64)."
+  type        = string
+  default     = "AL2_x86_64"
+}
+
+
 variable "capacity_type" {
   description = "Capacity type: ON_DEMAND or SPOT."
   type        = string
@@ -160,6 +178,17 @@ variable "instance_types" {
   description = "Instance types for the node group."
   type        = list(string)
   default     = ["t3.medium"]
+}
+
+variable "bastion_instance_type" {
+   type = string
+   default = "t3.micro" 
+}
+
+variable "bastion_admin_cidrs" {
+  description = "CIDRs allowed to SSH to the bastion."
+  type        = list(string)
+  default     = []
 }
 
 variable "force_update_version" {

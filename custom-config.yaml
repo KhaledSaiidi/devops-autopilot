@@ -26,7 +26,7 @@ eks:
   cluster_user: "khaled"
   version: "1.33"
   generate_kubeconfig: true
-  endpoint_private_access: false
+  endpoint_private_access: true
   endpoint_public_access: true
   public_access_cidrs: [ "0.0.0.0/0" ]
   service_ipv4_cidr: "172.20.0.0/16"

@@ -1,9 +1,14 @@
-output "ssh_private_key_path" {
-  description = "Path to the generated SSH private key."
-  value       = var.create_ssh_key ? local_file.private_key[0].filename : null
+output "bastion_public_ip" {
+  value       = try(aws_instance.bastion[0].public_ip, null)
+  description = "Public IP of the bastion host (if enabled)."
 }
 
 output "ssh_key_name" {
-  description = "AWS key pair name for EC2 nodes."
-  value       = var.create_ssh_key ? aws_key_pair.eks_keypair[0].key_name : null
+  value       = local.effective_ssh_key_name
+  description = "AWS key pair name in use for bastion and nodes."
+}
+
+output "ssh_private_key_path" {
+  value       = try(local_file.private_key[0].filename, null)
+  description = "Local path to the generated private key (if create_ssh_key=true)."
 }

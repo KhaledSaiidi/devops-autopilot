@@ -1,3 +1,4 @@
+# modules/nodegroup
 variable "project_name" {
   description = "Project or environment prefix used for IAM resource names."
   type        = string
@@ -86,6 +87,7 @@ variable "tags" {
   default     = {}
 }
 
+# SSH control
 variable "enable_ssh" {
   description = "Enable SSH access to worker nodes via EC2 key pair."
   type        = bool
@@ -108,4 +110,39 @@ variable "create_ssh_key" {
   description = "Whether to create an SSH key pair for EC2 access."
   type        = bool
   default     = false
+}
+
+# Bastion
+variable "enable_bastion"   {
+   type = bool
+   default = true 
+}
+variable "bastion_instance_type" {
+   type = string
+   default = "t3.micro" 
+}
+variable "bastion_ami_id"   {
+   type = string 
+   default     = "AL2_x86_64"
+}
+variable "bastion_admin_cidrs" {
+   type = list(string)
+   default = [] 
+}
+variable "public_subnet_ids" {
+   type = list(string) 
+}
+
+variable "config_guardrails" {
+  description = "Internal guardrails to validate SSH/bastion configuration."
+  type        = bool
+  default     = true
+  validation {
+    condition     = !(var.enable_ssh && !var.enable_bastion)
+    error_message = "enable_ssh=true requires enable_bastion=true to avoid exposing SSH."
+  }
+  validation {
+    condition     = (!var.enable_bastion) || length(var.bastion_admin_cidrs) > 0
+    error_message = "enable_bastion=true requires bastion_admin_cidrs to be non-empty."
+  }
 }
