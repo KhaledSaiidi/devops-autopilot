@@ -166,3 +166,15 @@ variable "extra_labels" {
   type    = map(string)
   default = {}
 }
+
+variable "enable_irsa" {
+  description = "Create the IAM OIDC provider for IRSA."
+  type        = bool
+  default     = true
+}
+
+variable "create_alb_controller_role" {
+  description = "Create an IRSA role for the AWS Load Balancer Controller."
+  type        = bool
+  default     = true
+}

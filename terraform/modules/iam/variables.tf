@@ -8,3 +8,29 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# OIDC provider + ALB Controller IRSA role
+
+variable "enable_irsa" {
+  description = "Create the IAM OIDC provider for IRSA."
+  type        = bool
+  default     = true
+}
+
+variable "oidc_issuer_url" {
+  description = "OIDC issuer URL from EKS (module.eks.oidc_issuer_url). Required if enable_irsa = true."
+  type        = string
+  default     = ""
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name (optional, used in tags/description)."
+  type        = string
+  default     = ""
+}
+
+variable "create_alb_controller_role" {
+  description = "Create an IRSA role for the AWS Load Balancer Controller."
+  type        = bool
+  default     = true
+}

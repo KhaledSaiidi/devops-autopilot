@@ -21,6 +21,10 @@ vpc:
   - "10.0.4.0/24"
   add_k8s_tags: true
 
+iam:
+  enable_irsa: true
+  create_alb_controller_role: true
+
 eks:
   cluster_name: "devops-autopilot-cluster"
   cluster_user: "khaled"

@@ -22,3 +22,8 @@ output "kubeconfig_path" {
   description = "Path to the generated kubeconfig file (for Ansible use)."
   value       = var.generate_kubeconfig ? abspath(local_file.kubeconfig[0].filename) : null
 }
+
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL for the EKS cluster (used by IRSA)."
+  value       = try(aws_eks_cluster.this.identity[0].oidc[0].issuer, null)
+}

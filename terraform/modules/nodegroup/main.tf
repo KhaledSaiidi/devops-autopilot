@@ -101,7 +101,7 @@ resource "local_file" "private_key" {
   count           = var.create_ssh_key ? 1 : 0
   content         = tls_private_key.eks_key[0].private_key_pem
   filename        = "${path.root}/keys/${var.project_name}-eks.pem"
-   file_permission = "0600"
+  file_permission = "0600"
 }
 
 locals {
@@ -148,7 +148,7 @@ data "aws_vpc" "selected" {
 
 resource "aws_instance" "bastion" {
   count                       = var.enable_bastion ? 1 : 0
-  ami = var.bastion_ami_id != "" ? var.bastion_ami_id : data.aws_ssm_parameter.al2023.value
+  ami                         = var.bastion_ami_id != "" ? var.bastion_ami_id : data.aws_ssm_parameter.al2023.value
   instance_type               = var.bastion_instance_type
   subnet_id                   = var.public_subnet_ids[0]
   associate_public_ip_address = true

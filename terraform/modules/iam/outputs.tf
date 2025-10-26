@@ -10,3 +10,13 @@ output "eks_node_role_arn" {
   description = "IAM role ARN for the EKS worker nodes."
   value       = aws_iam_role.eks_node_role.arn
 }
+
+output "oidc_provider_arn" {
+  description = "ARN of the IAM OIDC provider used for IRSA (if created)."
+  value       = try(aws_iam_openid_connect_provider.eks[0].arn, null)
+}
+
+output "alb_controller_role_arn" {
+  description = "IRSA role ARN for AWS Load Balancer Controller (if created)."
+  value       = try(aws_iam_role.alb_controller[0].arn, null)
+}

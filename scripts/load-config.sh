@@ -45,6 +45,12 @@ TF_VAR_private_subnet_cidrs=$(json_one_line '.vpc.private_subnet_cidrs' "$CONFIG
 TF_VAR_add_k8s_tags=$(yq -r '.vpc.add_k8s_tags' "$CONFIG_FILE"); export TF_VAR_add_k8s_tags
 
 # -------------------------
+# IAM
+# -------------------------
+TF_VAR_enable_irsa=$(yq -r '.iam.enable_irsa' "$CONFIG_FILE"); export TF_VAR_enable_irsa
+TF_VAR_create_alb_controller_role=$(yq -r '.iam.create_alb_controller_role' "$CONFIG_FILE"); export TF_VAR_create_alb_controller_role
+
+# -------------------------
 # EKS
 # -------------------------
 TF_VAR_cluster_name=$(yq -r '.eks.cluster_name' "$CONFIG_FILE"); export TF_VAR_cluster_name
