@@ -2,13 +2,8 @@ data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
 
-data "aws_ami" "al2023" {
-  most_recent = true
-  owners      = ["879755317616"] # Amazon
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*/x86_64"]
-  }
+data "aws_ssm_parameter" "al2023" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
 }
 
 locals {
@@ -153,7 +148,7 @@ data "aws_vpc" "selected" {
 
 resource "aws_instance" "bastion" {
   count                       = var.enable_bastion ? 1 : 0
-  ami                         = var.bastion_ami_id != "" ? var.bastion_ami_id : data.aws_ami.al2023.id
+  ami = var.bastion_ami_id != "" ? var.bastion_ami_id : data.aws_ssm_parameter.al2023.value
   instance_type               = var.bastion_instance_type
   subnet_id                   = var.public_subnet_ids[0]
   associate_public_ip_address = true
