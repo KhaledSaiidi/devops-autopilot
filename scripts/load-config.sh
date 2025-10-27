@@ -5,7 +5,7 @@ set -Eeuo pipefail
 need() { command -v "$1" >/dev/null 2>&1 || { echo "❌ Missing dependency: $1" >&2; exit 1; }; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONFIG_FILE="${1:-$ROOT/custom-config.yaml}"
+CONFIG_FILE="${1:-$ROOT/custom-config-infrastructure.yaml}"
 
 need yq
 need jq

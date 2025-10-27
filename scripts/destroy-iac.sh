@@ -7,7 +7,7 @@ need() { command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1"; }
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STACK="$ROOT/terraform/stacks/main"
-CFG="${1:-$ROOT/custom-config.yaml}"
+CFG="${1:-$ROOT/custom-config-infrastructure.yaml}"
 
 need terraform
 need yq
