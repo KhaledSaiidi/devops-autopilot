@@ -28,6 +28,11 @@ output "eks_node_role_arn" {
   description = "IAM role ARN for the EKS worker nodes."
 }
 
+output "ebs_csi_role_arn" {
+  value       = module.iam.ebs_csi_role_arn
+  description = "IAM role ARN for the EBS CSI controller (IRSA)"
+}
+
 ############################################
 # Nodegroup / Bastion Outputs
 ############################################

@@ -190,3 +190,49 @@ resource "aws_iam_role_policy_attachment" "alb_controller" {
   role       = aws_iam_role.alb_controller[0].name
   policy_arn = aws_iam_policy.alb_controller[0].arn
 }
+
+# -----------------------------
+# EBS CSI IRSA (enable via flag)
+# -----------------------------
+# Trust policy for the SA kube-system/ebs-csi-controller-sa
+data "aws_iam_policy_document" "ebs_csi_trust" {
+  count = var.enable_irsa && var.create_ebs_csi_role ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = ["system:serviceaccount:${var.ebs_csi_namespace}:${var.ebs_csi_service_account}"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi" {
+  count              = var.enable_irsa && var.create_ebs_csi_role ? 1 : 0
+  name               = "${var.project_name}-ebs-csi"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_trust[0].json
+
+  tags = merge(
+    { Name = "${var.project_name}-ebs-csi-role", ManagedBy = "Terraform" },
+    var.tags
+  )
+}
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  count      = var.enable_irsa && var.create_ebs_csi_role ? 1 : 0
+  role       = aws_iam_role.ebs_csi[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}

@@ -40,3 +40,17 @@ variable "lbc_policy_url" {
   default     = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json"
 }
 
+variable "create_ebs_csi_role" {
+  type    = bool
+  default = true
+}
+
+variable "ebs_csi_namespace" {
+  type    = string
+  default = "kube-system"
+}
+
+variable "ebs_csi_service_account" {
+  type    = string
+  default = "ebs-csi-controller-sa"
+}
