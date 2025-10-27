@@ -49,6 +49,7 @@ TF_VAR_add_k8s_tags=$(yq -r '.vpc.add_k8s_tags' "$CONFIG_FILE"); export TF_VAR_a
 # -------------------------
 TF_VAR_enable_irsa=$(yq -r '.iam.enable_irsa' "$CONFIG_FILE"); export TF_VAR_enable_irsa
 TF_VAR_create_alb_controller_role=$(yq -r '.iam.create_alb_controller_role' "$CONFIG_FILE"); export TF_VAR_create_alb_controller_role
+TF_VAR_lbc_policy_url=$(yq -r '.iam.lbc_policy_url' "$CONFIG_FILE"); export TF_VAR_lbc_policy_url
 
 # -------------------------
 # EKS

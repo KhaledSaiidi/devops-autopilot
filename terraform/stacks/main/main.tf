@@ -33,6 +33,7 @@ module "iam" {
   enable_irsa                = var.enable_irsa
   oidc_issuer_url            = module.eks.oidc_issuer_url
   create_alb_controller_role = var.create_alb_controller_role
+  lbc_policy_url             = var.lbc_policy_url
 }
 
 ############################################

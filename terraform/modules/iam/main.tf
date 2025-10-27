@@ -38,12 +38,6 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# (Left as-is per your request; consider removing later)
-resource "aws_iam_role_policy_attachment" "elb_full_access" {
-  role       = aws_iam_role.eks_cluster_role.name
-  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
-}
-
 ###############
 # Node Group Role
 ###############

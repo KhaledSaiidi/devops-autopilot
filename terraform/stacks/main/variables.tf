@@ -57,6 +57,27 @@ variable "ssh_key_name" {
 }
 
 ############################################
+# IAM Settings
+############################################
+variable "enable_irsa" {
+  description = "Create the IAM OIDC provider for IRSA."
+  type        = bool
+  default     = true
+}
+
+variable "create_alb_controller_role" {
+  description = "Create an IRSA role for the AWS Load Balancer Controller."
+  type        = bool
+  default     = true
+}
+
+variable "lbc_policy_url" {
+  description = "Raw URL to the official AWS Load Balancer Controller IAM policy JSON (pin to a specific version)."
+  type        = string
+  default     = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json"
+}
+
+############################################
 # EKS Cluster Settings
 ############################################
 variable "cluster_user" {
@@ -165,16 +186,4 @@ variable "force_update_version" {
 variable "extra_labels" {
   type    = map(string)
   default = {}
-}
-
-variable "enable_irsa" {
-  description = "Create the IAM OIDC provider for IRSA."
-  type        = bool
-  default     = true
-}
-
-variable "create_alb_controller_role" {
-  description = "Create an IRSA role for the AWS Load Balancer Controller."
-  type        = bool
-  default     = true
 }
