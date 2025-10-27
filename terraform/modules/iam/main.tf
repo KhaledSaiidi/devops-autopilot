@@ -1,3 +1,14 @@
+#############################
+# Official LBC policy (HTTP)
+#############################
+data "http" "lbc_policy" {
+  count = var.enable_irsa && var.create_alb_controller_role ? 1 : 0
+  url   = var.lbc_policy_url
+
+  # Optional hardening: ensure we actually got JSON back
+  request_headers = { Accept = "application/json" }
+}
+
 ###############
 # EKS Cluster Role
 ###############
@@ -27,6 +38,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# (Left as-is per your request; consider removing later)
 resource "aws_iam_role_policy_attachment" "elb_full_access" {
   role       = aws_iam_role.eks_cluster_role.name
   policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
@@ -93,9 +105,8 @@ data "tls_certificate" "eks_oidc" {
 }
 
 resource "aws_iam_openid_connect_provider" "eks" {
-  count            = var.enable_irsa ? 1 : 0
-  url = var.oidc_issuer_url
-
+  count           = var.enable_irsa ? 1 : 0
+  url             = var.oidc_issuer_url
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.eks_oidc[0].certificates[0].sha1_fingerprint]
 
@@ -127,12 +138,14 @@ data "aws_iam_policy_document" "alb_controller_trust" {
       identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
     }
 
+    # Exact audience for IRSA
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_hostpath}:aud"
       values   = ["sts.amazonaws.com"]
     }
 
+    # Exact SA identity constraint
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_hostpath}:sub"
@@ -141,32 +154,19 @@ data "aws_iam_policy_document" "alb_controller_trust" {
   }
 }
 
-# Permissions policy (you may replace with your curated JSON if you prefer)
-data "aws_iam_policy_document" "alb_controller" {
-  statement {
-    sid = "ControllerAccess"
-    actions = [
-      "elasticloadbalancing:*",
-      "ec2:Describe*",
-      "ec2:GetCoipPoolUsage",
-      "iam:CreateServiceLinkedRole",
-      "acm:ListCertificates",
-      "acm:DescribeCertificate",
-      "waf-regional:*WebACL*",
-      "wafv2:*WebACL*",
-      "shield:*Protection*",
-      "shield:GetSubscriptionState",
-      "shield:DescribeSubscription"
-    ]
-    resources = ["*"]
-  }
-}
-
+# Official AWS Load Balancer Controller policy (fetched via HTTP)
 resource "aws_iam_policy" "alb_controller" {
   count       = var.enable_irsa && var.create_alb_controller_role ? 1 : 0
   name        = "${var.project_name}-alb-controller"
-  description = "Permissions for AWS Load Balancer Controller via IRSA"
-  policy      = data.aws_iam_policy_document.alb_controller.json
+  description = "Official AWS Load Balancer Controller policy (fetched via http)"
+  policy      = data.http.lbc_policy[0].response_body
+
+  lifecycle {
+    precondition {
+      condition     = can(jsondecode(data.http.lbc_policy[0].response_body))
+      error_message = "Failed to fetch/parse the official LBC policy JSON from lbc_policy_url."
+    }
+  }
 
   tags = merge(
     {

@@ -34,3 +34,9 @@ variable "create_alb_controller_role" {
   type        = bool
   default     = true
 }
+variable "lbc_policy_url" {
+  description = "Raw URL to the official AWS Load Balancer Controller IAM policy JSON (pin to a specific version)."
+  type        = string
+  default     = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.7.2/docs/install/iam_policy.json"
+}
+
