@@ -27,15 +27,15 @@ module "nat_gw" {
 # 2) IAM (roles only)
 ############################################
 module "iam" {
-  source                     = "../../modules/iam"
-  project_name               = var.project_name
-  tags                       = var.tags
-  enable_irsa                = var.enable_irsa
-  oidc_issuer_url            = module.eks.oidc_issuer_url
-  create_alb_controller_role = var.create_alb_controller_role
-  lbc_policy_url             = var.lbc_policy_url
-  create_cluster_autoscaler_role = var.create_cluster_autoscaler_role
-  cluster_autoscaler_namespace = var.cluster_autoscaler_namespace
+  source                             = "../../modules/iam"
+  project_name                       = var.project_name
+  tags                               = var.tags
+  enable_irsa                        = var.enable_irsa
+  oidc_issuer_url                    = module.eks.oidc_issuer_url
+  create_alb_controller_role         = var.create_alb_controller_role
+  lbc_policy_url                     = var.lbc_policy_url
+  create_cluster_autoscaler_role     = var.create_cluster_autoscaler_role
+  cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
   cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
 }
 

@@ -264,7 +264,7 @@ data "aws_iam_policy_document" "cluster_autoscaler_trust" {
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_hostpath}:sub"
-      values   = [
+      values = [
         "system:serviceaccount:${var.cluster_autoscaler_namespace}:${var.cluster_autoscaler_service_account}"
       ]
     }
