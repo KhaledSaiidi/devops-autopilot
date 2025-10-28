@@ -72,6 +72,7 @@ resource "aws_eks_node_group" "this" {
       condition     = length(var.private_subnet_ids) > 0
       error_message = "private_subnet_ids must contain at least one subnet."
     }
+    ignore_changes = [scaling_config[0].desired_size]
   }
 }
 
