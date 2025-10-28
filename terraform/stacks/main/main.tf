@@ -34,6 +34,9 @@ module "iam" {
   oidc_issuer_url            = module.eks.oidc_issuer_url
   create_alb_controller_role = var.create_alb_controller_role
   lbc_policy_url             = var.lbc_policy_url
+  create_cluster_autoscaler_role = var.create_cluster_autoscaler_role
+  cluster_autoscaler_namespace = var.cluster_autoscaler_namespace
+  cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
 }
 
 ############################################

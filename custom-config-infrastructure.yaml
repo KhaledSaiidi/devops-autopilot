@@ -28,6 +28,9 @@ iam:
   create_ebs_csi_role: true
   ebs_csi_namespace: "storage"
   ebs_csi_service_account: "ebs-csi-controller-sa"
+  create_cluster_autoscaler_role: true
+  cluster_autoscaler_namespace: "kube-system"
+  cluster_autoscaler_service_account: "cluster-autoscaler"
 
 eks:
   cluster_name: "devops-autopilot-cluster"

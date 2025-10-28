@@ -53,6 +53,9 @@ TF_VAR_lbc_policy_url=$(yq -r '.iam.lbc_policy_url' "$CONFIG_FILE"); export TF_V
 TF_VAR_create_ebs_csi_role=$(yq -r '.iam.create_ebs_csi_role' "$CONFIG_FILE"); export TF_VAR_create_ebs_csi_role
 TF_VAR_ebs_csi_namespace=$(yq -r '.iam.ebs_csi_namespace' "$CONFIG_FILE"); export TF_VAR_ebs_csi_namespace
 TF_VAR_ebs_csi_service_account=$(yq -r '.iam.ebs_csi_service_account' "$CONFIG_FILE"); export TF_VAR_ebs_csi_service_account
+TF_VAR_create_cluster_autoscaler_role=$(yq -r '.iam.create_cluster_autoscaler_role' "$CONFIG_FILE"); export TF_VAR_create_cluster_autoscaler_role
+TF_VAR_cluster_autoscaler_namespace=$(yq -r '.iam.cluster_autoscaler_namespace' "$CONFIG_FILE"); export TF_VAR_cluster_autoscaler_namespace
+TF_VAR_cluster_autoscaler_service_account=$(yq -r '.iam.cluster_autoscaler_service_account' "$CONFIG_FILE"); export TF_VAR_cluster_autoscaler_service_account
 
 # -------------------------
 # EKS

@@ -54,3 +54,21 @@ variable "ebs_csi_service_account" {
   type    = string
   default = "ebs-csi-controller-sa"
 }
+
+variable "create_cluster_autoscaler_role" {
+  description = "Create an IRSA role for the Cluster Autoscaler."
+  type        = bool
+  default     = true
+}
+
+variable "cluster_autoscaler_namespace" {
+  description = "Namespace where the Cluster Autoscaler ServiceAccount lives."
+  type        = string
+  default     = "kube-system"
+}
+
+variable "cluster_autoscaler_service_account" {
+  description = "Name of the Cluster Autoscaler ServiceAccount."
+  type        = string
+  default     = "cluster-autoscaler"
+}

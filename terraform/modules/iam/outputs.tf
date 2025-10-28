@@ -25,3 +25,8 @@ output "ebs_csi_role_arn" {
   value       = try(aws_iam_role.ebs_csi[0].arn, null)
   description = "IAM role ARN for the EBS CSI controller (IRSA)"
 }
+
+output "cluster_autoscaler_role_arn" {
+  description = "IRSA role ARN for Cluster Autoscaler (if created)."
+  value       = try(aws_iam_role.cluster_autoscaler[0].arn, null)
+}

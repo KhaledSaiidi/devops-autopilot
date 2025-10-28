@@ -52,6 +52,8 @@ resource "aws_eks_node_group" "this" {
       Name      = "${var.cluster_name}-node-group"
       ManagedBy = "Terraform"
       Component = "eks"
+      "k8s.io/cluster-autoscaler/enabled"             = "true"
+      "k8s.io/cluster-autoscaler/${var.cluster_name}" = "owned"
     },
     var.tags
   )

@@ -33,6 +33,10 @@ output "ebs_csi_role_arn" {
   description = "IAM role ARN for the EBS CSI controller (IRSA)"
 }
 
+output "cluster_autoscaler_role_arn" {
+  description = "IRSA role ARN for Cluster Autoscaler (if created)."
+  value       = module.iam.cluster_autoscaler_role_arn
+}
 ############################################
 # Nodegroup / Bastion Outputs
 ############################################
