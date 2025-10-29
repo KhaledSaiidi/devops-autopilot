@@ -17,37 +17,67 @@ output "private_subnet_ids" {
 }
 
 ############################################
-# IAM / SSH Key Outputs
+# IAM Outputs
 ############################################
 output "eks_cluster_role_arn" {
-  description = "IAM role ARN for the EKS control plane."
   value       = module.iam.eks_cluster_role_arn
+  description = "IAM role ARN for the EKS control plane."
+}
+output "eks_node_role_arn" {
+  value       = module.iam.eks_node_role_arn
+  description = "IAM role ARN for the EKS worker nodes."
 }
 
-output "eks_node_role_arn" {
-  description = "IAM role ARN for the EKS worker nodes."
-  value       = module.iam.eks_node_role_arn
+output "ebs_csi_role_arn" {
+  value       = module.iam.ebs_csi_role_arn
+  description = "IAM role ARN for the EBS CSI controller (IRSA)"
+}
+
+output "cluster_autoscaler_role_arn" {
+  description = "IRSA role ARN for Cluster Autoscaler (if created)."
+  value       = module.iam.cluster_autoscaler_role_arn
+}
+
+output "alb_controller_role_arn" {
+  description = "IRSA role ARN for AWS Load Balancer Controller."
+  value       = module.iam.alb_controller_role_arn
+}
+
+############################################
+# Nodegroup / Bastion Outputs
+############################################
+output "bastion_public_ip" {
+  value       = module.nodegroup.bastion_public_ip
+  description = "Public IP of the bastion host (if enabled)."
 }
 
 output "ssh_private_key_path" {
+  value       = module.nodegroup.ssh_private_key_path
   description = "Path to the generated SSH private key (if created)."
-  value       = module.iam.ssh_private_key_path
 }
 
 ############################################
 # EKS Outputs
 ############################################
 output "eks_cluster_name" {
-  description = "The name of the EKS cluster."
   value       = module.eks.cluster_name
+  description = "The name of the EKS cluster."
 }
-
 output "eks_cluster_endpoint" {
-  description = "EKS cluster API endpoint URL."
   value       = module.eks.cluster_endpoint
+  description = "EKS cluster API endpoint URL."
+}
+output "kubeconfig_path" {
+  value       = module.eks.kubeconfig_path
+  description = "Local path to the generated kubeconfig file."
 }
 
-output "kubeconfig_path" {
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL for the EKS cluster (used by IRSA)."
+  value       = module.eks.oidc_issuer_url
+}
+
+output "inventory_path" {
+  value       = abspath(local_file.ansible_inventory.filename)
   description = "Local path to the generated kubeconfig file."
-  value       = module.eks.kubeconfig_path
 }

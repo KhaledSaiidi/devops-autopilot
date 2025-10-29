@@ -1,3 +1,12 @@
+locals {
+  artifacts_dir = "${path.root}/artifacts"
+}
+resource "null_resource" "artifacts_dir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${local.artifacts_dir}"
+  }
+}
+
 ############################################
 # 1) Networking
 ############################################
@@ -27,9 +36,16 @@ module "nat_gw" {
 # 2) IAM (roles only)
 ############################################
 module "iam" {
-  source         = "../../modules/iam"
-  project_name   = var.project_name
-  tags           = var.tags
+  source                             = "../../modules/iam"
+  project_name                       = var.project_name
+  tags                               = var.tags
+  enable_irsa                        = var.enable_irsa
+  oidc_issuer_url                    = module.eks.oidc_issuer_url
+  create_alb_controller_role         = var.create_alb_controller_role
+  lbc_policy_url                     = var.lbc_policy_url
+  create_cluster_autoscaler_role     = var.create_cluster_autoscaler_role
+  cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
+  cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
 }
 
 ############################################
@@ -47,49 +63,93 @@ module "kms" {
 # 4) EKS (enable secrets encryption)
 ############################################
 module "eks" {
-  source = "../../modules/eks"
-
-  cluster_name        = var.cluster_name
-  cluster_role_arn    = module.iam.eks_cluster_role_arn
-  subnet_ids          = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
-  eks_version         = var.eks_version
-  aws_region          = var.aws_region
-  generate_kubeconfig = var.generate_kubeconfig
-  cluster_user        = var.cluster_user
-
+  source                    = "../../modules/eks"
+  cluster_name              = var.cluster_name
+  cluster_role_arn          = module.iam.eks_cluster_role_arn
+  subnet_ids                = concat(module.vpc.public_subnet_ids, module.vpc.private_subnet_ids)
+  eks_version               = var.eks_version
+  aws_region                = var.aws_region
+  generate_kubeconfig       = var.generate_kubeconfig
+  cluster_user              = var.cluster_user
   endpoint_private_access   = var.endpoint_private_access
   endpoint_public_access    = var.endpoint_public_access
   public_access_cidrs       = var.public_access_cidrs
   service_ipv4_cidr         = var.service_ipv4_cidr
   enabled_cluster_log_types = var.enabled_cluster_log_types
   kms_key_arn               = module.kms.key_arn
-
-  tags = var.tags
+  tags                      = var.tags
 }
 
 ############################################
 # 5) Nodegroup (private subnets)
 ############################################
 module "nodegroup" {
-  source = "../../modules/nodegroup"
-  project_name         = var.project_name
+  source              = "../../modules/nodegroup"
+  project_name        = var.project_name
   cluster_name        = module.eks.cluster_name
   node_group_role_arn = module.iam.eks_node_role_arn
   private_subnet_ids  = module.vpc.private_subnet_ids
 
-  enable_ssh   = var.create_ssh_key
-  ssh_key_name = module.iam.ssh_key_name
-
-  desired_size         = var.desired_size
-  min_size             = var.min_size
-  max_size             = var.max_size
-  ami_type             = var.ami_type
-  capacity_type        = var.capacity_type
-  disk_size            = var.disk_size
-  instance_types       = var.instance_types
-  eks_version          = var.eks_version
-  force_update_version = var.force_update_version
-  extra_labels         = var.extra_labels
+  # SSH control
+  enable_ssh     = var.enable_ssh
   create_ssh_key = var.create_ssh_key
-  tags                 = var.tags
+  ssh_key_name   = var.ssh_key_name
+
+  # Bastion
+  enable_bastion        = true
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  bastion_admin_cidrs   = var.bastion_admin_cidrs
+  bastion_instance_type = var.bastion_instance_type
+  bastion_ami_id        = var.bastion_ami_id
+  desired_size          = var.desired_size
+  min_size              = var.min_size
+  max_size              = var.max_size
+  ami_type              = var.ami_type
+  capacity_type         = var.capacity_type
+  disk_size             = var.disk_size
+  instance_types        = var.instance_types
+  eks_version           = var.eks_version
+  force_update_version  = var.force_update_version
+  extra_labels          = var.extra_labels
+  tags                  = var.tags
+}
+
+#########################
+# Generate inventory file
+#########################
+
+resource "local_file" "ansible_inventory" {
+  filename        = "${path.root}/artifacts/${var.project_name}-inventory.ini"
+  file_permission = "0644"
+
+  content = templatefile("${path.module}/templates/inventory.tpl", {
+    # Host to run bootstrap from
+    bastion_public_ip    = module.nodegroup.bastion_public_ip
+    ansible_user         = "ec2-user"
+    ssh_private_key_path = module.nodegroup.ssh_private_key_path
+
+    # Kubernetes / cluster info
+    project_name           = var.project_name
+    cluster_name           = module.eks.cluster_name
+    cluster_endpoint       = module.eks.cluster_endpoint
+    kubeconfig_local_path  = module.eks.kubeconfig_path
+    kubeconfig_remote_path = "/home/ec2-user/.kube/config"
+    oidc_issuer_url        = module.eks.oidc_issuer_url
+
+    # Cloud / networking
+    aws_region         = var.aws_region
+    vpc_id             = module.vpc.vpc_id
+    public_subnet_ids  = join(",", module.vpc.public_subnet_ids)
+    private_subnet_ids = join(",", module.vpc.private_subnet_ids)
+
+    # IRSA Role ARNs (for GitOps values/envsubst)
+    ebs_csi_role_arn = module.iam.ebs_csi_role_arn
+    ca_role_arn      = module.iam.cluster_autoscaler_role_arn
+    alb_role_arn     = module.iam.alb_controller_role_arn
+
+    kubectl_version = var.kubectl_version
+    helm_version    = var.helm_version
+  })
+
+  depends_on = [null_resource.artifacts_dir]
 }

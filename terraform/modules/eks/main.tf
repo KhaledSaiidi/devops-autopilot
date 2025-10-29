@@ -1,3 +1,21 @@
+locals {
+  artifacts_dir = "${path.root}/artifacts"
+}
+resource "null_resource" "artifacts_dir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${local.artifacts_dir}"
+  }
+}
+
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com/"
+}
+
+locals {
+  detected_api_cidr   = format("%s/32", chomp(data.http.my_ip.response_body))
+  effective_api_cidrs = length(var.public_access_cidrs) > 0 ? var.public_access_cidrs : [local.detected_api_cidr]
+}
+
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = var.cluster_role_arn
@@ -6,7 +24,7 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     endpoint_private_access = var.endpoint_private_access
     endpoint_public_access  = var.endpoint_public_access
-    public_access_cidrs     = var.public_access_cidrs
+    public_access_cidrs     = local.effective_api_cidrs
     subnet_ids              = var.subnet_ids
   }
 
@@ -22,7 +40,7 @@ resource "aws_eks_cluster" "this" {
       }
     }
   }
-  
+
   enabled_cluster_log_types = var.enabled_cluster_log_types
 
   tags = merge(
@@ -40,8 +58,8 @@ resource "aws_eks_cluster" "this" {
 #########################
 
 resource "local_file" "kubeconfig" {
-  count    = var.generate_kubeconfig ? 1 : 0
-  filename = "${path.module}/../../kubeconfig/${aws_eks_cluster.this.name}-kubeconfig.yaml"
+  count           = var.generate_kubeconfig ? 1 : 0
+  filename        = "${path.root}/artifacts/${aws_eks_cluster.this.name}-kubeconfig.yaml"
   file_permission = "0600"
   content = templatefile("${path.module}/templates/kubeconfig.tpl", {
     cluster_name = aws_eks_cluster.this.name
@@ -50,4 +68,5 @@ resource "local_file" "kubeconfig" {
     ca_data      = aws_eks_cluster.this.certificate_authority[0].data
     region       = var.aws_region
   })
+  depends_on = [null_resource.artifacts_dir]
 }

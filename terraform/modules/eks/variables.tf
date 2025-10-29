@@ -21,7 +21,7 @@ variable "subnet_ids" {
 variable "eks_version" {
   description = "Desired Kubernetes version for the EKS control plane."
   type        = string
-  default     = "1.30"
+  default     = "1.33"
 }
 
 variable "endpoint_private_access" {
@@ -39,7 +39,7 @@ variable "endpoint_public_access" {
 variable "public_access_cidrs" {
   description = "List of CIDR blocks that can access the public endpoint."
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = []
 }
 
 variable "service_ipv4_cidr" {

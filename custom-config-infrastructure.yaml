@@ -21,18 +21,31 @@ vpc:
   - "10.0.4.0/24"
   add_k8s_tags: true
 
+iam:
+  enable_irsa: true
+  create_alb_controller_role: true
+  lbc_policy_url: "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.7/docs/install/iam_policy.json"
+  create_ebs_csi_role: true
+  ebs_csi_namespace: "storage"
+  ebs_csi_service_account: "ebs-csi-controller-sa"
+  create_cluster_autoscaler_role: true
+  cluster_autoscaler_namespace: "kube-system"
+  cluster_autoscaler_service_account: "cluster-autoscaler"
+
 eks:
   cluster_name: "devops-autopilot-cluster"
   cluster_user: "khaled"
   version: "1.33"
   generate_kubeconfig: true
-  endpoint_private_access: false
+  endpoint_private_access: true
   endpoint_public_access: true
-  public_access_cidrs: [ "0.0.0.0/0" ]
+  # Leave [] to auto-restrict to caller /32 at apply-time
+  public_access_cidrs: []
   service_ipv4_cidr: "172.20.0.0/16"
-  enabled_cluster_log_types: [ "api", "audit", "authenticator" ]
+  enabled_cluster_log_types: [ "api", "audit", "authenticator", "controllerManager", "scheduler" ]
 
 nodegroup:
+  # Scaling & shape
   desired_size: 3
   min_size: 2
   max_size: 5
@@ -45,5 +58,14 @@ nodegroup:
     role: "node"
     tier: "app"
 
-iam:
+  # SSH & Bastion (moved here)
   create_ssh_key: true
+  enable_ssh: true
+  ssh_key_name: ""
+  bastion_instance_type: "t3.micro"
+  bastion_ami_id: ""
+  bastion_admin_cidrs: []
+
+ansible:
+  kubectl_version: "v1.34.1"
+  helm_version: "v3.19.0"
