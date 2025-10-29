@@ -97,4 +97,10 @@ export_if_set "TF_VAR_bastion_ami_id" "${BASTION_AMI_ID_VAL}"
 
 TF_VAR_bastion_admin_cidrs=$(json_one_line '.nodegroup.bastion_admin_cidrs' "$CONFIG_FILE"); export TF_VAR_bastion_admin_cidrs
 
+# -------------------------
+# Ansible
+# -------------------------
+TF_VAR_kubectl_version=$(yq -r '.ansible.kubectl_version' "$CONFIG_FILE"); export TF_VAR_kubectl_version
+TF_VAR_helm_version=$(yq -r '.ansible.helm_version' "$CONFIG_FILE"); export TF_VAR_helm_version
+
 echo "✅ Environment loaded successfully."

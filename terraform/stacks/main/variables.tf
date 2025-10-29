@@ -220,3 +220,15 @@ variable "extra_labels" {
   type    = map(string)
   default = {}
 }
+
+variable "kubectl_version" {
+  description = "kubectl version Ansible installs on bastion (e.g., 1.30.5)."
+  type        = string
+  default     = ""
+}
+
+variable "helm_version" {
+  description = "Helm version Ansible installs on bastion (e.g., v3.15.3)."
+  type        = string
+  default     = ""
+}

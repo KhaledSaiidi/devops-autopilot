@@ -178,7 +178,7 @@ logs/
 *.sops.yaml
 .sops/
 .secret/
-terraform/stacks/main/keys/
-terraform/stacks/main/kubeconfig/
+terraform/stacks/**/artifacts/
+**/artifacts/
 *.pem
 *-kubeconfig.yaml

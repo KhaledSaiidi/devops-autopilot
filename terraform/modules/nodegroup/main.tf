@@ -1,3 +1,12 @@
+locals {
+  artifacts_dir = "${path.root}/artifacts"
+}
+resource "null_resource" "artifacts_dir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${local.artifacts_dir}"
+  }
+}
+
 data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
@@ -103,8 +112,9 @@ resource "aws_key_pair" "eks_keypair" {
 resource "local_file" "private_key" {
   count           = var.create_ssh_key ? 1 : 0
   content         = tls_private_key.eks_key[0].private_key_pem
-  filename        = "${path.root}/keys/${var.project_name}-eks.pem"
+  filename        = "${path.root}/artifacts/${var.project_name}-eks.pem"
   file_permission = "0600"
+  depends_on      = [null_resource.artifacts_dir]
 }
 
 locals {

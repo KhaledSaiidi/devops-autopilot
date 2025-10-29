@@ -1,3 +1,12 @@
+locals {
+  artifacts_dir = "${path.root}/artifacts"
+}
+resource "null_resource" "artifacts_dir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${local.artifacts_dir}"
+  }
+}
+
 data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
@@ -50,7 +59,7 @@ resource "aws_eks_cluster" "this" {
 
 resource "local_file" "kubeconfig" {
   count           = var.generate_kubeconfig ? 1 : 0
-  filename        = "${path.root}/kubeconfig/${aws_eks_cluster.this.name}-kubeconfig.yaml"
+  filename        = "${path.root}/artifacts/${aws_eks_cluster.this.name}-kubeconfig.yaml"
   file_permission = "0600"
   content = templatefile("${path.module}/templates/kubeconfig.tpl", {
     cluster_name = aws_eks_cluster.this.name
@@ -59,4 +68,5 @@ resource "local_file" "kubeconfig" {
     ca_data      = aws_eks_cluster.this.certificate_authority[0].data
     region       = var.aws_region
   })
+  depends_on = [null_resource.artifacts_dir]
 }

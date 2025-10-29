@@ -1,3 +1,12 @@
+locals {
+  artifacts_dir = "${path.root}/artifacts"
+}
+resource "null_resource" "artifacts_dir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${local.artifacts_dir}"
+  }
+}
+
 ############################################
 # 1) Networking
 ############################################
@@ -103,4 +112,44 @@ module "nodegroup" {
   force_update_version  = var.force_update_version
   extra_labels          = var.extra_labels
   tags                  = var.tags
+}
+
+#########################
+# Generate inventory file
+#########################
+
+resource "local_file" "ansible_inventory" {
+  filename        = "${path.root}/artifacts/${var.project_name}-inventory.ini"
+  file_permission = "0644"
+
+  content = templatefile("${path.module}/templates/inventory.tpl", {
+    # Host to run bootstrap from
+    bastion_public_ip    = module.nodegroup.bastion_public_ip
+    ansible_user         = "ec2-user"
+    ssh_private_key_path = module.nodegroup.ssh_private_key_path
+
+    # Kubernetes / cluster info
+    project_name           = var.project_name
+    cluster_name           = module.eks.cluster_name
+    cluster_endpoint       = module.eks.cluster_endpoint
+    kubeconfig_local_path  = module.eks.kubeconfig_path
+    kubeconfig_remote_path = "/home/ec2-user/.kube/config"
+    oidc_issuer_url        = module.eks.oidc_issuer_url
+
+    # Cloud / networking
+    aws_region         = var.aws_region
+    vpc_id             = module.vpc.vpc_id
+    public_subnet_ids  = join(",", module.vpc.public_subnet_ids)
+    private_subnet_ids = join(",", module.vpc.private_subnet_ids)
+
+    # IRSA Role ARNs (for GitOps values/envsubst)
+    ebs_csi_role_arn = module.iam.ebs_csi_role_arn
+    ca_role_arn      = module.iam.cluster_autoscaler_role_arn
+    alb_role_arn     = module.iam.alb_controller_role_arn
+
+    kubectl_version = var.kubectl_version
+    helm_version    = var.helm_version
+  })
+
+  depends_on = [null_resource.artifacts_dir]
 }

@@ -37,6 +37,12 @@ output "cluster_autoscaler_role_arn" {
   description = "IRSA role ARN for Cluster Autoscaler (if created)."
   value       = module.iam.cluster_autoscaler_role_arn
 }
+
+output "alb_controller_role_arn" {
+  description = "IRSA role ARN for AWS Load Balancer Controller."
+  value       = module.iam.alb_controller_role_arn
+}
+
 ############################################
 # Nodegroup / Bastion Outputs
 ############################################
@@ -69,4 +75,9 @@ output "kubeconfig_path" {
 output "oidc_issuer_url" {
   description = "OIDC issuer URL for the EKS cluster (used by IRSA)."
   value       = module.eks.oidc_issuer_url
+}
+
+output "inventory_path" {
+  value       = abspath(local_file.ansible_inventory.filename)
+  description = "Local path to the generated kubeconfig file."
 }
