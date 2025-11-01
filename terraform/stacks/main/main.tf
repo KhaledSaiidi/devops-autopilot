@@ -141,11 +141,11 @@ resource "local_file" "ansible_vars" {
     aws_region   = var.aws_region
 
     # Cluster
-    cluster_name          = module.eks.cluster_name
-    cluster_endpoint      = module.eks.cluster_endpoint
-    oidc_issuer_url       = module.eks.oidc_issuer_url
-    kubeconfig_path       = module.eks.kubeconfig_path
-    ssh_private_key_path  = module.nodegroup.ssh_private_key_path
+    cluster_name         = module.eks.cluster_name
+    cluster_endpoint     = module.eks.cluster_endpoint
+    oidc_issuer_url      = module.eks.oidc_issuer_url
+    kubeconfig_path      = module.eks.kubeconfig_path
+    ssh_private_key_path = module.nodegroup.ssh_private_key_path
 
     # Networking
     vpc_id             = module.vpc.vpc_id
