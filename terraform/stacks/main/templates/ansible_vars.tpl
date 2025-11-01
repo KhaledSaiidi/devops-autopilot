@@ -5,6 +5,8 @@ cluster:
   name: "${cluster_name}"
   endpoint: "${cluster_endpoint}"
   oidc_issuer_url: "${oidc_issuer_url}"
+  ssh_private_key:
+      local_path: "${ssh_private_key_path}"
   kubeconfig:
     local_path: "${kubeconfig_path}"
 
