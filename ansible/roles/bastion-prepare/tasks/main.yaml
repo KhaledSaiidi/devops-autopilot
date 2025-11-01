@@ -1,0 +1,36 @@
+---
+- name: Ensure ~/.kube exists
+  ansible.builtin.file:
+    path: ~/.kube
+    state: directory
+    mode: "0700"
+
+- name: Install kubectl
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -L -o /usr/local/bin/kubectl "https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    chmod +x /usr/local/bin/kubectl
+  args:
+    creates: /usr/local/bin/kubectl
+
+- name: Install helm
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -L https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz -o /tmp/helm.tgz
+    tar -xzf /tmp/helm.tgz -C /tmp
+    install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Copy kubeconfig to bastion
+  ansible.builtin.copy:
+    src: "{{ kubeconfig_local_path }}"
+    dest: "{{ kubeconfig_remote_path }}"
+    mode: "0600"
+
+- name: Sanity check kubectl
+  ansible.builtin.shell: kubectl --kubeconfig "{{ kubeconfig_remote_path }}" get nodes -o name
+  register: nodes
+  retries: 12
+  delay: 10
+  until: nodes.rc == 0

@@ -1,0 +1,20 @@
+---
+- name: One-time bootstrap from bastion
+  hosts: bastion
+  gather_facts: no
+  become: false
+  vars_files:
+    - "{{ lookup('env','STACK') | default('') }}/artifacts/{{ lookup('env','PROJECT') | default('devops-autopilot') }}-ansible-vars.yaml"
+  pre_tasks:
+    - name: Assert required vars
+      assert:
+        that:
+          - kubeconfig_local_path is defined
+          - kubeconfig_remote_path is defined
+          - cluster_name is defined
+          - cluster_endpoint is defined
+  roles:
+    - role: bastion-prepare
+    - role: argocd-install
+    - role: argocd-plugin-envsubst
+    - role: root-app

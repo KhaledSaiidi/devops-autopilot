@@ -1,0 +1,9 @@
+---
+- name: Apply argocd-cm plugin patch
+  ansible.builtin.shell: kubectl --kubeconfig "{{ kubeconfig_remote_path }}" -n argocd apply -f gitops/argocd/config/argocd-cm-envsubst.yaml
+
+- name: Restart repo-server
+  ansible.builtin.shell: kubectl --kubeconfig "{{ kubeconfig_remote_path }}" -n argocd rollout restart deploy argocd-repo-server
+
+- name: Wait repo-server ready
+  ansible.builtin.shell: kubectl --kubeconfig "{{ kubeconfig_remote_path }}" -n argocd rollout status deploy/argocd-repo-server --timeout=300s
