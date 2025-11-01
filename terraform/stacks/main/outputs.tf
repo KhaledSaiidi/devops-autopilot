@@ -81,3 +81,8 @@ output "inventory_path" {
   value       = abspath(local_file.ansible_inventory.filename)
   description = "Local path to the generated kubeconfig file."
 }
+
+output "ansible_vars_path" {
+  value       = abspath(local_file.ansible_vars.filename)
+  description = "Absolute path to the generated Ansible vars YAML."
+}
