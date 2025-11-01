@@ -7,7 +7,6 @@ cluster:
   oidc_issuer_url: "${oidc_issuer_url}"
   kubeconfig:
     local_path: "${kubeconfig_path}"
-    remote_path: "${kubeconfig_remote_path}"
 
 networking:
   vpc_id: "${vpc_id}"

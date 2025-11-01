@@ -182,3 +182,4 @@ terraform/stacks/**/artifacts/
 **/artifacts/
 *.pem
 *-kubeconfig.yaml
+*.txt

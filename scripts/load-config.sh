@@ -102,5 +102,6 @@ TF_VAR_bastion_admin_cidrs=$(json_one_line '.nodegroup.bastion_admin_cidrs' "$CO
 # -------------------------
 TF_VAR_kubectl_version=$(yq -r '.ansible.kubectl_version' "$CONFIG_FILE"); export TF_VAR_kubectl_version
 TF_VAR_helm_version=$(yq -r '.ansible.helm_version' "$CONFIG_FILE"); export TF_VAR_helm_version
-
+ANSIBLE_VERBOSITY=$(yq -r '.ansible.verbosity' "$CONFIG_FILE"); export ANSIBLE_VERBOSITY
+ANSIBLE_DRY_RUN=$(yq -r '.ansible.dry_run' "$CONFIG_FILE"); export ANSIBLE_DRY_RUN
 echo "✅ Environment loaded successfully."

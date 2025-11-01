@@ -135,7 +135,7 @@ resource "local_file" "ansible_vars" {
   filename        = "${path.root}/artifacts/${var.project_name}-ansible-vars.yaml"
   file_permission = "0644"
 
-  content = templatefile("${path.module}/templates/ansible_vars.tpl.yaml", {
+  content = templatefile("${path.module}/templates/ansible_vars.tpl", {
     # Identity / meta
     project_name = var.project_name
     aws_region   = var.aws_region
