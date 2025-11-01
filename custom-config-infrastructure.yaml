@@ -67,6 +67,7 @@ nodegroup:
   bastion_admin_cidrs: []
 
 ansible:
+  ansible_enabled: true
   kubectl_version: "v1.34.1"
   helm_version: "v3.19.0"
   dry_run: false

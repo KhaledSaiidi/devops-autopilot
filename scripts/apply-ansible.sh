@@ -48,10 +48,18 @@ CFG="${CFG:-$ROOT/custom-config-infrastructure.yaml}"
 
 # -------- source ansible vars --------
 source "$ROOT/scripts/load-config.sh" "$CFG"
+
+# -------- ansible toggle --------
+case "${ANSIBLE_ENABLED:-true}" in
+  0|false|False)
+    log "⚙️  Ansible is disabled (ANSIBLE_ENABLED=${ANSIBLE_ENABLED}). Skipping playbook execution."
+    exit 0
+    ;;
+esac
 # -------- deps --------
 need ansible-playbook
 need ssh
-
+need yq
 # -------- helpers --------
 latest_file()(
   shopt -s nullglob

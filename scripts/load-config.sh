@@ -104,4 +104,6 @@ TF_VAR_kubectl_version=$(yq -r '.ansible.kubectl_version' "$CONFIG_FILE"); expor
 TF_VAR_helm_version=$(yq -r '.ansible.helm_version' "$CONFIG_FILE"); export TF_VAR_helm_version
 ANSIBLE_VERBOSITY=$(yq -r '.ansible.verbosity' "$CONFIG_FILE"); export ANSIBLE_VERBOSITY
 ANSIBLE_DRY_RUN=$(yq -r '.ansible.dry_run' "$CONFIG_FILE"); export ANSIBLE_DRY_RUN
+ANSIBLE_ENABLED=$(yq -r '.ansible.ansible_enabled' "$CONFIG_FILE"); export ANSIBLE_ENABLED
+
 echo "✅ Environment loaded successfully."
