@@ -19,12 +19,12 @@
 # -------- kubectl (arch-aware, idempotent) --------
 - name: Detect desired kubectl tag (e.g., v1.34.1)
   ansible.builtin.set_fact:
-    _kubectl_tag: "v{{ kubectl_version | regex_replace('^v','') }}"
+    _kubectl_tag: "v{{ kubectl_version | regex_replace('^v', '') }}"
 
 - name: Determine kubectl OS/arch
   ansible.builtin.set_fact:
     _kubectl_os: "linux"
-    _kubectl_arch: "{{ 'arm64' if ansible_architecture in ['aarch64','arm64'] else 'amd64' }}"
+    _kubectl_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
 
 - name: Check existing kubectl binary/version
   ansible.builtin.shell: |
@@ -40,9 +40,9 @@
 
 - name: Decide whether to (re)install kubectl
   ansible.builtin.set_fact:
-    _kubectl_needs_install: "{{ (_kubectl_current.stdout | default('') ) != _kubectl_tag }}"
+    _kubectl_needs_install: "{{ (_kubectl_current.stdout | default('')) != _kubectl_tag }}"
 
-- name: Download kubectl {{ _kubectl_tag }} ({{ _kubectl_os }}/{{ _kubectl_arch }})
+- name: "Download kubectl to /usr/local/bin — {{ _kubectl_tag ~ ' ' ~ _kubectl_os ~ '/' ~ _kubectl_arch }}"
   ansible.builtin.get_url:
     url: "https://dl.k8s.io/release/{{ _kubectl_tag }}/bin/{{ _kubectl_os }}/{{ _kubectl_arch }}/kubectl"
     dest: /usr/local/bin/kubectl
@@ -52,12 +52,12 @@
 # -------- helm (arch-aware, idempotent) --------
 - name: Detect desired helm tag (e.g., v3.19.0)
   ansible.builtin.set_fact:
-    _helm_tag: "v{{ helm_version | regex_replace('^v','') }}"
+    _helm_tag: "v{{ helm_version | regex_replace('^v', '') }}"
 
 - name: Determine helm OS/arch
   ansible.builtin.set_fact:
     _helm_os: "linux"
-    _helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64','arm64'] else 'amd64' }}"
+    _helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
 
 - name: Check existing helm version
   ansible.builtin.shell: |
@@ -76,7 +76,7 @@
   ansible.builtin.set_fact:
     _helm_needs_install: "{{ (_helm_current.stdout | default('')) != _helm_tag }}"
 
-- name: Download helm tarball {{ _helm_tag }} ({{ _helm_os }}/{{ _helm_arch }})
+- name: "Download helm tarball — {{ _helm_tag ~ ' ' ~ _helm_os ~ '/' ~ _helm_arch }}"
   ansible.builtin.get_url:
     url: "https://get.helm.sh/helm-{{ _helm_tag }}-{{ _helm_os }}-{{ _helm_arch }}.tar.gz"
     dest: /tmp/helm.tgz

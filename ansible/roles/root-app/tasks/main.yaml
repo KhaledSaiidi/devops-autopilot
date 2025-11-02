@@ -1,3 +1,0 @@
----
-- name: Apply Root App
-  ansible.builtin.shell: kubectl --kubeconfig "{{ kubeconfig_remote_path }}" -n argocd apply -f gitops/argo-apps/root/argocd-root-app.yaml
