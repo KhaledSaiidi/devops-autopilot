@@ -114,6 +114,33 @@ log "  config:    $ANSIBLE_CONFIG"
 [[ -n "$CHECK_FLAG" ]] && log "  mode:      DRY-RUN"
 [[ -n "$VERBOSITY"  ]] && log "  verbosity: $VERBOSITY"
 
+# -------- ensure Ansible collections --------
+need ansible-galaxy
+
+COLL_PATH="$ROOT/.ansible/collections"
+mkdir -p "$COLL_PATH"
+
+export ANSIBLE_COLLECTIONS_PATHS="$COLL_PATH:$HOME/.ansible/collections:/usr/share/ansible/collections"
+
+have_k8s_core=$(ansible-galaxy collection list -p "$COLL_PATH" kubernetes.core >/dev/null 2>&1 && echo yes || echo no)
+have_comm_k8s=$(ansible-galaxy collection list -p "$COLL_PATH" community.kubernetes >/dev/null 2>&1 && echo yes || echo no)
+if [[ "$have_k8s_core" != "yes" || "$have_comm_k8s" != "yes" ]]; then
+  log "Installing Ansible collections to $COLL_PATH ..."
+  ansible-galaxy collection install -r "$ROOT/ansible/requirements.yml" \
+    --collections-path "$COLL_PATH" --force-with-deps
+else
+  log "Ansible collections already present in $COLL_PATH"
+fi
+
+# Optional: Python libs needed by kubernetes.core/community.kubernetes modules on the controller
+# Set INSTALL_PY_K8S_DEPS=0 to skip
+if [[ "${INSTALL_PY_K8S_DEPS:-1}" != "0" ]]; then
+  if command -v python3 >/dev/null 2>&1; then
+    log "Ensuring python deps for k8s modules (kubernetes, openshift, pyyaml) ..."
+    python3 -m pip install --user -q "kubernetes>=26.1.0" "openshift>=0.13.2" pyyaml || true
+  fi
+fi
+
 set -x
 ansible-playbook \
   -i "$INVENTORY" \
