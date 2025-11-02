@@ -16,7 +16,7 @@ Defaults:
   inventory:  <artifacts>/*-inventory.ini
   vars:       <artifacts>/*-ansible-vars.yaml
   ssh key:    <artifacts>/*-eks.pem
-  playbook:   ansible/playbooks/bootstrap-iac.yaml
+  playbook:   ansible/playbooks/bootstrap-iac.yml
   artifacts:  terraform/stacks/main/artifacts
 EOF
 }
@@ -43,7 +43,7 @@ done
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STACK="$ROOT/terraform/stacks/main"
 ARTIFACTS="${ARTIFACTS:-$STACK/artifacts}"
-PLAYBOOK="${PLAYBOOK:-$ROOT/ansible/playbooks/bootstrap-iac.yaml}"
+PLAYBOOK="${PLAYBOOK:-$ROOT/ansible/playbooks/bootstrap-iac.yml}"
 CFG="${CFG:-$ROOT/custom-config-infrastructure.yaml}"
 
 # -------- source ansible vars --------

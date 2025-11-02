@@ -44,5 +44,7 @@
         msg: "tooling.helm_version is required in the vars file."
       when: (tooling.helm_version | string | length) == 0
 
-  roles:
-    - role: bastion-prepare
+  tasks:
+    - name: Prepare bastion
+      ansible.builtin.import_role:
+        name: bastion-prepare
