@@ -46,26 +46,30 @@ ARTIFACTS="${ARTIFACTS:-$STACK/artifacts}"
 PLAYBOOK="${PLAYBOOK:-$ROOT/ansible/playbooks/bootstrap-iac.yml}"
 CFG="${CFG:-$ROOT/custom-config-infrastructure.yaml}"
 
+# Point Ansible to the config that defines roles_path, etc.
+ANS_CFG_FILE="$ROOT/ansible/ansible.cfg"
+[[ -f "$ANS_CFG_FILE" ]] || die "Missing $ANS_CFG_FILE"
+export ANSIBLE_CONFIG="$ANS_CFG_FILE"
+# Make roles discovery absolute & unambiguous regardless of CWD
+export ANSIBLE_ROLES_PATH="$ROOT/ansible/roles"
+
 # -------- source ansible vars --------
 source "$ROOT/scripts/load-config.sh" "$CFG"
 
 # -------- ansible toggle --------
 case "${ANSIBLE_ENABLED:-true}" in
-  0|false|False)
-    log "⚙️  Ansible is disabled (ANSIBLE_ENABLED=${ANSIBLE_ENABLED}). Skipping playbook execution."
-    exit 0
-    ;;
+  0|false|False) log "⚙️  Ansible is disabled (ANSIBLE_ENABLED=${ANSIBLE_ENABLED}). Skipping playbook execution."; exit 0 ;;
 esac
+
 # -------- deps --------
 need ansible-playbook
 need ssh
 need yq
+
 # -------- helpers --------
 latest_file()(
   shopt -s nullglob
-  for pat in "$@"; do
-    set -- $pat
-  done
+  for pat in "$@"; do set -- $pat; done
   ls -1t "$@" 2>/dev/null | head -n1 || true
 )
 
@@ -81,34 +85,32 @@ SSH_KEY="${SSH_KEY:-$(latest_file "$ARTIFACTS"/*-eks.pem)}"
 chmod 600 "$SSH_KEY" || true
 
 # -------- env knobs --------
-# ANSIBLE_DRY_RUN
 CHECK_FLAG=""
-case "${ANSIBLE_DRY_RUN:-}" in
-  1|true|True) CHECK_FLAG="--check" ;;
-esac
+case "${ANSIBLE_DRY_RUN:-}" in 1|true|True) CHECK_FLAG="--check" ;; esac
 
-# ANSIBLE_VERBOSITY
 verbosity_from_env() {
   case "${ANSIBLE_VERBOSITY:-normal}" in
-    quiet)   echo "" ;;
-    normal)  echo "" ;;
-    verbose) echo "-v" ;;
-    very)   echo "-vv" ;;
-    high)       echo "-vvv" ;;
-    debug) echo "-vvvv" ;;
-    *) echo ""; ;;
+    quiet) echo "" ;;
+    normal)      echo "-v" ;;
+    verbose)         echo "-vv" ;;
+    high)         echo "-vvv" ;;
+    debug)        echo "-vvvv" ;;
+    *)            echo "" ;;
   esac
 }
 VERBOSITY="${CLI_VERBOSITY:-$(verbosity_from_env)}"
 
 # Recommended for non-interactive runs
 export ANSIBLE_HOST_KEY_CHECKING=False
+# (Optional) Quiet known-hosts prompts with SSH args
+export ANSIBLE_SSH_ARGS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 log "Running Ansible with:"
 log "  inventory: $INVENTORY"
 log "  vars:      $VARSFILE"
 log "  playbook:  $PLAYBOOK"
 log "  key:       $SSH_KEY"
+log "  config:    $ANSIBLE_CONFIG"
 [[ -n "$CHECK_FLAG" ]] && log "  mode:      DRY-RUN"
 [[ -n "$VERBOSITY"  ]] && log "  verbosity: $VERBOSITY"
 

@@ -71,4 +71,4 @@ ansible:
   kubectl_version: "v1.34.1"
   helm_version: "v3.19.0"
   dry_run: false
-  verbosity: "debug" # one of: quiet, normal, verbose, very, high, debug
+  verbosity: "debug" # one of: quiet, normal, verbose, high, debug
