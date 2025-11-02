@@ -14,6 +14,7 @@ CFG_PATH="custom-config-infrastructure.yaml"
 TF_DIR_ROOT="terraform"
 ANSIBLE_DIR="ansible"
 PLAYBOOKS_DIR="$ANSIBLE_DIR/playbooks"
+ANSIBLE_ROLES_DIR="$ANSIBLE_DIR/roles"
 
 # -------------------------------------------------------------------
 # 0) Basic preflight
@@ -83,9 +84,8 @@ else
 fi
 
 # -------------------------------------------------------------------
-# 3) Terraform validate (NO init)
+# 3) Terraform validate
 #    - Only validate directories that already look initialized
-#      (i.e., contain a '.terraform' directory).
 # -------------------------------------------------------------------
 if command -v terraform >/dev/null 2>&1; then
   mapfile -t TF_ROOTS < <(find "$TF_DIR_ROOT" -type f -name '*.tf' -print0 | xargs -0 -n1 dirname | sort -u)
@@ -164,8 +164,8 @@ else
 fi
 
 if command -v ansible-lint >/dev/null 2>&1; then
-  echo "🔎 ansible-lint (root: $ANSIBLE_DIR)"
-  if ! ANSIBLE_CONFIG="ansible/ansible.cfg" ansible-lint "$ANSIBLE_DIR" >/dev/null; then
+  echo "🔎 ansible-lint (roles only: $ANSIBLE_ROLES_DIR)"
+  if ! ANSIBLE_CONFIG="ansible/ansible.cfg" ansible-lint -p -v "$ANSIBLE_ROLES_DIR"; then
     echo "❌ ansible-lint reported issues."
     ansible_failed=1
   else

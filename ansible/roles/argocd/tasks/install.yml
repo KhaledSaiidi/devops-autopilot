@@ -1,0 +1,48 @@
+- name: Create temp values file path
+  ansible.builtin.tempfile:
+    state: file
+    suffix: "-argocd-values.yaml"
+  register: argocd_values_file
+
+- name: Restrict temp values file permissions
+  ansible.builtin.file:
+    path: "{{ argocd_values_file.path }}"
+    mode: "0600"
+
+- name: Render Helm values
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: "{{ argocd_values_file.path }}"
+    mode: "0600"
+
+- name: Install/Upgrade Argo CD via Helm (CLI, idempotent)
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install {{ argocd_release_name }} {{ argocd_chart_name }}
+      --namespace {{ argocd_namespace }}
+      --kubeconfig {{ argocd_kubeconfig }}
+      --wait
+      -f {{ argocd_values_file.path }}
+      {% if argocd_chart_version | default('', true) %}--version {{ argocd_chart_version }}{% endif %}
+  register: argocd_helm_apply
+  changed_when: >
+    ('has been upgraded' in argocd_helm_apply.stdout) or
+    ('has been installed' in argocd_helm_apply.stdout) or
+    ('STATUS: deployed' in argocd_helm_apply.stdout) or
+    ('STATUS: superseded' in argocd_helm_apply.stdout)
+  failed_when: argocd_helm_apply.rc != 0
+
+- name: Wait for argocd-server rollout
+  ansible.builtin.command:
+    cmd: >
+      kubectl --kubeconfig "{{ argocd_kubeconfig }}"
+      -n "{{ argocd_namespace }}"
+      get deploy argocd-server
+      -o jsonpath='{.status.readyReplicas}/{.spec.replicas}'
+  register: argocd_server_rr
+  changed_when: false
+  retries: "{{ (argocd_wait_timeout // argocd_wait_interval) | int }}"
+  delay: "{{ argocd_wait_interval }}"
+  until: >
+    (argocd_server_rr.stdout is match('^[0-9]+/[0-9]+$')) and
+    ((argocd_server_rr.stdout.split('/')[0] | int) >= (argocd_server_rr.stdout.split('/')[1] | int))

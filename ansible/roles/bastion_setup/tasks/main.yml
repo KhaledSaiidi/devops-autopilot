@@ -19,12 +19,12 @@
 # -------- kubectl (arch-aware, idempotent) --------
 - name: Detect desired kubectl tag (e.g., v1.34.1)
   ansible.builtin.set_fact:
-    _kubectl_tag: "v{{ kubectl_version | regex_replace('^v', '') }}"
+    bastion_setup_kubectl_tag: "v{{ kubectl_version | regex_replace('^v', '') }}"
 
 - name: Determine kubectl OS/arch
   ansible.builtin.set_fact:
-    _kubectl_os: "linux"
-    _kubectl_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+    bastion_setup_kubectl_os: "linux"
+    bastion_setup_kubectl_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
 
 - name: Check existing kubectl binary/version
   ansible.builtin.shell: |
@@ -34,30 +34,30 @@
     fi
   args:
     executable: /bin/bash
-  register: _kubectl_current
+  register: bastion_setup_kubectl_current
   changed_when: false
   failed_when: false
 
 - name: Decide whether to (re)install kubectl
   ansible.builtin.set_fact:
-    _kubectl_needs_install: "{{ (_kubectl_current.stdout | default('')) != _kubectl_tag }}"
+    bastion_setup_kubectl_needs_install: "{{ (bastion_setup_kubectl_current.stdout | default('')) != bastion_setup_kubectl_tag }}"
 
-- name: "Download kubectl to /usr/local/bin — {{ _kubectl_tag ~ ' ' ~ _kubectl_os ~ '/' ~ _kubectl_arch }}"
+- name: "Download kubectl to /usr/local/bin — {{ bastion_setup_kubectl_tag ~ ' ' ~ bastion_setup_kubectl_os ~ '/' ~ bastion_setup_kubectl_arch }}"
   ansible.builtin.get_url:
-    url: "https://dl.k8s.io/release/{{ _kubectl_tag }}/bin/{{ _kubectl_os }}/{{ _kubectl_arch }}/kubectl"
+    url: "https://dl.k8s.io/release/{{ bastion_setup_kubectl_tag }}/bin/{{ bastion_setup_kubectl_os }}/{{ bastion_setup_kubectl_arch }}/kubectl"
     dest: /usr/local/bin/kubectl
     mode: "0755"
-  when: _kubectl_needs_install
+  when: bastion_setup_kubectl_needs_install
 
 # -------- helm (arch-aware, idempotent) --------
 - name: Detect desired helm tag (e.g., v3.19.0)
   ansible.builtin.set_fact:
-    _helm_tag: "v{{ helm_version | regex_replace('^v', '') }}"
+    bastion_setup_helm_tag: "v{{ helm_version | regex_replace('^v', '') }}"
 
 - name: Determine helm OS/arch
   ansible.builtin.set_fact:
-    _helm_os: "linux"
-    _helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+    bastion_setup_helm_os: "linux"
+    bastion_setup_helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
 
 - name: Check existing helm version
   ansible.builtin.shell: |
@@ -68,36 +68,36 @@
     fi
   args:
     executable: /bin/bash
-  register: _helm_current
+  register: bastion_setup_helm_current
   changed_when: false
   failed_when: false
 
 - name: Decide whether to (re)install helm
   ansible.builtin.set_fact:
-    _helm_needs_install: "{{ (_helm_current.stdout | default('')) != _helm_tag }}"
+    bastion_setup_helm_needs_install: "{{ (bastion_setup_helm_current.stdout | default('')) != bastion_setup_helm_tag }}"
 
-- name: "Download helm tarball — {{ _helm_tag ~ ' ' ~ _helm_os ~ '/' ~ _helm_arch }}"
+- name: "Download helm tarball — {{ bastion_setup_helm_tag ~ ' ' ~ bastion_setup_helm_os ~ '/' ~ bastion_setup_helm_arch }}"
   ansible.builtin.get_url:
-    url: "https://get.helm.sh/helm-{{ _helm_tag }}-{{ _helm_os }}-{{ _helm_arch }}.tar.gz"
+    url: "https://get.helm.sh/helm-{{ bastion_setup_helm_tag }}-{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}.tar.gz"
     dest: /tmp/helm.tgz
     mode: "0644"
-  when: _helm_needs_install
+  when: bastion_setup_helm_needs_install
 
 - name: Unpack helm
   ansible.builtin.unarchive:
     src: /tmp/helm.tgz
     dest: /tmp
     remote_src: true
-    creates: "/tmp/{{ _helm_os }}-{{ _helm_arch }}/helm"
-  when: _helm_needs_install
+    creates: "/tmp/{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}/helm"
+  when: bastion_setup_helm_needs_install
 
 - name: Install helm binary
   ansible.builtin.copy:
-    src: "/tmp/{{ _helm_os }}-{{ _helm_arch }}/helm"
+    src: "/tmp/{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}/helm"
     dest: /usr/local/bin/helm
     mode: "0755"
     remote_src: true
-  when: _helm_needs_install
+  when: bastion_setup_helm_needs_install
 
 - name: Cleanup helm temp files
   ansible.builtin.file:
@@ -105,8 +105,8 @@
     state: absent
   loop:
     - "helm.tgz"
-    - "{{ _helm_os }}-{{ _helm_arch }}"
-  when: _helm_needs_install
+    - "{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}"
+  when: bastion_setup_helm_needs_install
 
 # -------- kubeconfig & SSH key (copied from controller to bastion) --------
 - name: Copy kubeconfig to bastion
@@ -147,12 +147,12 @@
     executable: /bin/bash
   environment:
     KUBECONFIG: "{{ kubeconfig_remote_path }}"
-  register: _nodes_out
+  register: bastion_setup_nodes_out
   retries: 18
   delay: 10
   changed_when: false
-  until: _nodes_out.rc == 0
+  until: bastion_setup_nodes_out.rc == 0
 
 - name: Show discovered nodes
   ansible.builtin.debug:
-    var: _nodes_out.stdout_lines
+    var: bastion_setup_nodes_out.stdout_lines

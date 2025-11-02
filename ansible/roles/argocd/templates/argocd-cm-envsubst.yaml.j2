@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: {{ argocd_namespace }}
+data:
+  configManagementPlugins: |
+    - name: {{ argocd_envsubst_plugin_name }}
+      generate:
+        command: ["/bin/sh", "-lc"]
+        args:
+          - |
+            if ! command -v envsubst >/dev/null 2>&1; then
+              echo "envsubst not found in repo-server image"; exit 1;
+            fi
+            {{ argocd_envsubst_command }}

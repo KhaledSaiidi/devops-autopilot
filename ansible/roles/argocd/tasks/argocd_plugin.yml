@@ -1,0 +1,24 @@
+- name: Configure envsubst plugin via ConfigMap
+  when: argocd_enable_envsubst_plugin | bool
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ argocd_kubeconfig }}"
+    template: "argocd-cm-envsubst.yaml.j2"
+
+- name: Restart repo-server to load plugin
+  when: argocd_enable_envsubst_plugin | bool
+  kubernetes.core.k8s:
+    state: patched
+    kubeconfig: "{{ argocd_kubeconfig }}"
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-repo-server
+        namespace: "{{ argocd_namespace }}"
+      spec:
+        template:
+          metadata:
+            annotations:
+              rollme.ts: "{{ ansible_date_time.iso8601 }}"
+  notify: Wait for repo-server rollout

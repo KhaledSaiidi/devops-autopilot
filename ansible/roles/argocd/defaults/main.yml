@@ -1,0 +1,35 @@
+# Kubernetes access
+argocd_kubeconfig: "{{ kubeconfig_remote_path | default('~/.kube/config') }}"
+
+# Chart settings
+argocd_namespace: argocd
+argocd_create_namespace: true
+argocd_helm_repo_name: argo
+argocd_helm_repo_url: https://argoproj.github.io/argo-helm
+argocd_chart_name: argo/argo-cd
+argocd_chart_version: ""   # pin like "6.9.4" if you want deterministic installs
+
+# Service exposure
+argocd_server_service_type: LoadBalancer
+argocd_server_service_annotations: {}
+# Example for AWS NLB:
+# argocd_server_service_annotations:
+#   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+# Server params
+argocd_server_insecure: true  # true = allow http for internal LB; set false in public setups
+
+# Helm values merge (advanced/custom overrides)
+argocd_values_extra: {}  # dict merged into template values
+
+# Plugin: envsubst (GitOps)
+argocd_enable_envsubst_plugin: true
+argocd_envsubst_plugin_name: envsubst
+# The command can be adjusted per-app with .spec.source.plugin, but a generic plugin is handy:
+argocd_envsubst_command: >
+  bash -lc 'envsubst < "$ARGOCD_APP_SOURCE_PATH/{{ "{{" }} .path {{ "}}" }}" > out.yaml &&
+  kubectl apply -f out.yaml'
+
+# Readiness wait
+argocd_wait_timeout: 600   # seconds
+argocd_wait_interval: 10   # seconds

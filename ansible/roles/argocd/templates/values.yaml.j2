@@ -1,0 +1,33 @@
+server:
+  service:
+    type: {{ argocd_server_service_type }}
+    annotations:
+{% if argocd_server_service_annotations %}
+{%   for k, v in argocd_server_service_annotations.items() %}
+      {{ k | quote }}: {{ v | quote }}
+{%   endfor %}
+{% else %}
+      {}
+{% endif %}
+  config:
+    params:
+      server.insecure: "{{ 'true' if argocd_server_insecure else 'false' }}"
+
+{% if argocd_enable_envsubst_plugin %}
+configs:
+  cm:
+    # Use configManagementPlugins (preferred vs legacy)
+    configManagementPlugins: |
+      - name: {{ argocd_envsubst_plugin_name }}
+        generate:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              if ! command -v envsubst >/dev/null 2>&1; then
+                echo "envsubst not found in repo-server image"; exit 1;
+              fi
+              {{ argocd_envsubst_command }}
+{% endif %}
+
+# Merge in extra values from defaults or play vars
+{{ argocd_values_extra | to_nice_yaml(indent=0) }}
