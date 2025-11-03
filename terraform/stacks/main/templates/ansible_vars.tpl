@@ -32,3 +32,11 @@ tooling:
 
 bastion:
   public_ip: "${bastion_public_ip}"
+
+argocd_namespace: "${argocd_namespace}"
+argocd_create_namespace: ${argocd_create_namespace}
+argocd_server_service_type: "${argocd_server_service_type}"
+argocd_enable_envsubst_plugin: ${argocd_enable_envsubst_plugin}
+argocd_enable_lovely_plugin: ${argocd_enable_lovely_plugin}
+argocd_wait_timeout: ${argocd_wait_timeout}
+argocd_wait_interval: ${argocd_wait_interval}

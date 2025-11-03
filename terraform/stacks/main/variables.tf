@@ -232,3 +232,44 @@ variable "helm_version" {
   type        = string
   default     = ""
 }
+
+variable "argocd_namespace" {
+  description = "Argocd namespace to install into"
+  type        = string
+  default     = ""
+}
+
+variable "argocd_create_namespace" {
+  description = "Argocd create namespace if not exists"
+  type        = bool
+  default     = true
+}
+
+variable "argocd_server_service_type" {
+  description = "Argocd server service type (e.g., LoadBalancer, ClusterIP, NodePort)"
+  type        = string
+  default     = ""
+}
+
+variable "argocd_enable_envsubst_plugin" {
+  description = "Argocd enable envsubst plugin"
+  type        = bool
+  default     = true
+}
+
+variable "argocd_enable_lovely_plugin" {
+  description = "Argocd enable lovely plugin"
+  type        = bool
+  default     = true
+}
+variable "argocd_wait_timeout" {
+  description = "ArgoCD wait timeout in seconds"
+  type        = number
+  default     = 0
+}
+
+variable "argocd_wait_interval" {
+  description = "ArgoCD wait interval in seconds"
+  type        = number
+  default     = 0
+}

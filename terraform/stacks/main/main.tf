@@ -164,6 +164,15 @@ resource "local_file" "ansible_vars" {
     # Bastion convenience (read-only info for play logic)
     bastion_public_ip      = module.nodegroup.bastion_public_ip
     kubeconfig_remote_path = "/home/ec2-user/.kube/config"
+
+    # Argo CD overrides
+    argocd_namespace              = var.argocd_namespace
+    argocd_create_namespace       = var.argocd_create_namespace
+    argocd_server_service_type    = var.argocd_server_service_type
+    argocd_enable_envsubst_plugin = var.argocd_enable_envsubst_plugin
+    argocd_enable_lovely_plugin   = var.argocd_enable_lovely_plugin
+    argocd_wait_timeout           = var.argocd_wait_timeout
+    argocd_wait_interval          = var.argocd_wait_interval
   })
 
   depends_on = [null_resource.artifacts_dir]
