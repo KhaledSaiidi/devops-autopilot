@@ -152,7 +152,7 @@ if command -v ansible-playbook >/dev/null 2>&1; then
     while IFS= read -r -d '' pb; do
       rel="${pb#"$REPO_ROOT"/}"
       echo "🔎 Ansible syntax-check: $rel"
-      if ! ANSIBLE_CONFIG="ansible/ansible.cfg" \
+      if ! ANSIBLE_CONFIG="ansible.cfg" \
            ansible-playbook -i 'bastion,' --syntax-check "$pb" >/dev/null; then
         echo "   ❌ syntax-check failed: $rel"
         ansible_failed=1
@@ -165,7 +165,7 @@ fi
 
 if command -v ansible-lint >/dev/null 2>&1; then
   echo "🔎 ansible-lint (roles only: $ANSIBLE_ROLES_DIR)"
-  if ! ANSIBLE_CONFIG="ansible/ansible.cfg" ansible-lint -p -v "$ANSIBLE_ROLES_DIR"; then
+  if ! ANSIBLE_CONFIG="ansible.cfg" ansible-lint -p -v "$ANSIBLE_ROLES_DIR"; then
     echo "❌ ansible-lint reported issues."
     ansible_failed=1
   else

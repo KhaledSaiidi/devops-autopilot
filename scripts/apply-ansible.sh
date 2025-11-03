@@ -47,7 +47,7 @@ PLAYBOOK="${PLAYBOOK:-$ROOT/ansible/playbooks/bootstrap-iac.yml}"
 CFG="${CFG:-$ROOT/custom-config-infrastructure.yaml}"
 
 # Point Ansible to the config that defines roles_path, etc.
-ANS_CFG_FILE="$ROOT/ansible/ansible.cfg"
+ANS_CFG_FILE="$ROOT/ansible.cfg"
 [[ -f "$ANS_CFG_FILE" ]] || die "Missing $ANS_CFG_FILE"
 export ANSIBLE_CONFIG="$ANS_CFG_FILE"
 # Make roles discovery absolute & unambiguous regardless of CWD
