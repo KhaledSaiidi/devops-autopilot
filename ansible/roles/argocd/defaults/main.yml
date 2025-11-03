@@ -30,6 +30,19 @@ argocd_envsubst_command: >
   bash -lc 'envsubst < "$ARGOCD_APP_SOURCE_PATH/{{ "{{" }} .path {{ "}}" }}" > out.yaml &&
   kubectl apply -f out.yaml'
 
+# Plugin: lovely (multi-source config management)
+argocd_enable_lovely_plugin: true
+argocd_lovely_plugin_name: lovely
+argocd_lovely_plugin_image: ghcr.io/akuity/argocd-lovely-plugin:v0.18.0
+argocd_lovely_plugin_image_pull_policy: IfNotPresent
+argocd_lovely_plugin_install_dir: /custom-tools
+argocd_lovely_plugin_binary_name: argocd-lovely-plugin
+# init command is optional; leave blank to skip
+argocd_lovely_plugin_init_command: ""
+argocd_lovely_plugin_generate_command: >
+  {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
+argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
+
 # Readiness wait
 argocd_wait_timeout: 600   # seconds
 argocd_wait_interval: 10   # seconds

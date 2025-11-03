@@ -13,11 +13,13 @@ server:
     params:
       server.insecure: "{{ 'true' if argocd_server_insecure else 'false' }}"
 
-{% if argocd_enable_envsubst_plugin %}
+{% set _plugins_enabled = argocd_enable_envsubst_plugin or argocd_enable_lovely_plugin %}
+{% if _plugins_enabled %}
 configs:
   cm:
     # Use configManagementPlugins (preferred vs legacy)
     configManagementPlugins: |
+{% if argocd_enable_envsubst_plugin %}
       - name: {{ argocd_envsubst_plugin_name }}
         generate:
           command: ["/bin/sh", "-lc"]
@@ -27,6 +29,52 @@ configs:
                 echo "envsubst not found in repo-server image"; exit 1;
               fi
               {{ argocd_envsubst_command }}
+{% endif %}
+{% if argocd_enable_lovely_plugin %}
+{% if argocd_enable_envsubst_plugin %}
+
+{% endif %}
+      - name: {{ argocd_lovely_plugin_name }}
+{% if argocd_lovely_plugin_init_command %}
+        init:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              {{ argocd_lovely_plugin_init_command }}
+{% endif %}
+        generate:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              {{ argocd_lovely_plugin_generate_command }}
+{% if argocd_lovely_plugin_discover_file_name %}
+        discover:
+          fileName: {{ argocd_lovely_plugin_discover_file_name }}
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if argocd_enable_lovely_plugin %}
+repoServer:
+  extraVolumes:
+    - name: argocd-lovely-plugin
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: argocd-lovely-plugin
+      mountPath: {{ argocd_lovely_plugin_install_dir }}
+  initContainers:
+    - name: install-{{ argocd_lovely_plugin_name }}
+      image: "{{ argocd_lovely_plugin_image }}"
+      imagePullPolicy: "{{ argocd_lovely_plugin_image_pull_policy }}"
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          cp /usr/local/bin/{{ argocd_lovely_plugin_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
+          chmod 0555 {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }}
+      volumeMounts:
+        - name: argocd-lovely-plugin
+          mountPath: {{ argocd_lovely_plugin_install_dir }}
+
 {% endif %}
 
 # Merge in extra values from defaults or play vars

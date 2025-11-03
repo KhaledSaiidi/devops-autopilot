@@ -1,12 +1,12 @@
-- name: Configure envsubst plugin via ConfigMap
-  when: argocd_enable_envsubst_plugin | bool
+- name: Configure Argo CD plugins via ConfigMap
+  when: (argocd_enable_envsubst_plugin | bool) or (argocd_enable_lovely_plugin | bool)
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ argocd_kubeconfig }}"
-    template: "argocd-cm-envsubst.yaml.j2"
+    template: "argocd-cm-plugins.yaml.j2"
 
-- name: Restart repo-server to load plugin
-  when: argocd_enable_envsubst_plugin | bool
+- name: Restart repo-server to load plugins
+  when: (argocd_enable_envsubst_plugin | bool) or (argocd_enable_lovely_plugin | bool)
   kubernetes.core.k8s:
     state: patched
     kubeconfig: "{{ argocd_kubeconfig }}"
