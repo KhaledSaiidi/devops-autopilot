@@ -6,15 +6,10 @@
     namespace: "{{ argocd_namespace }}"
     kubeconfig: "{{ argocd_kubeconfig }}"
   register: argocd_repo_dep
-  listen: Wait for repo-server rollout
-
-- name: Ensure repo-server ready
-  ansible.builtin.wait_for:
-    timeout: "{{ argocd_wait_timeout }}"
   until: >
     (argocd_repo_dep.resources | length) > 0 and
     (argocd_repo_dep.resources[0].status.readyReplicas | default(0)) >=
     (argocd_repo_dep.resources[0].spec.replicas | default(1))
-  retries: "{{ (argocd_wait_timeout // argocd_wait_interval) | int }}"
+  retries: "{{ ((argocd_wait_timeout | int) + (argocd_wait_interval | int) - 1) // (argocd_wait_interval | int) }}"
   delay: "{{ argocd_wait_interval }}"
   listen: Wait for repo-server rollout

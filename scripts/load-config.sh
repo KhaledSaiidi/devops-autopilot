@@ -112,5 +112,7 @@ export_if_set "TF_VAR_argocd_enable_envsubst_plugin" "$(yq -r '.ansible.argocd_e
 export_if_set "TF_VAR_argocd_enable_lovely_plugin" "$(yq -r '.ansible.argocd_enable_lovely_plugin' "$CONFIG_FILE")"
 export_if_set "TF_VAR_argocd_wait_timeout" "$(yq -r '.ansible.argocd_wait_timeout' "$CONFIG_FILE")"
 export_if_set "TF_VAR_argocd_wait_interval" "$(yq -r '.ansible.argocd_wait_interval' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_reconciliation_timeout" "$(yq -r '.ansible.argocd_reconciliation_timeout' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_exec_timeout" "$(yq -r '.ansible.argocd_exec_timeout' "$CONFIG_FILE")"
 
 echo "✅ Environment loaded successfully."

@@ -19,6 +19,10 @@ argocd_server_service_annotations: {}
 # Server params
 argocd_server_insecure: true  # true = allow http for internal LB; set false in public setups
 
+# Argo CD controller/exec timeouts (leave blank to use chart defaults)
+argocd_reconciliation_timeout: ""
+argocd_exec_timeout: ""
+
 # Helm values merge (advanced/custom overrides)
 argocd_values_extra: {}  # dict merged into template values
 
@@ -32,14 +36,17 @@ argocd_envsubst_command: >
 
 # Plugin: lovely (multi-source config management)
 argocd_enable_lovely_plugin: true
-argocd_lovely_plugin_name: lovely
+argocd_lovely_plugin_name: argocd-lovely-plugin-v1.0
 argocd_lovely_plugin_image: ghcr.io/akuity/argocd-lovely-plugin:v0.18.0
 argocd_lovely_plugin_image_pull_policy: IfNotPresent
 argocd_lovely_plugin_install_dir: /custom-tools
-argocd_lovely_plugin_binary_name: argocd-lovely-plugin
+argocd_lovely_plugin_source_binary_name: argocd-lovely-plugin
+argocd_lovely_plugin_binary_name: argocd-lovely-plugin-v1.0
 # init command is optional; leave blank to skip
 argocd_lovely_plugin_init_command: ""
 argocd_lovely_plugin_generate_command: >
+  set -e;
+  cd "${ARGOCD_APP_SOURCE_PATH}" &&
   {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
 argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
 

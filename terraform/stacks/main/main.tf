@@ -173,6 +173,8 @@ resource "local_file" "ansible_vars" {
     argocd_enable_lovely_plugin   = var.argocd_enable_lovely_plugin
     argocd_wait_timeout           = var.argocd_wait_timeout
     argocd_wait_interval          = var.argocd_wait_interval
+    argocd_reconciliation_timeout = var.argocd_reconciliation_timeout
+    argocd_exec_timeout           = var.argocd_exec_timeout
   })
 
   depends_on = [null_resource.artifacts_dir]

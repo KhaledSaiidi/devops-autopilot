@@ -41,7 +41,7 @@
       -o jsonpath='{.status.readyReplicas}/{.spec.replicas}'
   register: argocd_server_rr
   changed_when: false
-  retries: "{{ (argocd_wait_timeout // argocd_wait_interval) | int }}"
+  retries: "{{ ((argocd_wait_timeout | int) + (argocd_wait_interval | int) - 1) // (argocd_wait_interval | int) }}"
   delay: "{{ argocd_wait_interval }}"
   until: >
     (argocd_server_rr.stdout is match('^[0-9]+/[0-9]+$')) and

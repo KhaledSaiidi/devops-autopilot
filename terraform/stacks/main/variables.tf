@@ -273,3 +273,17 @@ variable "argocd_wait_interval" {
   type        = number
   default     = 0
 }
+
+variable "argocd_reconciliation_timeout" {
+  description = "ArgoCD reconciliation time"
+  type        = string
+  default     = ""
+}
+
+
+variable "argocd_exec_timeout" {
+  description = "ArgoCD execution time"
+  type        = string
+  default     = ""
+}
+

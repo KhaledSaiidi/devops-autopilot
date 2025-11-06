@@ -40,3 +40,5 @@ argocd_enable_envsubst_plugin: ${argocd_enable_envsubst_plugin}
 argocd_enable_lovely_plugin: ${argocd_enable_lovely_plugin}
 argocd_wait_timeout: ${argocd_wait_timeout}
 argocd_wait_interval: ${argocd_wait_interval}
+argocd_reconciliation_timeout: ${argocd_reconciliation_timeout}
+argocd_exec_timeout: ${argocd_exec_timeout}

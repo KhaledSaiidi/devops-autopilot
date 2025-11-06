@@ -14,9 +14,18 @@ server:
       server.insecure: "{{ 'true' if argocd_server_insecure else 'false' }}"
 
 {% set _plugins_enabled = argocd_enable_envsubst_plugin or argocd_enable_lovely_plugin %}
-{% if _plugins_enabled %}
+{% set _recon_timeout = argocd_reconciliation_timeout | default('', true) %}
+{% set _exec_timeout = argocd_exec_timeout | default('', true) %}
+{% if _plugins_enabled or _recon_timeout or _exec_timeout %}
 configs:
   cm:
+{% if _recon_timeout %}
+    timeout.reconciliation: {{ _recon_timeout | quote }}
+{% endif %}
+{% if _exec_timeout %}
+    timeout.exec: {{ _exec_timeout | quote }}
+{% endif %}
+{% if _plugins_enabled %}
     # Use configManagementPlugins (preferred vs legacy)
     configManagementPlugins: |
 {% if argocd_enable_envsubst_plugin %}
@@ -53,6 +62,7 @@ configs:
 {% endif %}
 {% endif %}
 {% endif %}
+{% endif %}
 
 {% if argocd_enable_lovely_plugin %}
 repoServer:
@@ -63,14 +73,15 @@ repoServer:
     - name: argocd-lovely-plugin
       mountPath: {{ argocd_lovely_plugin_install_dir }}
   initContainers:
-    - name: install-{{ argocd_lovely_plugin_name }}
+    - name: install-{{ argocd_lovely_plugin_name | regex_replace('[^a-z0-9-]', '-') }}
       image: "{{ argocd_lovely_plugin_image }}"
       imagePullPolicy: "{{ argocd_lovely_plugin_image_pull_policy }}"
       command: ["/bin/sh", "-c"]
       args:
         - |
-          cp /usr/local/bin/{{ argocd_lovely_plugin_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
-          chmod 0555 {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }}
+          cp /usr/local/bin/{{ argocd_lovely_plugin_source_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
+          chmod 0555 {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
+          ln -sf {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_source_binary_name }}
       volumeMounts:
         - name: argocd-lovely-plugin
           mountPath: {{ argocd_lovely_plugin_install_dir }}

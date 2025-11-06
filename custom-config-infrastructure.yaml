@@ -79,3 +79,5 @@ ansible:
   argocd_enable_lovely_plugin: true
   argocd_wait_timeout: 600
   argocd_wait_interval: 10
+  argocd_reconciliation_timeout: "10m"
+  argocd_exec_timeout: "600s"
