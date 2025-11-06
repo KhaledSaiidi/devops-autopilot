@@ -51,3 +51,6 @@
     - name: Install Argocd
       ansible.builtin.import_role:
         name: argocd
+    - name: Bootstrap Argo CD root application
+      ansible.builtin.import_role:
+        name: gitops_root_app

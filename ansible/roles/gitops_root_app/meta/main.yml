@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: gitops_root_app
+  author: khaleds
+  description: Bootstrap the Argo CD root (app-of-apps) Application.
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []

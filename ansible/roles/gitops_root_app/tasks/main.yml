@@ -1,0 +1,31 @@
+---
+- name: Validate root app repository configuration
+  ansible.builtin.assert:
+    that:
+      - gitops_root_app_repo_url is defined
+      - gitops_root_app_repo_url | string | length > 0
+    fail_msg: >
+      gitops_root_app_repo_url must be set to the Git repository that houses your GitOps manifests.
+
+- name: Render root application manifest for auditing
+  ansible.builtin.template:
+    src: argocd-root-app.yaml.j2
+    dest: "{{ gitops_root_app_manifest_path }}"
+    mode: "0600"
+
+- name: Apply Argo CD root application
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ argocd_kubeconfig }}"
+    template: argocd-root-app.yaml.j2
+
+- name: Confirm root application presence
+  kubernetes.core.k8s_info:
+    api_version: argoproj.io/v1alpha1
+    kind: Application
+    name: "{{ gitops_root_app_name }}"
+    namespace: "{{ gitops_root_app_namespace }}"
+    kubeconfig: "{{ argocd_kubeconfig }}"
+  register: gitops_root_app_info
+  changed_when: false
+  failed_when: (gitops_root_app_info.resources | default([])) | length == 0
