@@ -153,9 +153,9 @@ resource "local_file" "ansible_vars" {
     private_subnet_ids = module.vpc.private_subnet_ids
 
     # IRSA / roles
-    ebs_csi_role_arn = module.iam.ebs_csi_role_arn
-    ca_role_arn      = module.iam.cluster_autoscaler_role_arn
-    alb_role_arn     = module.iam.alb_controller_role_arn
+    ebs_csi_role_arn     = module.iam.ebs_csi_role_arn
+    ca_role_arn          = module.iam.cluster_autoscaler_role_arn
+    alb_role_arn         = module.iam.alb_controller_role_arn
     eks_cluster_role_arn = module.iam.eks_cluster_role_arn
     eks_node_role_arn    = module.iam.eks_node_role_arn
 
