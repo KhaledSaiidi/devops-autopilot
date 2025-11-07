@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: khaleds
+  description: Prepare bastion (kubectl/helm, kubeconfig, SSH, sanity)
+  license: MIT
+  min_ansible_version: "2.13"
+dependencies: []

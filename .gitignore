@@ -35,6 +35,7 @@ tfplan
 ############################################
 # ⚙️ Ansible
 ############################################
+# Retry, vaults, and secret files
 *.retry
 *.vault_pass
 *.secret
@@ -44,14 +45,22 @@ tfplan
 *.vault.yaml
 *.key
 *.pem
+vault_pass.txt
 ansible.cfg~
+*.lock
+*.lock.json
 inventories/*
 !inventories/example/
-roles/*/defaults/*
-roles/*/vars/*
 group_vars/*
 host_vars/*
-vault_pass.txt
+.ansible/
+.ansible_tmp/
+.ansible_cache/
+.ansible_facts/
+.ansible_async/
+.ansible_cp/
+ansible.log
+ansible-debug.log
 
 ############################################
 # 🚀 Argo CD & Kubernetes
@@ -182,3 +191,4 @@ terraform/stacks/**/artifacts/
 **/artifacts/
 *.pem
 *-kubeconfig.yaml
+*.txt

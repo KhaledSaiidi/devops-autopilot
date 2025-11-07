@@ -1,0 +1,92 @@
+server:
+  service:
+    type: {{ argocd_server_service_type }}
+    annotations:
+{% if argocd_server_service_annotations %}
+{%   for k, v in argocd_server_service_annotations.items() %}
+      {{ k | quote }}: {{ v | quote }}
+{%   endfor %}
+{% else %}
+      {}
+{% endif %}
+  config:
+    params:
+      server.insecure: "{{ 'true' if argocd_server_insecure else 'false' }}"
+
+{% set _plugins_enabled = argocd_enable_envsubst_plugin or argocd_enable_lovely_plugin %}
+{% set _recon_timeout = argocd_reconciliation_timeout | default('', true) %}
+{% set _exec_timeout = argocd_exec_timeout | default('', true) %}
+{% if _plugins_enabled or _recon_timeout or _exec_timeout %}
+configs:
+  cm:
+{% if _recon_timeout %}
+    timeout.reconciliation: {{ _recon_timeout | quote }}
+{% endif %}
+{% if _exec_timeout %}
+    timeout.exec: {{ _exec_timeout | quote }}
+{% endif %}
+{% if _plugins_enabled %}
+    # Use configManagementPlugins (preferred vs legacy)
+    configManagementPlugins: |
+{% if argocd_enable_envsubst_plugin %}
+      - name: {{ argocd_envsubst_plugin_name }}
+        generate:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              if ! command -v envsubst >/dev/null 2>&1; then
+                echo "envsubst not found in repo-server image"; exit 1;
+              fi
+              {{ argocd_envsubst_command }}
+{% endif %}
+{% if argocd_enable_lovely_plugin %}
+{% if argocd_enable_envsubst_plugin %}
+
+{% endif %}
+      - name: {{ argocd_lovely_plugin_name }}
+{% if argocd_lovely_plugin_init_command %}
+        init:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              {{ argocd_lovely_plugin_init_command }}
+{% endif %}
+        generate:
+          command: ["/bin/sh", "-lc"]
+          args:
+            - |
+              {{ argocd_lovely_plugin_generate_command }}
+{% if argocd_lovely_plugin_discover_file_name %}
+        discover:
+          fileName: {{ argocd_lovely_plugin_discover_file_name }}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if argocd_enable_lovely_plugin %}
+repoServer:
+  extraVolumes:
+    - name: argocd-lovely-plugin
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: argocd-lovely-plugin
+      mountPath: {{ argocd_lovely_plugin_install_dir }}
+  initContainers:
+    - name: install-{{ argocd_lovely_plugin_name | regex_replace('[^a-z0-9-]', '-') }}
+      image: "{{ argocd_lovely_plugin_image }}"
+      imagePullPolicy: "{{ argocd_lovely_plugin_image_pull_policy }}"
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          cp /usr/local/bin/{{ argocd_lovely_plugin_source_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
+          chmod 0555 {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} &&
+          ln -sf {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_source_binary_name }}
+      volumeMounts:
+        - name: argocd-lovely-plugin
+          mountPath: {{ argocd_lovely_plugin_install_dir }}
+
+{% endif %}
+
+# Merge in extra values from defaults or play vars
+{{ argocd_values_extra | to_nice_yaml(indent=0) }}

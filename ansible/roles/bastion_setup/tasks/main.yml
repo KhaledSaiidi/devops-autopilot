@@ -1,0 +1,158 @@
+---
+# -------- .kube / .ssh --------
+- name: Ensure ~/.kube exists
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0700"
+
+- name: Ensure ~/.ssh exists
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.ssh"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0700"
+
+# -------- kubectl (arch-aware, idempotent) --------
+- name: Detect desired kubectl tag (e.g., v1.34.1)
+  ansible.builtin.set_fact:
+    bastion_setup_kubectl_tag: "v{{ kubectl_version | regex_replace('^v', '') }}"
+
+- name: Determine kubectl OS/arch
+  ansible.builtin.set_fact:
+    bastion_setup_kubectl_os: "linux"
+    bastion_setup_kubectl_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+
+- name: Check existing kubectl binary/version
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v kubectl >/dev/null 2>&1; then
+      kubectl version --client --output json | awk -F'"' '/gitVersion/ {print $4}'
+    fi
+  args:
+    executable: /bin/bash
+  register: bastion_setup_kubectl_current
+  changed_when: false
+  failed_when: false
+
+- name: Decide whether to (re)install kubectl
+  ansible.builtin.set_fact:
+    bastion_setup_kubectl_needs_install: "{{ (bastion_setup_kubectl_current.stdout | default('')) != bastion_setup_kubectl_tag }}"
+
+- name: "Download kubectl to /usr/local/bin — {{ bastion_setup_kubectl_tag ~ ' ' ~ bastion_setup_kubectl_os ~ '/' ~ bastion_setup_kubectl_arch }}"
+  ansible.builtin.get_url:
+    url: "https://dl.k8s.io/release/{{ bastion_setup_kubectl_tag }}/bin/{{ bastion_setup_kubectl_os }}/{{ bastion_setup_kubectl_arch }}/kubectl"
+    dest: /usr/local/bin/kubectl
+    mode: "0755"
+  when: bastion_setup_kubectl_needs_install
+
+# -------- helm (arch-aware, idempotent) --------
+- name: Detect desired helm tag (e.g., v3.19.0)
+  ansible.builtin.set_fact:
+    bastion_setup_helm_tag: "v{{ helm_version | regex_replace('^v', '') }}"
+
+- name: Determine helm OS/arch
+  ansible.builtin.set_fact:
+    bastion_setup_helm_os: "linux"
+    bastion_setup_helm_arch: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+
+- name: Check existing helm version
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if command -v helm >/dev/null 2>&1; then
+      # helm version --short outputs like: v3.19.0+gXXXX
+      helm version --short | awk '{print $1}' | sed 's/+.*//'
+    fi
+  args:
+    executable: /bin/bash
+  register: bastion_setup_helm_current
+  changed_when: false
+  failed_when: false
+
+- name: Decide whether to (re)install helm
+  ansible.builtin.set_fact:
+    bastion_setup_helm_needs_install: "{{ (bastion_setup_helm_current.stdout | default('')) != bastion_setup_helm_tag }}"
+
+- name: "Download helm tarball — {{ bastion_setup_helm_tag ~ ' ' ~ bastion_setup_helm_os ~ '/' ~ bastion_setup_helm_arch }}"
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-{{ bastion_setup_helm_tag }}-{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}.tar.gz"
+    dest: /tmp/helm.tgz
+    mode: "0644"
+  when: bastion_setup_helm_needs_install
+
+- name: Unpack helm
+  ansible.builtin.unarchive:
+    src: /tmp/helm.tgz
+    dest: /tmp
+    remote_src: true
+    creates: "/tmp/{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}/helm"
+  when: bastion_setup_helm_needs_install
+
+- name: Install helm binary
+  ansible.builtin.copy:
+    src: "/tmp/{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}/helm"
+    dest: /usr/local/bin/helm
+    mode: "0755"
+    remote_src: true
+  when: bastion_setup_helm_needs_install
+
+- name: Cleanup helm temp files
+  ansible.builtin.file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - "helm.tgz"
+    - "{{ bastion_setup_helm_os }}-{{ bastion_setup_helm_arch }}"
+  when: bastion_setup_helm_needs_install
+
+# -------- kubeconfig & SSH key (copied from controller to bastion) --------
+- name: Copy kubeconfig to bastion
+  ansible.builtin.copy:
+    src: "{{ kubeconfig_local_path }}"
+    dest: "{{ kubeconfig_remote_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+
+- name: Copy EC2 SSH private key to bastion (for node access via bastion)
+  ansible.builtin.copy:
+    src: "{{ ssh_key_local_path }}"
+    dest: "/home/{{ ansible_user }}/.ssh/id_eks"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+  when: ssh_key_local_path | default('') | length > 0
+
+- name: Optional SSH config for node access
+  ansible.builtin.blockinfile:
+    path: "/home/{{ ansible_user }}/.ssh/config"
+    create: true
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+    block: |
+      Host eks-node-*
+        IdentityFile ~/.ssh/id_eks
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+  when: ssh_key_local_path | default('') | length > 0
+
+# -------- sanity check --------
+- name: Wait for API to respond via kubectl
+  ansible.builtin.shell: kubectl get nodes -o name
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ kubeconfig_remote_path }}"
+  register: bastion_setup_nodes_out
+  retries: 18
+  delay: 10
+  changed_when: false
+  until: bastion_setup_nodes_out.rc == 0
+
+- name: Show discovered nodes
+  ansible.builtin.debug:
+    var: bastion_setup_nodes_out.stdout_lines

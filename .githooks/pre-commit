@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Always run from repo root
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+cd "$REPO_ROOT"
+
+echo "🔍 Running pre-commit checks from $REPO_ROOT ..."
+
+# -------------------------------------------------------------------
+# Paths (based on your tree)
+# -------------------------------------------------------------------
+CFG_PATH="custom-config-infrastructure.yaml"
+TF_DIR_ROOT="terraform"
+ANSIBLE_DIR="ansible"
+PLAYBOOKS_DIR="$ANSIBLE_DIR/playbooks"
+ANSIBLE_ROLES_DIR="$ANSIBLE_DIR/roles"
+
+# -------------------------------------------------------------------
+# 0) Basic preflight
+# -------------------------------------------------------------------
+if [[ ! -d "$TF_DIR_ROOT" ]]; then
+  echo "❌ Expected Terraform root at $TF_DIR_ROOT not found."
+  exit 1
+fi
+
+# -------------------------------------------------------------------
+# 1) YAML syntax validation for custom config
+# -------------------------------------------------------------------
+yaml_ok=false
+if [[ ! -f "$CFG_PATH" ]]; then
+  echo "❌ Missing config file at $CFG_PATH"
+  exit 1
+fi
+
+if command -v yq >/dev/null 2>&1; then
+  if yq --version 2>&1 | grep -qi 'mikefarah'; then
+    if yq eval '.' "$CFG_PATH" >/dev/null 2>&1 || yq e '.' "$CFG_PATH" >/dev/null 2>&1; then
+      yaml_ok=true
+    fi
+  else
+    if yq -e '.' "$CFG_PATH" >/dev/null 2>&1; then
+      yaml_ok=true
+    fi
+  fi
+fi
+
+# Fallback: Python + PyYAML
+if [[ "$yaml_ok" = false ]]; then
+  if command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' 2>/dev/null; then
+    if python3 - <<PY
+import yaml
+with open("$CFG_PATH", "r") as f:
+    yaml.safe_load(f)
+PY
+    then
+      yaml_ok=true
+    fi
+  fi
+fi
+
+if [[ "$yaml_ok" = false ]]; then
+  echo "❌ YAML validation failed for $CFG_PATH"
+  echo "   Tips:"
+  echo "    - If you use mikefarah/yq, ensure it's v4+ (e.g., 'yq eval' works)."
+  echo "    - Or install PyYAML:  pip install pyyaml"
+  exit 1
+else
+  echo "✅ YAML syntax OK ($CFG_PATH)"
+fi
+
+# -------------------------------------------------------------------
+# 2) Terraform formatting (recursive)
+# -------------------------------------------------------------------
+if command -v terraform >/dev/null 2>&1; then
+  if ! terraform fmt -check -recursive >/dev/null; then
+    echo "❌ Some Terraform files are not formatted."
+    echo "   ➜ Run: terraform fmt -recursive"
+    exit 1
+  fi
+  echo "✅ Terraform format OK"
+else
+  echo "⚠️  terraform not installed — skipping Terraform fmt check"
+fi
+
+# -------------------------------------------------------------------
+# 3) Terraform validate
+#    - Only validate directories that already look initialized
+# -------------------------------------------------------------------
+if command -v terraform >/dev/null 2>&1; then
+  mapfile -t TF_ROOTS < <(find "$TF_DIR_ROOT" -type f -name '*.tf' -print0 | xargs -0 -n1 dirname | sort -u)
+
+  tf_failed=0
+  for d in "${TF_ROOTS[@]}"; do
+    [[ "$d" =~ /tfplan$ ]] && continue
+    rel="${d#"$REPO_ROOT"/}"
+
+    if [[ -d "$d/.terraform" ]]; then
+      echo "🔎 Terraform validate (initialized): $rel"
+      if ! terraform -chdir="$d" validate -no-color >/dev/null 2> >(tee /tmp/_tf_val_err.$$ 1>&2); then
+        if grep -qiE 'initialize|terraform init' "/tmp/_tf_val_err.$$"; then
+          echo "   ❌ validate reports initialization required in $rel"
+        else
+          echo "   ❌ terraform validate failed in $rel"
+        fi
+        tf_failed=1
+      fi
+      rm -f /tmp/_tf_val_err.$$
+    else
+      echo "ℹ️  Skipping validate (not initialized): $rel"
+    fi
+  done
+
+  if [[ "$tf_failed" -ne 0 ]]; then
+    echo "❌ One or more Terraform directories failed validation."
+    exit 1
+  fi
+  echo "✅ Terraform validate OK (for initialized roots)"
+fi
+
+# -------------------------------------------------------------------
+# 3b) (Optional) TFLint for static checks (no init needed)
+# -------------------------------------------------------------------
+if command -v tflint >/dev/null 2>&1; then
+  echo "🔎 tflint (recursive)"
+  tfl_failed=0
+  for d in "${TF_ROOTS[@]}"; do
+    [[ "$d" =~ /tfplan$ ]] && continue
+    rel="${d#"$REPO_ROOT"/}"
+    echo "  • $rel"
+    if ! (cd "$d" && tflint --no-color >/dev/null); then
+      echo "   ❌ tflint reported issues in $rel"
+      tfl_failed=1
+    fi
+  done
+  if [[ "${tfl_failed:-0}" -ne 0 ]]; then
+    echo "❌ tflint found issues."
+    exit 1
+  fi
+  echo "✅ tflint OK"
+else
+  echo "ℹ️  tflint not installed — skipping tflint step"
+fi
+
+# -------------------------------------------------------------------
+# 4) Ansible syntax + lint (if available)
+# -------------------------------------------------------------------
+ansible_failed=0
+
+if command -v ansible-playbook >/dev/null 2>&1; then
+  if [[ -d "$PLAYBOOKS_DIR" ]]; then
+    while IFS= read -r -d '' pb; do
+      rel="${pb#"$REPO_ROOT"/}"
+      echo "🔎 Ansible syntax-check: $rel"
+      if ! ANSIBLE_CONFIG="ansible.cfg" \
+           ansible-playbook -i 'bastion,' --syntax-check "$pb" >/dev/null; then
+        echo "   ❌ syntax-check failed: $rel"
+        ansible_failed=1
+      fi
+    done < <(find "$PLAYBOOKS_DIR" -type f \( -name '*.yml' -o -name '*.yaml' \) -print0)
+  fi
+else
+  echo "⚠️  ansible-playbook not installed — skipping Ansible syntax-check"
+fi
+
+if command -v ansible-lint >/dev/null 2>&1; then
+  echo "🔎 ansible-lint (roles only: $ANSIBLE_ROLES_DIR)"
+  if ! ANSIBLE_CONFIG="ansible.cfg" ansible-lint -p -v "$ANSIBLE_ROLES_DIR"; then
+    echo "❌ ansible-lint reported issues."
+    ansible_failed=1
+  else
+    echo "✅ ansible-lint OK"
+  fi
+else
+  echo "ℹ️  ansible-lint not installed — skipping lint step"
+fi
+
+if [[ "$ansible_failed" -ne 0 ]]; then
+  echo "❌ One or more Ansible checks failed."
+  exit 1
+fi
+
+# -------------------------------------------------------------------
+# 5) Basic AWS creds leak scanner
+# -------------------------------------------------------------------
+AWS_LEAK_FOUND=0
+TMP_HITS="$(mktemp)"
+
+if grep -RIE --line-number \
+  --exclude-dir=.git \
+  --exclude-dir=.githooks \
+  --exclude-dir=.terraform \
+  --exclude='*.example' --exclude='*.sample' --exclude='*.tmpl' \
+  -e 'AKIA[0-9A-Z]\{16\}' \
+  -e 'ASIA[0-9A-Z]\{16\}' \
+  . >"$TMP_HITS" 2>/dev/null; then
+  AWS_LEAK_FOUND=1
+fi
+
+if grep -RIE --line-number \
+  --exclude-dir=.git \
+  --exclude-dir=.githooks \
+  --exclude-dir=.terraform \
+  --exclude='*.example' --exclude='*.sample' --exclude='*.tmpl' \
+  -e '[[:<:]]aws_secret_access_key[[:>:]][^[:alnum:]]*[=:][^[:alnum:]]*[A-Za-z0-9/+=]\{40\}' \
+  . >>"$TMP_HITS" 2>/dev/null; then
+  AWS_LEAK_FOUND=1
+fi
+
+if [[ "$AWS_LEAK_FOUND" -eq 1 ]]; then
+  echo "❌ Possible AWS credentials found in repo files!"
+  echo "   ➜ Review these lines:"
+  sed 's/^/   • /' "$TMP_HITS" || true
+  rm -f "$TMP_HITS"
+  exit 1
+fi
+rm -f "$TMP_HITS"
+echo "✅ No obvious AWS creds detected"
+
+echo "✨ All pre-commit checks passed."

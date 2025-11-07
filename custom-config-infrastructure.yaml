@@ -67,5 +67,17 @@ nodegroup:
   bastion_admin_cidrs: []
 
 ansible:
+  ansible_enabled: true
   kubectl_version: "v1.34.1"
   helm_version: "v3.19.0"
+  dry_run: false
+  verbosity: "debug" # one of: quiet, normal, verbose, high, debug
+  argocd_namespace: "argocd"
+  argocd_create_namespace: true
+  argocd_server_service_type: LoadBalancer
+  argocd_enable_envsubst_plugin: true
+  argocd_enable_lovely_plugin: true
+  argocd_wait_timeout: 600
+  argocd_wait_interval: 10
+  argocd_reconciliation_timeout: "10m"
+  argocd_exec_timeout: "600s"

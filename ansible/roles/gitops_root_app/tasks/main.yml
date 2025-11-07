@@ -1,0 +1,79 @@
+---
+- name: Validate root app repository configuration
+  ansible.builtin.assert:
+    that:
+      - gitops_root_app_repo_url is defined
+      - gitops_root_app_repo_url | string | length > 0
+    fail_msg: >
+      gitops_root_app_repo_url must be set to the Git repository that houses your GitOps manifests.
+
+- name: Build automatic plugin env context
+  ansible.builtin.set_fact:
+    gitops_root_app_auto_plugin_env: >-
+      {{
+        _auto_env_entries
+        | rejectattr('value', 'equalto', '')
+        | rejectattr('value', 'equalto', none)
+        | list
+      }}
+  vars:
+    _auto_env_entries:
+      - name: PROJECT_NAME
+        value: "{{ project_name | default('') }}"
+      - name: AWS_REGION
+        value: "{{ aws_region | default('') }}"
+      - name: CLUSTER_NAME
+        value: "{{ cluster.name | default('') }}"
+      - name: CLUSTER_ENDPOINT
+        value: "{{ cluster.endpoint | default('') }}"
+      - name: OIDC_ISSUER_URL
+        value: "{{ cluster.oidc_issuer_url | default('') }}"
+      - name: KUBECONFIG_PATH
+        value: "{{ cluster.kubeconfig.local_path | default('') }}"
+      - name: SSH_PRIVATE_KEY_PATH
+        value: "{{ cluster.ssh_private_key.local_path | default('') }}"
+      - name: VPC_ID
+        value: "{{ networking.vpc_id | default('') }}"
+      - name: PUBLIC_SUBNET_IDS
+        value: "{{ (networking.public_subnet_ids | default([])) | join(',') }}"
+      - name: PRIVATE_SUBNET_IDS
+        value: "{{ (networking.private_subnet_ids | default([])) | join(',') }}"
+      - name: EBS_CSI_ROLE_ARN
+        value: "{{ irsa.ebs_csi_role_arn | default('') }}"
+      - name: CA_ROLE_ARN
+        value: "{{ irsa.cluster_autoscaler_role_arn | default('') }}"
+      - name: ALB_CONTROLLER_ROLE_ARN
+        value: "{{ irsa.alb_controller_role_arn | default('') }}"
+      - name: EKS_CLUSTER_ROLE_ARN
+        value: "{{ iam_roles.eks_cluster_role_arn | default('') }}"
+      - name: EKS_NODE_ROLE_ARN
+        value: "{{ iam_roles.eks_node_role_arn | default('') }}"
+      - name: BASTION_PUBLIC_IP
+        value: "{{ bastion.public_ip | default('') }}"
+      - name: ARGOCD_NAMESPACE
+        value: "{{ argocd_namespace | default('argocd') }}"
+      - name: ROOT_APP_NAME
+        value: "{{ gitops_root_app_name }}"
+
+- name: Render root application manifest for auditing
+  ansible.builtin.template:
+    src: argocd-root-app.yaml.j2
+    dest: "{{ gitops_root_app_manifest_path }}"
+    mode: "0600"
+
+- name: Apply Argo CD root application
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ argocd_kubeconfig }}"
+    template: argocd-root-app.yaml.j2
+
+- name: Confirm root application presence
+  kubernetes.core.k8s_info:
+    api_version: argoproj.io/v1alpha1
+    kind: Application
+    name: "{{ gitops_root_app_name }}"
+    namespace: "{{ gitops_root_app_namespace }}"
+    kubeconfig: "{{ argocd_kubeconfig }}"
+  register: gitops_root_app_info
+  changed_when: false
+  failed_when: (gitops_root_app_info.resources | default([])) | length == 0

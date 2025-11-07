@@ -123,32 +123,60 @@ resource "local_file" "ansible_inventory" {
   file_permission = "0644"
 
   content = templatefile("${path.module}/templates/inventory.tpl", {
-    # Host to run bootstrap from
     bastion_public_ip    = module.nodegroup.bastion_public_ip
     ansible_user         = "ec2-user"
     ssh_private_key_path = module.nodegroup.ssh_private_key_path
+  })
 
-    # Kubernetes / cluster info
-    project_name           = var.project_name
-    cluster_name           = module.eks.cluster_name
-    cluster_endpoint       = module.eks.cluster_endpoint
-    kubeconfig_local_path  = module.eks.kubeconfig_path
-    kubeconfig_remote_path = "/home/ec2-user/.kube/config"
-    oidc_issuer_url        = module.eks.oidc_issuer_url
+  depends_on = [null_resource.artifacts_dir]
+}
 
-    # Cloud / networking
-    aws_region         = var.aws_region
+resource "local_file" "ansible_vars" {
+  filename        = "${path.root}/artifacts/${var.project_name}-ansible-vars.yaml"
+  file_permission = "0644"
+
+  content = templatefile("${path.module}/templates/ansible_vars.tpl", {
+    # Identity / meta
+    project_name = var.project_name
+    aws_region   = var.aws_region
+
+    # Cluster
+    cluster_name         = module.eks.cluster_name
+    cluster_endpoint     = module.eks.cluster_endpoint
+    oidc_issuer_url      = module.eks.oidc_issuer_url
+    kubeconfig_path      = module.eks.kubeconfig_path
+    ssh_private_key_path = module.nodegroup.ssh_private_key_path
+
+    # Networking
     vpc_id             = module.vpc.vpc_id
-    public_subnet_ids  = join(",", module.vpc.public_subnet_ids)
-    private_subnet_ids = join(",", module.vpc.private_subnet_ids)
+    public_subnet_ids  = module.vpc.public_subnet_ids
+    private_subnet_ids = module.vpc.private_subnet_ids
 
-    # IRSA Role ARNs (for GitOps values/envsubst)
-    ebs_csi_role_arn = module.iam.ebs_csi_role_arn
-    ca_role_arn      = module.iam.cluster_autoscaler_role_arn
-    alb_role_arn     = module.iam.alb_controller_role_arn
+    # IRSA / roles
+    ebs_csi_role_arn     = module.iam.ebs_csi_role_arn
+    ca_role_arn          = module.iam.cluster_autoscaler_role_arn
+    alb_role_arn         = module.iam.alb_controller_role_arn
+    eks_cluster_role_arn = module.iam.eks_cluster_role_arn
+    eks_node_role_arn    = module.iam.eks_node_role_arn
 
+    # Tooling versions (optional)
     kubectl_version = var.kubectl_version
     helm_version    = var.helm_version
+
+    # Bastion convenience (read-only info for play logic)
+    bastion_public_ip      = module.nodegroup.bastion_public_ip
+    kubeconfig_remote_path = "/home/ec2-user/.kube/config"
+
+    # Argo CD overrides
+    argocd_namespace              = var.argocd_namespace
+    argocd_create_namespace       = var.argocd_create_namespace
+    argocd_server_service_type    = var.argocd_server_service_type
+    argocd_enable_envsubst_plugin = var.argocd_enable_envsubst_plugin
+    argocd_enable_lovely_plugin   = var.argocd_enable_lovely_plugin
+    argocd_wait_timeout           = var.argocd_wait_timeout
+    argocd_wait_interval          = var.argocd_wait_interval
+    argocd_reconciliation_timeout = var.argocd_reconciliation_timeout
+    argocd_exec_timeout           = var.argocd_exec_timeout
   })
 
   depends_on = [null_resource.artifacts_dir]

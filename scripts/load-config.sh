@@ -102,5 +102,17 @@ TF_VAR_bastion_admin_cidrs=$(json_one_line '.nodegroup.bastion_admin_cidrs' "$CO
 # -------------------------
 TF_VAR_kubectl_version=$(yq -r '.ansible.kubectl_version' "$CONFIG_FILE"); export TF_VAR_kubectl_version
 TF_VAR_helm_version=$(yq -r '.ansible.helm_version' "$CONFIG_FILE"); export TF_VAR_helm_version
+ANSIBLE_VERBOSITY=$(yq -r '.ansible.verbosity' "$CONFIG_FILE"); export ANSIBLE_VERBOSITY
+ANSIBLE_DRY_RUN=$(yq -r '.ansible.dry_run' "$CONFIG_FILE"); export ANSIBLE_DRY_RUN
+ANSIBLE_ENABLED=$(yq -r '.ansible.ansible_enabled' "$CONFIG_FILE"); export ANSIBLE_ENABLED
+export_if_set "TF_VAR_argocd_namespace" "$(yq -r '.ansible.argocd_namespace' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_create_namespace" "$(yq -r '.ansible.argocd_create_namespace' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_server_service_type" "$(yq -r '.ansible.argocd_server_service_type' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_enable_envsubst_plugin" "$(yq -r '.ansible.argocd_enable_envsubst_plugin' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_enable_lovely_plugin" "$(yq -r '.ansible.argocd_enable_lovely_plugin' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_wait_timeout" "$(yq -r '.ansible.argocd_wait_timeout' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_wait_interval" "$(yq -r '.ansible.argocd_wait_interval' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_reconciliation_timeout" "$(yq -r '.ansible.argocd_reconciliation_timeout' "$CONFIG_FILE")"
+export_if_set "TF_VAR_argocd_exec_timeout" "$(yq -r '.ansible.argocd_exec_timeout' "$CONFIG_FILE")"
 
 echo "✅ Environment loaded successfully."

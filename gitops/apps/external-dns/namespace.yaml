@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dns-system
+  labels:
+    app.kubernetes.io/name: dns-system
+    app.kubernetes.io/part-of: platform-baseline

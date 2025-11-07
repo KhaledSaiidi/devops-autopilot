@@ -1,0 +1,436 @@
+---
+# Managed by argocd-lovely-plugin
+projects:
+  - name: platform
+    namespace: argocd
+    description: Baseline platform services managed via GitOps.
+    sourceRepos:
+      - https://github.com/KhaledSaiidi/devops-autopilot.git
+    destinations:
+      - namespace: '*'
+        server: https://kubernetes.default.svc
+    clusterResourceWhitelist:
+      - group: '*'
+        kind: '*'
+    namespaceResourceWhitelist:
+      - group: '*'
+        kind: '*'
+
+applications:
+  - name: storage-stack
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-4"
+    labels:
+      app.kubernetes.io/name: storage-stack
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/storage
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: storage-system
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: cert-manager
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-3"
+    labels:
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/cert-manager
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: cert-manager
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: ingress-nginx
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-3"
+    labels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/ingress
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: ingress-system
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: external-dns
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-3"
+    labels:
+      app.kubernetes.io/name: external-dns
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/external-dns
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: dns-system
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: monitoring
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-2"
+    labels:
+      app.kubernetes.io/name: monitoring
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/monitoring
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: monitoring
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: kyverno
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-2"
+    labels:
+      app.kubernetes.io/name: kyverno
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/kyverno
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: kyverno
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: reflector
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-2"
+    labels:
+      app.kubernetes.io/name: reflector
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/reflector
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: reflector
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: reloader
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-2"
+    labels:
+      app.kubernetes.io/name: reloader
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/reloader
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: reloader
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: vault
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-1"
+    labels:
+      app.kubernetes.io/name: vault
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/vault
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: vault
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: external-secrets
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "-1"
+    labels:
+      app.kubernetes.io/name: external-secrets
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/external-secrets
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: external-secrets
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: harbor
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "0"
+    labels:
+      app.kubernetes.io/name: harbor
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/harbor
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: harbor
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: gitlab
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "0"
+    labels:
+      app.kubernetes.io/name: gitlab
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/gitlab
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: gitlab
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: crossplane
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "1"
+    labels:
+      app.kubernetes.io/name: crossplane
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/crossplane
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: crossplane-system
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: velero
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "2"
+    labels:
+      app.kubernetes.io/name: velero
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/velero
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: velero
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: zitadel
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "3"
+    labels:
+      app.kubernetes.io/name: zitadel
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/zitadel
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: zitadel
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+  - name: root-deployer
+    namespace: argocd
+    project: platform
+    annotations:
+      argocd.argoproj.io/sync-wave: "4"
+    labels:
+      app.kubernetes.io/name: root-deployer
+      app.kubernetes.io/part-of: platform-baseline
+    source:
+      repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+      targetRevision: main
+      path: gitops/apps/root-deployer
+      directory:
+        recurse: true
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: root-deployer
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+        - ApplyOutOfSyncOnly=true
+        - SkipDryRunOnMissingResource=true
+
+clusters: []
