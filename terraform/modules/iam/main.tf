@@ -117,9 +117,6 @@ resource "aws_iam_openid_connect_provider" "eks" {
 # IRSA role for AWS Load Balancer Controller
 ############################################
 
-# Trust policy bound to the ServiceAccount:
-#   namespace: kube-system
-#   name:      aws-load-balancer-controller
 data "aws_iam_policy_document" "alb_controller_trust" {
   count = var.enable_irsa && var.create_alb_controller_role ? 1 : 0
 
@@ -143,7 +140,9 @@ data "aws_iam_policy_document" "alb_controller_trust" {
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_hostpath}:sub"
-      values   = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
+      values = [
+        "system:serviceaccount:${var.alb_controller_namespace}:${var.alb_controller_service_account}"
+      ]
     }
   }
 }

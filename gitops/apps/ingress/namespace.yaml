@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ingress-system
+  name: ${ALB_CONTROLLER_NAMESPACE}
   labels:
-    app.kubernetes.io/name: ingress-system
+    app.kubernetes.io/name: ${ALB_CONTROLLER_NAMESPACE}
     app.kubernetes.io/part-of: platform-baseline

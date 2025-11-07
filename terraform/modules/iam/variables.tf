@@ -34,6 +34,19 @@ variable "create_alb_controller_role" {
   type        = bool
   default     = true
 }
+
+variable "alb_controller_namespace" {
+  description = "Namespace where the AWS Load Balancer Controller ServiceAccount resides."
+  type        = string
+  default     = "kube-system"
+}
+
+variable "alb_controller_service_account" {
+  description = "ServiceAccount name for the AWS Load Balancer Controller."
+  type        = string
+  default     = "aws-load-balancer-controller"
+}
+
 variable "lbc_policy_url" {
   description = "Raw URL to the official AWS Load Balancer Controller IAM policy JSON (pin to a specific version)."
   type        = string
@@ -47,7 +60,7 @@ variable "create_ebs_csi_role" {
 
 variable "ebs_csi_namespace" {
   type    = string
-  default = "kube-system"
+  default = "storage-system"
 }
 
 variable "ebs_csi_service_account" {

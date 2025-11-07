@@ -42,10 +42,15 @@ module "iam" {
   enable_irsa                        = var.enable_irsa
   oidc_issuer_url                    = module.eks.oidc_issuer_url
   create_alb_controller_role         = var.create_alb_controller_role
+  alb_controller_namespace           = var.alb_controller_namespace
+  alb_controller_service_account     = var.alb_controller_service_account
   lbc_policy_url                     = var.lbc_policy_url
   create_cluster_autoscaler_role     = var.create_cluster_autoscaler_role
   cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
   cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
+  create_ebs_csi_role                = var.create_ebs_csi_role
+  ebs_csi_namespace                  = var.ebs_csi_namespace
+  ebs_csi_service_account            = var.ebs_csi_service_account
 }
 
 ############################################
@@ -153,11 +158,15 @@ resource "local_file" "ansible_vars" {
     private_subnet_ids = module.vpc.private_subnet_ids
 
     # IRSA / roles
-    ebs_csi_role_arn     = module.iam.ebs_csi_role_arn
-    ca_role_arn          = module.iam.cluster_autoscaler_role_arn
-    alb_role_arn         = module.iam.alb_controller_role_arn
-    eks_cluster_role_arn = module.iam.eks_cluster_role_arn
-    eks_node_role_arn    = module.iam.eks_node_role_arn
+    ebs_csi_role_arn               = module.iam.ebs_csi_role_arn
+    ebs_csi_namespace              = var.ebs_csi_namespace
+    ebs_csi_service_account        = var.ebs_csi_service_account
+    ca_role_arn                    = module.iam.cluster_autoscaler_role_arn
+    alb_role_arn                   = module.iam.alb_controller_role_arn
+    alb_controller_namespace       = var.alb_controller_namespace
+    alb_controller_service_account = var.alb_controller_service_account
+    eks_cluster_role_arn           = module.iam.eks_cluster_role_arn
+    eks_node_role_arn              = module.iam.eks_node_role_arn
 
     # Tooling versions (optional)
     kubectl_version = var.kubectl_version
@@ -181,3 +190,7 @@ resource "local_file" "ansible_vars" {
 
   depends_on = [null_resource.artifacts_dir]
 }
+
+#########################
+# Keep GitOps namespaces in sync with config
+#########################

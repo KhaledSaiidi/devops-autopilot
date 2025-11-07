@@ -25,8 +25,10 @@ iam:
   enable_irsa: true
   create_alb_controller_role: true
   lbc_policy_url: "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.7/docs/install/iam_policy.json"
+  alb_controller_namespace: "ingress-system"
+  alb_controller_service_account: "aws-load-balancer-controller"
   create_ebs_csi_role: true
-  ebs_csi_namespace: "storage"
+  ebs_csi_namespace: "storage-system"
   ebs_csi_service_account: "ebs-csi-controller-sa"
   create_cluster_autoscaler_role: true
   cluster_autoscaler_namespace: "kube-system"
