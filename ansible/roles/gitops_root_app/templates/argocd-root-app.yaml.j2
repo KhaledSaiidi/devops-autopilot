@@ -21,22 +21,30 @@ spec:
     repoURL: "{{ gitops_root_app_repo_url }}"
     targetRevision: "{{ gitops_root_app_target_revision }}"
     path: "{{ gitops_root_app_path }}"
+{% set _user_plugin_env = gitops_root_app_plugin_env | default([]) %}
+{% set _auto_plugin_env = gitops_root_app_auto_plugin_env | default([]) %}
+{% set _has_user_env = (_user_plugin_env | length) > 0 %}
+{% set _has_auto_env = (_auto_plugin_env | length) > 0 %}
 {% if gitops_root_app_plugin_name | default('') %}
     plugin:
       name: "{{ gitops_root_app_plugin_name }}"
-{% if gitops_root_app_plugin_env | default([]) %}
+{% if _has_user_env or _has_auto_env %}
       env:
-{% if gitops_root_app_plugin_env is mapping %}
-{% for key, value in (gitops_root_app_plugin_env | dictsort) %}
+{% if _user_plugin_env is mapping %}
+{% for key, value in (_user_plugin_env | dictsort) %}
         - name: "{{ key }}"
           value: "{{ value }}"
 {% endfor %}
 {% else %}
-{% for env_var in gitops_root_app_plugin_env %}
+{% for env_var in _user_plugin_env %}
         - name: "{{ env_var.name }}"
           value: "{{ env_var.value }}"
 {% endfor %}
 {% endif %}
+{% for env_var in _auto_plugin_env %}
+        - name: "{{ env_var.name }}"
+          value: "{{ env_var.value }}"
+{% endfor %}
 {% endif %}
 {% endif %}
   destination:

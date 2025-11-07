@@ -26,6 +26,10 @@ irsa:
   cluster_autoscaler_role_arn: "${ca_role_arn}"
   alb_controller_role_arn: "${alb_role_arn}"
 
+iam_roles:
+  eks_cluster_role_arn: "${eks_cluster_role_arn}"
+  eks_node_role_arn: "${eks_node_role_arn}"
+
 tooling:
   kubectl_version: "${kubectl_version}"
   helm_version: "${helm_version}"
