@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: storage-system
+  name: ${EBS_CSI_NAMESPACE}
   labels:
-    app.kubernetes.io/name: storage-system
+    app.kubernetes.io/name: ${EBS_CSI_NAMESPACE}
     app.kubernetes.io/part-of: platform-baseline

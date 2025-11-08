@@ -40,10 +40,18 @@
         value: "{{ (networking.private_subnet_ids | default([])) | join(',') }}"
       - name: EBS_CSI_ROLE_ARN
         value: "{{ irsa.ebs_csi_role_arn | default('') }}"
+      - name: EBS_CSI_NAMESPACE
+        value: "{{ irsa.ebs_csi_namespace | default('') }}"
+      - name: EBS_CSI_SERVICE_ACCOUNT
+        value: "{{ irsa.ebs_csi_service_account | default('') }}"
       - name: CA_ROLE_ARN
         value: "{{ irsa.cluster_autoscaler_role_arn | default('') }}"
       - name: ALB_CONTROLLER_ROLE_ARN
         value: "{{ irsa.alb_controller_role_arn | default('') }}"
+      - name: ALB_CONTROLLER_NAMESPACE
+        value: "{{ irsa.alb_controller_namespace | default('') }}"
+      - name: ALB_CONTROLLER_SERVICE_ACCOUNT
+        value: "{{ irsa.alb_controller_service_account | default('') }}"
       - name: EKS_CLUSTER_ROLE_ARN
         value: "{{ iam_roles.eks_cluster_role_arn | default('') }}"
       - name: EKS_NODE_ROLE_ARN

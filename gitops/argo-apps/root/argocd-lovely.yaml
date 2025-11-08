@@ -31,9 +31,14 @@ applications:
       path: gitops/apps/storage
       directory:
         recurse: true
+      plugin:
+        name: envsubst
+        env:
+          - name: EBS_CSI_NAMESPACE
+            value: ${EBS_CSI_NAMESPACE}
     destination:
       server: https://kubernetes.default.svc
-      namespace: storage-system
+      namespace: ${EBS_CSI_NAMESPACE}
     syncPolicy:
       automated:
         prune: true
@@ -83,9 +88,14 @@ applications:
       path: gitops/apps/ingress
       directory:
         recurse: true
+      plugin:
+        name: envsubst
+        env:
+          - name: ALB_CONTROLLER_NAMESPACE
+            value: ${ALB_CONTROLLER_NAMESPACE}
     destination:
       server: https://kubernetes.default.svc
-      namespace: ingress-system
+      namespace: ${ALB_CONTROLLER_NAMESPACE}
     syncPolicy:
       automated:
         prune: true

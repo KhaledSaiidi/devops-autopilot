@@ -71,6 +71,18 @@ variable "create_alb_controller_role" {
   default     = true
 }
 
+variable "alb_controller_namespace" {
+  description = "Namespace where the AWS Load Balancer Controller ServiceAccount lives."
+  type        = string
+  default     = "kube-system"
+}
+
+variable "alb_controller_service_account" {
+  description = "ServiceAccount name for the AWS Load Balancer Controller."
+  type        = string
+  default     = "aws-load-balancer-controller"
+}
+
 variable "lbc_policy_url" {
   description = "Raw URL to the official AWS Load Balancer Controller IAM policy JSON (pin to a specific version)."
   type        = string
@@ -84,7 +96,7 @@ variable "create_ebs_csi_role" {
 
 variable "ebs_csi_namespace" {
   type    = string
-  default = "storage"
+  default = "storage-system"
 }
 
 variable "ebs_csi_service_account" {
@@ -265,13 +277,13 @@ variable "argocd_enable_lovely_plugin" {
 variable "argocd_wait_timeout" {
   description = "ArgoCD wait timeout in seconds"
   type        = number
-  default     = 0
+  default     = 100
 }
 
 variable "argocd_wait_interval" {
   description = "ArgoCD wait interval in seconds"
   type        = number
-  default     = 0
+  default     = 10
 }
 
 variable "argocd_reconciliation_timeout" {
@@ -286,4 +298,3 @@ variable "argocd_exec_timeout" {
   type        = string
   default     = ""
 }
-

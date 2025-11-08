@@ -47,6 +47,11 @@ argocd_lovely_plugin_init_command: ""
 argocd_lovely_plugin_generate_command: >
   set -e;
   cd "${ARGOCD_APP_SOURCE_PATH}" &&
+  if command -v envsubst >/dev/null 2>&1 && [ -f argocd-lovely.yaml ]; then
+    tmp="$(mktemp)";
+    envsubst < argocd-lovely.yaml > "${tmp}";
+    mv "${tmp}" argocd-lovely.yaml;
+  fi &&
   {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
 argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
 

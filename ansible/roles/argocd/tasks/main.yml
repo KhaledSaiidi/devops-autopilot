@@ -5,7 +5,3 @@
 - name: Install/Upgrade Argo CD
   ansible.builtin.import_tasks: install.yml
   tags: [argocd, install]
-
-- name: Configure envsubst plugin
-  ansible.builtin.import_tasks: argocd_plugin.yml
-  tags: [argocd, plugin]

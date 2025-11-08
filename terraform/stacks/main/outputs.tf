@@ -29,18 +29,18 @@ output "eks_node_role_arn" {
 }
 
 output "ebs_csi_role_arn" {
-  value       = module.iam.ebs_csi_role_arn
+  value       = module.irsa.ebs_csi_role_arn
   description = "IAM role ARN for the EBS CSI controller (IRSA)"
 }
 
 output "cluster_autoscaler_role_arn" {
   description = "IRSA role ARN for Cluster Autoscaler (if created)."
-  value       = module.iam.cluster_autoscaler_role_arn
+  value       = module.irsa.cluster_autoscaler_role_arn
 }
 
 output "alb_controller_role_arn" {
   description = "IRSA role ARN for AWS Load Balancer Controller."
-  value       = module.iam.alb_controller_role_arn
+  value       = module.irsa.alb_controller_role_arn
 }
 
 ############################################
@@ -75,6 +75,11 @@ output "kubeconfig_path" {
 output "oidc_issuer_url" {
   description = "OIDC issuer URL for the EKS cluster (used by IRSA)."
   value       = module.eks.oidc_issuer_url
+}
+
+output "oidc_provider_arn" {
+  description = "ARN of the IAM OIDC provider used for IRSA (if created)."
+  value       = module.irsa.oidc_provider_arn
 }
 
 output "inventory_path" {

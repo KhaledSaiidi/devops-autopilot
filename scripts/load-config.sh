@@ -4,115 +4,146 @@ set -Eeuo pipefail
 # --- helpers ---
 need() { command -v "$1" >/dev/null 2>&1 || { echo "❌ Missing dependency: $1" >&2; exit 1; }; }
 
+read_config_json() {
+  local expr="$1"
+  yq "${YQ_JSON_ARGS[@]}" "${expr} // null" "$CONFIG_FILE"
+}
+
+format_env_value() {
+  local json="$1"
+  local type
+  type=$(jq -r 'type' <<<"$json")
+  if [[ "$type" == "array" || "$type" == "object" ]]; then
+    jq -c '.' <<<"$json"
+  else
+    jq -r '.' <<<"$json"
+  fi
+}
+
+export_tf_var() {
+  local var_name="$1"
+  local expr="$2"
+  local allow_empty="${3:-true}"
+
+  local raw_json value type
+  raw_json=$(read_config_json "$expr")
+  [[ "$raw_json" == "null" ]] && return
+
+  type=$(jq -r 'type' <<<"$raw_json")
+  value=$(format_env_value "$raw_json")
+
+  if [[ "$type" == "string" && "$allow_empty" != "true" && -z "$value" ]]; then
+    return
+  fi
+
+  export "TF_VAR_${var_name}=${value}"
+}
+
+export_plain_env() {
+  local env_name="$1"
+  local expr="$2"
+  local raw_json value
+
+  raw_json=$(read_config_json "$expr")
+  [[ "$raw_json" == "null" ]] && return
+
+  value=$(format_env_value "$raw_json")
+  export "${env_name}=${value}"
+}
+
+section_keys() {
+  local section="$1"
+  yq -r ".${section} | keys | .[]" "$CONFIG_FILE" 2>/dev/null || true
+}
+
+load_section() {
+  local section="$1"
+  local prefix="$2"
+  local overrides_ref="$3"
+  local skip_ref="$4"
+  local optional_ref="$5"
+
+  local -n overrides="$overrides_ref"
+  local -n skip="$skip_ref"
+  local -n optional="$optional_ref"
+
+  mapfile -t keys < <(section_keys "$section")
+  for key in "${keys[@]}"; do
+    [[ -n "${skip[$key]:-}" ]] && continue
+    local var_name="${overrides[$key]:-${prefix}${key}}"
+    local allow_empty="${optional[$key]:-true}"
+    export_tf_var "$var_name" ".${section}.${key}" "$allow_empty"
+  done
+}
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_FILE="${1:-$ROOT/custom-config-infrastructure.yaml}"
 
 need yq
 need jq
 
+YQ_JSON_ARGS=(-o=json)
+if ! yq "${YQ_JSON_ARGS[@]}" '.' "$CONFIG_FILE" >/dev/null 2>&1; then
+  YQ_JSON_ARGS=()
+fi
+
 echo "🔧 Loading configuration from $CONFIG_FILE ..."
 
-# Render YAML node as compact JSON (arrays/maps) for TF_* envs
-json_one_line() { yq -r "$1 // []" "$2" | jq -c .; }
+# -----------------------------------------------------------------------------
+# Terraform variables (data-driven)
+# -----------------------------------------------------------------------------
+declare -A EMPTY_MAP=()
 
-# Export only if non-empty/non-null (for optional strings)
-export_if_set() {
-  local key="$1" val="$2"
-  if [[ -n "${val}" && "${val}" != "null" ]]; then
-    export "${key}=${val}"
+declare -A PROJECT_OVERRIDES=(
+  [name]="project_name"
+  [region]="aws_region"
+  [tags]="tags"
+)
+declare -A PROJECT_SKIP=(
+  [bucket]=1
+  [state_key]=1
+  [dynamodb_table]=1
+)
+
+load_section "project" "project_" PROJECT_OVERRIDES PROJECT_SKIP EMPTY_MAP
+
+declare -A VPC_OVERRIDES=([cidr]="vpc_cidr")
+load_section "vpc" "" VPC_OVERRIDES EMPTY_MAP EMPTY_MAP
+load_section "iam" "" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+
+declare -A EKS_OVERRIDES=([version]="eks_version")
+load_section "eks" "" EKS_OVERRIDES EMPTY_MAP EMPTY_MAP
+
+declare -A NODEGROUP_OPTIONAL=(
+  [ssh_key_name]="false"
+  [bastion_ami_id]="false"
+)
+load_section "nodegroup" "" EMPTY_MAP EMPTY_MAP NODEGROUP_OPTIONAL
+
+# -----------------------------------------------------------------------------
+# Backend configuration (always exported, even if empty)
+# -----------------------------------------------------------------------------
+export TF_BACKEND_BUCKET=$(yq -r '.project.bucket // ""' "$CONFIG_FILE")
+export TF_BACKEND_KEY=$(yq -r '.project.state_key // ""' "$CONFIG_FILE")
+export TF_BACKEND_DYNAMODB_TABLE=$(yq -r '.project.dynamodb_table // ""' "$CONFIG_FILE")
+
+# -----------------------------------------------------------------------------
+# Ansible-driven values
+# -----------------------------------------------------------------------------
+declare -A ANSIBLE_ENV_MAP=(
+  [verbosity]="ANSIBLE_VERBOSITY"
+  [dry_run]="ANSIBLE_DRY_RUN"
+  [ansible_enabled]="ANSIBLE_ENABLED"
+)
+
+mapfile -t ansible_keys < <(section_keys "ansible")
+for key in "${ansible_keys[@]}"; do
+  if [[ -n "${ANSIBLE_ENV_MAP[$key]:-}" ]]; then
+    export_plain_env "${ANSIBLE_ENV_MAP[$key]}" ".ansible.${key}"
+    export_tf_var "$key" ".ansible.${key}"
+    continue
   fi
-}
-
-# -------------------------
-# Project-wide
-# -------------------------
-TF_VAR_project_name=$(yq -r '.project.name' "$CONFIG_FILE"); export TF_VAR_project_name
-TF_VAR_aws_region=$(yq -r '.project.region' "$CONFIG_FILE"); export TF_VAR_aws_region
-TF_VAR_tags=$(json_one_line '.project.tags' "$CONFIG_FILE"); export TF_VAR_tags
-
-# (Optional) backend helpers
-export TF_BACKEND_BUCKET=$(yq -r '.project.bucket' "$CONFIG_FILE")
-export TF_BACKEND_KEY=$(yq -r '.project.state_key' "$CONFIG_FILE")
-export TF_BACKEND_DYNAMODB_TABLE=$(yq -r '.project.dynamodb_table' "$CONFIG_FILE")
-
-# -------------------------
-# VPC
-# -------------------------
-TF_VAR_vpc_cidr=$(yq -r '.vpc.cidr' "$CONFIG_FILE"); export TF_VAR_vpc_cidr
-TF_VAR_enable_ipv6=$(yq -r '.vpc.enable_ipv6' "$CONFIG_FILE"); export TF_VAR_enable_ipv6
-TF_VAR_public_subnet_cidrs=$(json_one_line '.vpc.public_subnet_cidrs' "$CONFIG_FILE"); export TF_VAR_public_subnet_cidrs
-TF_VAR_private_subnet_cidrs=$(json_one_line '.vpc.private_subnet_cidrs' "$CONFIG_FILE"); export TF_VAR_private_subnet_cidrs
-TF_VAR_add_k8s_tags=$(yq -r '.vpc.add_k8s_tags' "$CONFIG_FILE"); export TF_VAR_add_k8s_tags
-
-# -------------------------
-# IAM
-# -------------------------
-TF_VAR_enable_irsa=$(yq -r '.iam.enable_irsa' "$CONFIG_FILE"); export TF_VAR_enable_irsa
-TF_VAR_create_alb_controller_role=$(yq -r '.iam.create_alb_controller_role' "$CONFIG_FILE"); export TF_VAR_create_alb_controller_role
-TF_VAR_lbc_policy_url=$(yq -r '.iam.lbc_policy_url' "$CONFIG_FILE"); export TF_VAR_lbc_policy_url
-TF_VAR_create_ebs_csi_role=$(yq -r '.iam.create_ebs_csi_role' "$CONFIG_FILE"); export TF_VAR_create_ebs_csi_role
-TF_VAR_ebs_csi_namespace=$(yq -r '.iam.ebs_csi_namespace' "$CONFIG_FILE"); export TF_VAR_ebs_csi_namespace
-TF_VAR_ebs_csi_service_account=$(yq -r '.iam.ebs_csi_service_account' "$CONFIG_FILE"); export TF_VAR_ebs_csi_service_account
-TF_VAR_create_cluster_autoscaler_role=$(yq -r '.iam.create_cluster_autoscaler_role' "$CONFIG_FILE"); export TF_VAR_create_cluster_autoscaler_role
-TF_VAR_cluster_autoscaler_namespace=$(yq -r '.iam.cluster_autoscaler_namespace' "$CONFIG_FILE"); export TF_VAR_cluster_autoscaler_namespace
-TF_VAR_cluster_autoscaler_service_account=$(yq -r '.iam.cluster_autoscaler_service_account' "$CONFIG_FILE"); export TF_VAR_cluster_autoscaler_service_account
-
-# -------------------------
-# EKS
-# -------------------------
-TF_VAR_cluster_name=$(yq -r '.eks.cluster_name' "$CONFIG_FILE"); export TF_VAR_cluster_name
-TF_VAR_cluster_user=$(yq -r '.eks.cluster_user' "$CONFIG_FILE"); export TF_VAR_cluster_user
-TF_VAR_eks_version=$(yq -r '.eks.version' "$CONFIG_FILE"); export TF_VAR_eks_version
-TF_VAR_generate_kubeconfig=$(yq -r '.eks.generate_kubeconfig' "$CONFIG_FILE"); export TF_VAR_generate_kubeconfig
-TF_VAR_endpoint_private_access=$(yq -r '.eks.endpoint_private_access' "$CONFIG_FILE"); export TF_VAR_endpoint_private_access
-TF_VAR_endpoint_public_access=$(yq -r '.eks.endpoint_public_access' "$CONFIG_FILE"); export TF_VAR_endpoint_public_access
-TF_VAR_public_access_cidrs=$(json_one_line '.eks.public_access_cidrs' "$CONFIG_FILE"); export TF_VAR_public_access_cidrs
-TF_VAR_service_ipv4_cidr=$(yq -r '.eks.service_ipv4_cidr' "$CONFIG_FILE"); export TF_VAR_service_ipv4_cidr
-TF_VAR_enabled_cluster_log_types=$(json_one_line '.eks.enabled_cluster_log_types' "$CONFIG_FILE"); export TF_VAR_enabled_cluster_log_types
-
-# -------------------------
-# Nodegroup (incl. SSH + Bastion)
-# -------------------------
-TF_VAR_desired_size=$(yq -r '.nodegroup.desired_size' "$CONFIG_FILE"); export TF_VAR_desired_size
-TF_VAR_min_size=$(yq -r '.nodegroup.min_size' "$CONFIG_FILE"); export TF_VAR_min_size
-TF_VAR_max_size=$(yq -r '.nodegroup.max_size' "$CONFIG_FILE"); export TF_VAR_max_size
-TF_VAR_ami_type=$(yq -r '.nodegroup.ami_type' "$CONFIG_FILE"); export TF_VAR_ami_type
-TF_VAR_capacity_type=$(yq -r '.nodegroup.capacity_type' "$CONFIG_FILE"); export TF_VAR_capacity_type
-TF_VAR_disk_size=$(yq -r '.nodegroup.disk_size' "$CONFIG_FILE"); export TF_VAR_disk_size
-TF_VAR_instance_types=$(json_one_line '.nodegroup.instance_types' "$CONFIG_FILE"); export TF_VAR_instance_types
-TF_VAR_force_update_version=$(yq -r '.nodegroup.force_update_version' "$CONFIG_FILE"); export TF_VAR_force_update_version
-TF_VAR_extra_labels=$(json_one_line '.nodegroup.extra_labels' "$CONFIG_FILE"); export TF_VAR_extra_labels
-
-# SSH & Bastion (from nodegroup section)
-TF_VAR_create_ssh_key=$(yq -r '.nodegroup.create_ssh_key' "$CONFIG_FILE"); export TF_VAR_create_ssh_key
-TF_VAR_enable_ssh=$(yq -r '.nodegroup.enable_ssh' "$CONFIG_FILE"); export TF_VAR_enable_ssh
-
-SSH_KEY_NAME_VAL=$(yq -r '.nodegroup.ssh_key_name' "$CONFIG_FILE")
-export_if_set "TF_VAR_ssh_key_name" "${SSH_KEY_NAME_VAL}"
-
-TF_VAR_bastion_instance_type=$(yq -r '.nodegroup.bastion_instance_type' "$CONFIG_FILE"); export TF_VAR_bastion_instance_type
-
-BASTION_AMI_ID_VAL=$(yq -r '.nodegroup.bastion_ami_id' "$CONFIG_FILE")
-export_if_set "TF_VAR_bastion_ami_id" "${BASTION_AMI_ID_VAL}"
-
-TF_VAR_bastion_admin_cidrs=$(json_one_line '.nodegroup.bastion_admin_cidrs' "$CONFIG_FILE"); export TF_VAR_bastion_admin_cidrs
-
-# -------------------------
-# Ansible
-# -------------------------
-TF_VAR_kubectl_version=$(yq -r '.ansible.kubectl_version' "$CONFIG_FILE"); export TF_VAR_kubectl_version
-TF_VAR_helm_version=$(yq -r '.ansible.helm_version' "$CONFIG_FILE"); export TF_VAR_helm_version
-ANSIBLE_VERBOSITY=$(yq -r '.ansible.verbosity' "$CONFIG_FILE"); export ANSIBLE_VERBOSITY
-ANSIBLE_DRY_RUN=$(yq -r '.ansible.dry_run' "$CONFIG_FILE"); export ANSIBLE_DRY_RUN
-ANSIBLE_ENABLED=$(yq -r '.ansible.ansible_enabled' "$CONFIG_FILE"); export ANSIBLE_ENABLED
-export_if_set "TF_VAR_argocd_namespace" "$(yq -r '.ansible.argocd_namespace' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_create_namespace" "$(yq -r '.ansible.argocd_create_namespace' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_server_service_type" "$(yq -r '.ansible.argocd_server_service_type' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_enable_envsubst_plugin" "$(yq -r '.ansible.argocd_enable_envsubst_plugin' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_enable_lovely_plugin" "$(yq -r '.ansible.argocd_enable_lovely_plugin' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_wait_timeout" "$(yq -r '.ansible.argocd_wait_timeout' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_wait_interval" "$(yq -r '.ansible.argocd_wait_interval' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_reconciliation_timeout" "$(yq -r '.ansible.argocd_reconciliation_timeout' "$CONFIG_FILE")"
-export_if_set "TF_VAR_argocd_exec_timeout" "$(yq -r '.ansible.argocd_exec_timeout' "$CONFIG_FILE")"
+  export_tf_var "$key" ".ansible.${key}"
+done
 
 echo "✅ Environment loaded successfully."

@@ -67,11 +67,20 @@ need ssh
 need yq
 
 # -------- helpers --------
-latest_file()(
+latest_file() {
+  local pattern="${1:-}"
+  [[ -n "$pattern" ]] || die "latest_file requires a glob pattern"
+
   shopt -s nullglob
-  for pat in "$@"; do set -- $pat; done
-  ls -1t "$@" 2>/dev/null | head -n1 || true
-)
+  local matches=($pattern)
+  shopt -u nullglob
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
+    die "No files found matching pattern: $pattern"
+  fi
+
+  ls -1t -- "${matches[@]}" | head -n1
+}
 
 INVENTORY="${INVENTORY:-$(latest_file "$ARTIFACTS"/*-inventory.ini)}"
 VARSFILE="${VARSFILE:-$(latest_file "$ARTIFACTS"/*-ansible-vars.yaml)}"
