@@ -16,6 +16,19 @@
     group: "{{ ansible_user }}"
     mode: "0700"
 
+- name: Ensure python3-pip is installed (for k8s modules)
+  ansible.builtin.package:
+    name: python3-pip
+    state: present
+  when: bastion_setup_install_k8s_python_deps | bool
+
+- name: Install Python dependencies required by kubernetes.core/community.kubernetes
+  ansible.builtin.pip:
+    name: "{{ bastion_setup_k8s_python_packages }}"
+    executable: pip3
+    extra_args: "--upgrade"
+  when: bastion_setup_install_k8s_python_deps | bool
+
 # -------- kubectl (arch-aware, idempotent) --------
 - name: Detect desired kubectl tag (e.g., v1.34.1)
   ansible.builtin.set_fact:

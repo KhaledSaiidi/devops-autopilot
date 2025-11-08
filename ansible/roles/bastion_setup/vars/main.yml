@@ -1,0 +1,6 @@
+---
+bastion_setup_install_k8s_python_deps: true
+bastion_setup_k8s_python_packages:
+  - "kubernetes>=26.1.0"
+  - "openshift>=0.13.2"
+  - "PyYAML>=6.0.0"
