@@ -33,6 +33,15 @@ iam:
   create_cluster_autoscaler_role: true
   cluster_autoscaler_namespace: "kube-system"
   cluster_autoscaler_service_account: "cluster-autoscaler"
+  create_crossplane_core_role: true
+  create_crossplane_data_role: true
+  crossplane_namespace: "crossplane-system"
+  crossplane_core_service_accounts:
+  - "provider-aws-core"
+  crossplane_data_service_accounts:
+  - "provider-aws-data"
+  crossplane_core_passrole_arns: []
+  crossplane_kms_key_arns: []
 
 eks:
   cluster_name: "devops-autopilot-cluster"

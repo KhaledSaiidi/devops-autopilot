@@ -43,6 +43,16 @@ output "alb_controller_role_arn" {
   value       = module.irsa.alb_controller_role_arn
 }
 
+output "crossplane_core_role_arn" {
+  description = "IRSA role ARN for Crossplane networking/ingress controllers."
+  value       = module.irsa.crossplane_core_role_arn
+}
+
+output "crossplane_data_role_arn" {
+  description = "IRSA role ARN for Crossplane data-plane controllers."
+  value       = module.irsa.crossplane_data_role_arn
+}
+
 ############################################
 # Nodegroup / Bastion Outputs
 ############################################

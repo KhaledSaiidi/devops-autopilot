@@ -124,6 +124,13 @@ module "irsa" {
   create_ebs_csi_role                = var.create_ebs_csi_role
   ebs_csi_namespace                  = var.ebs_csi_namespace
   ebs_csi_service_account            = var.ebs_csi_service_account
+  create_crossplane_core_role        = var.create_crossplane_core_role
+  create_crossplane_data_role        = var.create_crossplane_data_role
+  crossplane_namespace               = var.crossplane_namespace
+  crossplane_core_service_accounts   = var.crossplane_core_service_accounts
+  crossplane_data_service_accounts   = var.crossplane_data_service_accounts
+  crossplane_core_passrole_arns      = var.crossplane_core_passrole_arns
+  crossplane_kms_key_arns            = length(var.crossplane_kms_key_arns) > 0 ? var.crossplane_kms_key_arns : [module.kms.key_arn]
 }
 
 #########################
@@ -165,15 +172,20 @@ resource "local_file" "ansible_vars" {
     private_subnet_ids = module.vpc.private_subnet_ids
 
     # IRSA / roles
-    ebs_csi_role_arn               = module.irsa.ebs_csi_role_arn
-    ebs_csi_namespace              = var.ebs_csi_namespace
-    ebs_csi_service_account        = var.ebs_csi_service_account
-    ca_role_arn                    = module.irsa.cluster_autoscaler_role_arn
-    alb_role_arn                   = module.irsa.alb_controller_role_arn
-    alb_controller_namespace       = var.alb_controller_namespace
-    alb_controller_service_account = var.alb_controller_service_account
-    eks_cluster_role_arn           = module.iam.eks_cluster_role_arn
-    eks_node_role_arn              = module.iam.eks_node_role_arn
+    ebs_csi_role_arn                 = module.irsa.ebs_csi_role_arn
+    ebs_csi_namespace                = var.ebs_csi_namespace
+    ebs_csi_service_account          = var.ebs_csi_service_account
+    ca_role_arn                      = module.irsa.cluster_autoscaler_role_arn
+    alb_role_arn                     = module.irsa.alb_controller_role_arn
+    alb_controller_namespace         = var.alb_controller_namespace
+    alb_controller_service_account   = var.alb_controller_service_account
+    eks_cluster_role_arn             = module.iam.eks_cluster_role_arn
+    eks_node_role_arn                = module.iam.eks_node_role_arn
+    crossplane_core_role_arn         = module.irsa.crossplane_core_role_arn
+    crossplane_data_role_arn         = module.irsa.crossplane_data_role_arn
+    crossplane_namespace             = var.crossplane_namespace
+    crossplane_core_service_accounts = var.crossplane_core_service_accounts
+    crossplane_data_service_accounts = var.crossplane_data_service_accounts
 
     # Tooling versions (optional)
     kubectl_version = var.kubectl_version
