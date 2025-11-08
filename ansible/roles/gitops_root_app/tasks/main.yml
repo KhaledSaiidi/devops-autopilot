@@ -62,6 +62,8 @@
         value: "{{ argocd_namespace | default('argocd') }}"
       - name: ROOT_APP_NAME
         value: "{{ gitops_root_app_name }}"
+      - name: CROSSPLANE_NAMESPACE
+        value: "{{ irsa.crossplane_namespace }}"
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:

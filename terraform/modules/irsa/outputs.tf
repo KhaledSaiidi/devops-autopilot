@@ -17,3 +17,13 @@ output "cluster_autoscaler_role_arn" {
   description = "IRSA role ARN for Cluster Autoscaler (if created)."
   value       = try(aws_iam_role.cluster_autoscaler[0].arn, null)
 }
+
+output "crossplane_core_role_arn" {
+  description = "IRSA role ARN used by Crossplane core/provider controllers."
+  value       = try(aws_iam_role.crossplane_core[0].arn, null)
+}
+
+output "crossplane_data_role_arn" {
+  description = "IRSA role ARN for Crossplane data-plane controllers."
+  value       = try(aws_iam_role.crossplane_data[0].arn, null)
+}

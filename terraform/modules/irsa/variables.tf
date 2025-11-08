@@ -80,3 +80,53 @@ variable "cluster_autoscaler_service_account" {
   type        = string
   default     = "cluster-autoscaler"
 }
+
+variable "create_crossplane_core_role" {
+  description = "Create an IRSA role for Crossplane core/provider controllers handling networking workloads."
+  type        = bool
+  default     = true
+}
+
+variable "create_crossplane_data_role" {
+  description = "Create an IRSA role for Crossplane data-plane controllers (databases, secrets, storage)."
+  type        = bool
+  default     = true
+}
+
+variable "crossplane_namespace" {
+  description = "Namespace where Crossplane controllers run."
+  type        = string
+  default     = "crossplane-system"
+}
+
+variable "crossplane_core_service_accounts" {
+  description = "ServiceAccounts allowed to assume the Crossplane core role."
+  type        = list(string)
+  default     = ["provider-aws-core"]
+  validation {
+    condition     = length(var.crossplane_core_service_accounts) > 0
+    error_message = "Provide at least one Crossplane core ServiceAccount for IRSA."
+  }
+}
+
+variable "crossplane_data_service_accounts" {
+  description = "ServiceAccounts allowed to assume the Crossplane data role."
+  type        = list(string)
+  default     = ["provider-aws-data"]
+  validation {
+    condition     = length(var.crossplane_data_service_accounts) > 0
+    error_message = "Provide at least one Crossplane data ServiceAccount for IRSA."
+  }
+}
+
+variable "crossplane_core_passrole_arns" {
+  description = "Optional list of IAM role ARNs Crossplane core controllers may pass to AWS services."
+  type        = list(string)
+  default     = []
+}
+
+variable "crossplane_kms_key_arns" {
+  description = "KMS keys Crossplane data controllers may use (encrypt/decrypt/data key)."
+  type        = list(string)
+  default     = []
+}

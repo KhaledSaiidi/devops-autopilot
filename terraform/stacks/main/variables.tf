@@ -122,6 +122,48 @@ variable "cluster_autoscaler_service_account" {
   default     = "cluster-autoscaler"
 }
 
+variable "create_crossplane_core_role" {
+  description = "Create an IRSA role for Crossplane core/provider controllers."
+  type        = bool
+  default     = true
+}
+
+variable "create_crossplane_data_role" {
+  description = "Create an IRSA role for Crossplane data-plane controllers."
+  type        = bool
+  default     = true
+}
+
+variable "crossplane_namespace" {
+  description = "Namespace where Crossplane controllers run."
+  type        = string
+  default     = "crossplane-system"
+}
+
+variable "crossplane_core_service_accounts" {
+  description = "ServiceAccounts allowed to assume the Crossplane core role."
+  type        = list(string)
+  default     = ["provider-aws-core"]
+}
+
+variable "crossplane_data_service_accounts" {
+  description = "ServiceAccounts allowed to assume the Crossplane data role."
+  type        = list(string)
+  default     = ["provider-aws-data"]
+}
+
+variable "crossplane_core_passrole_arns" {
+  description = "IAM roles Crossplane core controllers can pass."
+  type        = list(string)
+  default     = []
+}
+
+variable "crossplane_kms_key_arns" {
+  description = "KMS keys Crossplane data controllers can use. Defaults to the cluster key if empty."
+  type        = list(string)
+  default     = []
+}
+
 ############################################
 # EKS Cluster Settings
 ############################################

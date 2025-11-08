@@ -29,6 +29,17 @@ irsa:
   alb_controller_role_arn: "${alb_role_arn}"
   alb_controller_namespace: "${alb_controller_namespace}"
   alb_controller_service_account: "${alb_controller_service_account}"
+  crossplane_namespace: "${crossplane_namespace}"
+  crossplane_core_role_arn: "${crossplane_core_role_arn}"
+  crossplane_core_service_accounts:
+%{ for sa in crossplane_core_service_accounts }
+    - "${sa}"
+%{ endfor }
+  crossplane_data_role_arn: "${crossplane_data_role_arn}"
+  crossplane_data_service_accounts:
+%{ for sa in crossplane_data_service_accounts }
+    - "${sa}"
+%{ endfor }
 
 iam_roles:
   eks_cluster_role_arn: "${eks_cluster_role_arn}"

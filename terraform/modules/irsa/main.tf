@@ -11,7 +11,12 @@ data "http" "lbc_policy" {
 
 locals {
   # Strip https:// for condition keys (e.g., oidc.eks.<region>.amazonaws.com/id/<id>:sub)
-  oidc_hostpath = var.oidc_issuer_url != "" ? replace(var.oidc_issuer_url, "https://", "") : ""
+  oidc_hostpath              = var.oidc_issuer_url != "" ? replace(var.oidc_issuer_url, "https://", "") : ""
+  crossplane_core_subjects   = [for sa in var.crossplane_core_service_accounts : "system:serviceaccount:${var.crossplane_namespace}:${sa}"]
+  crossplane_data_subjects   = [for sa in var.crossplane_data_service_accounts : "system:serviceaccount:${var.crossplane_namespace}:${sa}"]
+  crossplane_s3_bucket_arn   = "arn:aws:s3:::${var.project_name}-crossplane-*"
+  crossplane_s3_objects_arn  = "${local.crossplane_s3_bucket_arn}/*"
+  crossplane_secret_resource = "arn:aws:secretsmanager:*:*:secret:${var.project_name}-*"
 }
 
 # Get OIDC root CA fingerprint
@@ -259,4 +264,257 @@ resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
   count      = var.enable_irsa && var.create_cluster_autoscaler_role ? 1 : 0
   role       = aws_iam_role.cluster_autoscaler[0].name
   policy_arn = aws_iam_policy.cluster_autoscaler[0].arn
+}
+
+############################################
+# Crossplane IRSA Roles
+############################################
+
+data "aws_iam_policy_document" "crossplane_core_trust" {
+  count = var.enable_irsa && var.create_crossplane_core_role ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = local.crossplane_core_subjects
+    }
+  }
+}
+
+data "aws_iam_policy_document" "crossplane_core_policy" {
+  count = var.enable_irsa && var.create_crossplane_core_role ? 1 : 0
+
+  statement {
+    sid    = "Route53Management"
+    effect = "Allow"
+    actions = [
+      "route53:ChangeResourceRecordSets",
+      "route53:ListHostedZones",
+      "route53:ListHostedZonesByName",
+      "route53:ListResourceRecordSets",
+      "route53:GetHostedZone"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "LoadBalancerRead"
+    effect = "Allow"
+    actions = [
+      "elasticloadbalancing:Describe*",
+      "elasticloadbalancing:List*"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "Ec2Describe"
+    effect    = "Allow"
+    actions   = ["ec2:Describe*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "Tagging"
+    effect = "Allow"
+    actions = [
+      "tag:GetResources",
+      "tag:TagResources",
+      "tag:UntagResources"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "CloudWatchLogsRead"
+    effect = "Allow"
+    actions = [
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents"
+    ]
+    resources = ["*"]
+  }
+
+  dynamic "statement" {
+    for_each = length(var.crossplane_core_passrole_arns) > 0 ? [1] : []
+    content {
+      sid       = "AllowPassRole"
+      effect    = "Allow"
+      actions   = ["iam:PassRole"]
+      resources = var.crossplane_core_passrole_arns
+    }
+  }
+}
+
+resource "aws_iam_role" "crossplane_core" {
+  count              = var.enable_irsa && var.create_crossplane_core_role ? 1 : 0
+  name               = "${var.project_name}-crossplane-core"
+  assume_role_policy = data.aws_iam_policy_document.crossplane_core_trust[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-crossplane-core-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role_policy" "crossplane_core" {
+  count  = var.enable_irsa && var.create_crossplane_core_role ? 1 : 0
+  name   = "${var.project_name}-crossplane-core"
+  role   = aws_iam_role.crossplane_core[0].id
+  policy = data.aws_iam_policy_document.crossplane_core_policy[0].json
+}
+
+data "aws_iam_policy_document" "crossplane_data_trust" {
+  count = var.enable_irsa && var.create_crossplane_data_role ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = local.crossplane_data_subjects
+    }
+  }
+}
+
+data "aws_iam_policy_document" "crossplane_data_policy" {
+  count = var.enable_irsa && var.create_crossplane_data_role ? 1 : 0
+
+  statement {
+    sid    = "RDSLifecycle"
+    effect = "Allow"
+    actions = [
+      "rds:*",
+      "docdb:*"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SecretsManagerRW"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecrets",
+      "secretsmanager:PutResourcePolicy",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:RestoreSecret",
+      "secretsmanager:TagResource",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:UntagResource",
+      "secretsmanager:ReplicateSecretToRegions"
+    ]
+    resources = [local.crossplane_secret_resource]
+  }
+
+  statement {
+    sid    = "CrossplaneBuckets"
+    effect = "Allow"
+    actions = [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:GetBucketLocation",
+      "s3:GetEncryptionConfiguration",
+      "s3:ListBucket",
+      "s3:ListBucketMultipartUploads",
+      "s3:PutBucketPolicy",
+      "s3:PutEncryptionConfiguration"
+    ]
+    resources = [local.crossplane_s3_bucket_arn]
+  }
+
+  statement {
+    sid    = "CrossplaneBucketObjects"
+    effect = "Allow"
+    actions = [
+      "s3:AbortMultipartUpload",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:ListMultipartUploadParts",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:PutObjectTagging"
+    ]
+    resources = [local.crossplane_s3_objects_arn]
+  }
+
+  dynamic "statement" {
+    for_each = length(var.crossplane_kms_key_arns) > 0 ? [1] : []
+    content {
+      sid    = "KMSUsage"
+      effect = "Allow"
+      actions = [
+        "kms:DescribeKey",
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:GenerateDataKey",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:ReEncryptFrom",
+        "kms:ReEncryptTo",
+        "kms:CreateGrant",
+        "kms:ListGrants",
+        "kms:RevokeGrant"
+      ]
+      resources = var.crossplane_kms_key_arns
+    }
+  }
+}
+
+resource "aws_iam_role" "crossplane_data" {
+  count              = var.enable_irsa && var.create_crossplane_data_role ? 1 : 0
+  name               = "${var.project_name}-crossplane-data"
+  assume_role_policy = data.aws_iam_policy_document.crossplane_data_trust[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-crossplane-data-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role_policy" "crossplane_data" {
+  count  = var.enable_irsa && var.create_crossplane_data_role ? 1 : 0
+  name   = "${var.project_name}-crossplane-data"
+  role   = aws_iam_role.crossplane_data[0].id
+  policy = data.aws_iam_policy_document.crossplane_data_policy[0].json
 }
