@@ -1,130 +1,181 @@
-## Next-Phase Execution Plan
+## Next Phase Execution Plan (Post-Root-App)
 
-This document captures the ordered work that remains after the initial Terraform + Ansible bootstrap. All tasks happen through GitOps (Argo CD) unless explicitly stated.
+**Current state:** Terraform/Ansible finished, bastion prepared, Argo CD Root Application synced. No platform apps, Vault, ESO, or Crossplane are running yet.
 
----
-
-### 0. Baseline (Already in place / verify once)
-- Argo CD Root App applies via `ansible/playbooks/bootstrap-bastion.yml` immediately after `terraform apply -var-file="custom-config-infrastructure.yaml"`.
-- `${VAR}` placeholders in manifests resolve via the envsubst CMP (`gitops/argocd/config/argocd-cm-envsubst.yaml`).
-- Namespace convention stands: `storage-system`, `monitoring`, `ingress-system`, `platform-config`, etc. Keep ALB/NLB annotations close to the manifest using them.
-
-**Verification checklist**
-1. Confirm Terraform outputs (`terraform/stacks/main/outputs.tf`) include every value referenced in `plugin.env`.
-2. Ensure `ansible/templates/argocd-root-app.yaml.j2` aligns with `gitops/argo-apps/root/argocd-root-app.yaml` (same waves, plugin inputs).
-3. Run `scripts/apply-iac.sh` once to ensure bootstrap completes cleanly; afterward rely on Argo CD syncs only.
+The plan below is a fully ordered runbook that takes us from this point to a production-grade GitOps environment where Crossplane manages Zitadel, GitLab, Vault, DNS, and database dependencies. Follow each phase sequentially; do not skip ahead because later work assumes earlier prerequisites are healthy.
 
 ---
 
-### Standard GitOps procedure per wave
-1. Author Helm/Kustomize values under `gitops/argo-apps/apps/<wave>/<component>/`.
-2. Include the App (or ApplicationSet) in `gitops/argo-apps/root/argocd-root-app.yaml` with the desired `sync-wave`.
-3. Reference namespaces, IAM role ARNs, and IDs via `${VAR}` so Argo can template them.
-4. Merge to main; Argo CD reconciles automatically. Use Argo CD UI/CLI only to confirm health.
+### Phase 0 – Stabilize the GitOps control plane
+1. **Lock references**
+   - Snapshot Terraform outputs (especially VPC, subnet IDs, IAM ARNs) to confirm all `${VAR}` placeholders used by GitOps resolve correctly.
+   - Document bastion access + `kubectl` commands for verification.
+2. **Validate Root App**
+   - In Argo CD UI/CLI, confirm the root Application is `Healthy/Synced`. Fix any path or plugin issues (envsubst CMP) before onboarding new apps.
+3. **Establish verification checklist**
+   - Define the minimum smoke tests for each upcoming wave (e.g., `kubectl get ns`, `kubectl top nodes`, etc.) so you know when a phase completes.
+
+_Exit criteria:_ Argo CD reconciles reliably; no manual drift remains on the cluster.
 
 ---
 
-## Ordered Task List
+### Phase 1 – Extend Terraform IRSA for Crossplane
+Crossplane must assume AWS roles via IRSA before any provider work begins.
 
-| Wave | Scope                                 | Owner Namespace  | Prereqs                | Success Criteria |
-|------|---------------------------------------|------------------|------------------------|--------------------------------------------------------------|
-| 1    | metrics-server                        | `kube-system`    | Baseline done          | HPA-ready metrics (`kubectl get --raw /apis/metrics.k8s.io`) |
-| 2    | aws-ebs-csi-driver + gp3 StorageClass | `storage-system` | Node IAM/role ready    | Default StorageClass = gp3, PVC bind succeeds                |
-| 3    | aws-load-balancer-controller          | `ingress-system` | VPC,IAM ,subnets tag   | ALB & NLB ingress classes published, SA annotated            |
-| 4    | Prefix delegation patch (aws-node)    | `kube-system`    | CNI DS EKS managed     | `ENABLE_PREFIX_DELEGATION=true` visible in DS env            |
-| 5    | cluster-autoscaler                    | `kube-system`    | Metrics/EBS driver     | CA logs show node-group discovery, IRSA annotation           |
-| 6    | envset-baseline(RBAC/policies...)     | `platform-config`| Prior waves synced     | Namespaces + quotas + NP + optional Argo self-manage present |
+1. **Design Crossplane roles**
+   - `crossplane_core_role`: Route53 record management, Elastic Load Balancing (read), EC2 `Describe*`, tagging, limited `iam:PassRole` for Crossplane-managed identities, CloudWatch Logs read access.
+   - `crossplane_data_role`: RDS/Aurora + DocumentDB lifecycle, Secrets Manager read/write, KMS describe/use (scoped to the project), S3 bucket/object management for `${project_name}-crossplane-*`.
+   - Optional sub-roles (if desired): dedicated DNS-only role or DB-only role for fine-grained ProviderConfigs.
+2. **Terraform implementation**
+   - Update `terraform/modules/irsa` to create these IAM roles, trust the EKS OIDC provider (`crossplane-system` service accounts), and output their ARNs.
+   - Extend `terraform/stacks/main/outputs.tf` and `scripts/load-config.sh` so the ARNs become `${TF_VAR_crossplane_*}` values for GitOps.
+3. **Apply & document**
+   - Run `scripts/apply-iac.sh` to create roles.
+   - Record the ARNs in this plan for later ProviderConfig references; confirm no AWS secrets exist anywhere else.
 
----
+- **`crossplane_core_role`**: Permissions for Route53, ELB, EC2 describe, tagging, CloudWatch Logs reads. Used by provider-aws for DNS/ingress tasks.
+- **`crossplane_data_role`**: Permissions for RDS/DocDB lifecycle, Secrets Manager read/write (for DB creds if Crossplane needs to rotate), KMS encryption context tied to project, and S3 (for Terraform provider state or app buckets). Enforce resource-level constraints where possible (ARN prefixes).
+No static AWS keys are stored anywhere—every Crossplane ProviderConfig relies on IRSA.
 
-### Wave details & immediate next actions
-
-#### Wave 1 – metrics-server (`gitops/argo-apps/apps/00-metrics-server/`)
-- Values to lock:  
-  ```
-  args:
-    - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
-    - --kubelet-use-node-status-port
-    - --metric-resolution=15s
-  ```
-- Action: finalize chart values, ensure ServiceAccount uses IRSA if required, commit.
-- Validation: `kubectl top nodes` works through bastion kubeconfig.
-
-#### Wave 2 – storage system (`gitops/argo-apps/apps/00-storage/`)
-- Components: aws-ebs-csi-driver (controller in `kube-system`), default `gp3` StorageClass, optional PVC under `apps/storage/tests/`.
-- Required template values: `${EBS_CSI_ROLE_ARN}` on ServiceAccount.
-- Actions:
-  1. Author HelmRelease/values and apply `sync-wave: "2"`.
-  2. Add StorageClass manifest with `metadata.annotations.storageclass.kubernetes.io/is-default-class: "true"`.
-  3. Create PVC test manifest referencing `gp3`.
-- Validation: `kubectl describe sc gp3` shows default; smoke PVC binds to an EBS volume.
-
-#### Wave 3 – ingress system (`gitops/argo-apps/apps/00-ingress/` or keep under existing folder)
-- App: aws-load-balancer-controller (`ingress-system` namespace).
-- Values required:  
-  ```
-  clusterName: ${CLUSTER_NAME}
-  region: ${AWS_REGION}
-  vpcId: ${VPC_ID}
-  serviceAccount.annotations."eks.amazonaws.com/role-arn": ${ALB_ROLE_ARN}
-  ```
-- Ensure standard annotations live with workloads (ALB + NLB bullets remain in manifests).
-- Validation: controller Deployment healthy; `kubectl get ingressclass alb` shows proper parameters.
-
-#### Wave 4 – CNI prefix delegation (`gitops/argo-apps/apps/00-cni-tuning/`)
-- Implement Kustomize patch to the `aws-node` DaemonSet:  
-  ```
-  ENABLE_PREFIX_DELEGATION=true
-  WARM_PREFIX_TARGET=1
-  ```
-- Action: create overlay patch referencing upstream manifest; confirm Argo applies in wave 4.
-- Validation: `kubectl describe ds aws-node -n kube-system` shows env vars.
-
-#### Wave 5 – cluster-autoscaler (`gitops/argo-apps/apps/00-autoscaler/`)
-- Values:  
-  ```
-  autoDiscovery.clusterName: ${CLUSTER_NAME}
-  awsRegion: ${AWS_REGION}
-  extraArgs.balance-similar-node-groups: "true"
-  extraArgs.expander: "least-waste"
-  serviceAccount.annotations."eks.amazonaws.com/role-arn": ${CA_ROLE_ARN}
-  ```
-- Actions: ensure nodegroup tags support auto-discovery, add PodDisruptionBudget, set `priorityClassName` if needed.
-- Validation: CA logs show `ClusterAutoscaler 1.29+` starting, `kubectl logs deployment/cluster-autoscaler -n kube-system`.
-
-#### Wave 6 – envset-baseline (`gitops/argo-apps/apps/00-argocd/` or `envset-baseline/`)
-- Purpose: centralize namespaces (storage, ingress, monitoring), RBAC, quotas, LimitRanges, default NetworkPolicies/IngressClasses, optional Argo self-management.
-- Actions: create aggregated Kustomize or Helm chart; ensure namespaces exist before dependent apps by keeping this at the same or earlier wave for those namespaces (wave 6 is fine if all earlier namespaces are created per chart, otherwise split out namespace creation to wave 0).
-- Validation: `kubectl get ns` shows platform namespaces, RBAC objects exist, optional Argo Application for self-management synced.
+_Exit criteria:_ Crossplane IAM roles exist and are exported via Terraform.
 
 ---
 
-### Supporting automation recap
+### Phase 2 – Foundational platform services (pre-Crossplane)
+These apps bootstrap namespaces, storage, ingress, security, and secrets so Crossplane has everything it needs later.
 
-```
-terraform apply -var-file="custom-config-infrastructure.yaml" \
-  && ansible-playbook -i ansible/inventory/aws.ini ansible/playbooks/bootstrap-bastion.yml
-```
+1. **Namespaces & baseline policies (`gitops/apps/platform-baseline`)**
+   - Create namespaces: `platform-system`, `ingress-system`, `storage-system`, `vault`, `gitlab`, `zitadel`, `crossplane-system`, `platform-secrets`.
+   - Apply quotas, LimitRanges, default NetworkPolicies, PriorityClasses.
+   - _Validation_: `kubectl get ns` shows the full list; Argo app `Healthy`.
 
-Ansible responsibilities (run once per environment):
-- Consume Terraform outputs (`bastion_public_ip`, `ssh_private_key_path`, `kubeconfig_path`).
-- Install `helm` + `kubectl` on bastion, copy kubeconfig.
-- Install Argo CD, register envsubst CMP, apply Root App. After that, **only Argo CD** mutates the cluster.
+2. **Storage layer (`gitops/apps/storage`)**
+   - Deploy AWS EBS CSI Driver; annotate ServiceAccount with `${EBS_CSI_ROLE_ARN}`.
+   - Create gp3 StorageClass (default) + PVC smoke test.
+   - _Validation_: `kubectl describe sc gp3` shows `is-default-class=true`; PVC binds.
+
+3. **Ingress & networking (`gitops/apps/ingress`)**
+   - Install AWS Load Balancer Controller with `${CLUSTER_NAME}`, `${AWS_REGION}`, `${VPC_ID}`, `${ALB_ROLE_ARN}`.
+   - Ensure VPC subnets carry required tags (`kubernetes.io/role/*`).
+   - _Validation_: Controller Deployment healthy; `kubectl get ingressclass alb`.
+
+4. **CNI tuning (`gitops/apps/cni-tuning`)**
+   - Patch `aws-node` DaemonSet to set `ENABLE_PREFIX_DELEGATION=true`, `WARM_PREFIX_TARGET=1`.
+   - _Validation_: `kubectl describe ds aws-node -n kube-system` lists the new env vars.
+
+5. **Cluster Autoscaler (`gitops/apps/autoscaler`)**
+   - Deploy CA with auto-discovery, `--balance-similar-node-groups`, SA annotated with `${CA_ROLE_ARN}`.
+   - _Validation_: `kubectl logs deployment/cluster-autoscaler -n kube-system` shows node group discovery.
+
+6. **Security & policy controls**
+   - Install Kyverno + policy bundles (`gitops/apps/kyverno`), metrics-server (`gitops/apps/metrics`), reflector/reloader if desired.
+   - _Validation_: `kubectl top nodes` works; Kyverno enforces baseline policies.
+
+7. **Vault deployment (`gitops/apps/vault`)**
+   - Deploy Vault (Raft) and expose via internal Service/Ingress; wire TLS certs.
+   - _Validation_: Vault pods healthy; `vault status` via bastion port-forward succeeds.
+
+8. **External Secrets Operator (`gitops/apps/external-secrets`)**
+   - Install ESO targeting Vault; configure placeholder auth (no AWS creds).
+   - _Validation_: ESO pods running; logs show successful Vault connection after Vault is up.
+
+_Exit criteria:_ All foundational apps (except monitoring/Velero) show `Healthy`; Vault and ESO are ready for later integration.
 
 ---
 
-### Repository map (for quick navigation)
+### Phase 3 – Install Crossplane & supporting packages
+Only start this phase once Phases 1 and 2 are complete.
 
-```
-devops-autopilot/
-├── custom-config-infrastructure.yaml      # single source of env vars for TF + echoed to Ansible
-├── scripts/                               # init/plan/apply/destroy helpers (terraform chdir pattern)
-├── terraform/stacks/main/                 # stateful IaC entrypoint (outputs feed Ansible)
-├── ansible/                               # bootstrap-only automation (bastion, Argo CD install)
-└── gitops/                                # Argo CD apps, values, and CMP config
-    ├── argocd/config/argocd-cm-envsubst.yaml
-    ├── argo-apps/root/argocd-root-app.yaml
-    └── argo-apps/apps/<wave>-*/            # application manifests ordered by sync wave
-```
+1. **Crossplane Helm release**
+   - Add `gitops/apps/crossplane/core` Application. Pin version (e.g., `1.15.x`), set `args: ["--enable-composition-functions"]`.
+2. **Provider packages**
+   - Under `gitops/apps/crossplane/packages`, create `Provider` manifests with exact versions:
+     - `crossplane/provider-aws`
+     - `crossplane/provider-kubernetes`
+     - `crossplane/provider-helm`
+     - `crossplane-contrib/provider-terraform`
+     - `crossplane-contrib/provider-gitlab`
+     - `crossplane-contrib/provider-vault`
+   - Also add `Function` manifests: `function-go-templating`, `function-patch-and-transform`, `function-auto-ready`.
+3. **ProviderConfigs (IRSA-based)**
+   - Create `aws-providerconfig` referencing the new `crossplane_core_role` ARN (via `spec.credentials.source: IRSA`).
+   - Create specialized `ProviderConfig` objects for RDS/DocDB if they need different roles (e.g., `crossplane_data_role`).
+   - For Kubernetes & Helm providers, use in-cluster service accounts with fine-grained RBAC.
+   - Terraform provider config should reference a Kubernetes Secret containing `.terraformrc` (populated by ESO later) but **no AWS keys**—Terraform provider assumes IRSA as well.
+4. **ESO integration for non-AWS secrets**
+   - Configure ESO to produce secrets for Zitadel admin APIs, GitLab PATs, Vault tokens, etc., leaving AWS access solely to IRSA.
+5. **Validation**
+   - `kubectl get providers.pkg.crossplane.io` shows all packages `Healthy`.
+   - ProviderConfigs report `READY`. Crossplane Pod logs show reconciliation of built-in resources.
 
-Keep this file (`project-next-phase.md`) as the canonical runbook for upcoming work; update statuses as each wave ships.
+_Exit criteria:_ Crossplane core + providers + functions installed; no pending packages in Argo CD.
+
+---
+
+### Phase 4 – Build and publish Crossplane Configuration Package
+Create the reusable APIs (XRs) that higher-level apps will consume.
+
+1. **Repository structure**
+   - `gitops/apps/crossplane/config/`
+     - `crds/` – `CompositeResourceDefinition` files (XRDS).
+     - `compositions/` – each composition referencing providers/functions.
+     - `crossplane.yaml` – configuration metadata for packaging.
+2. **XRs to define**
+   - **Identity**: `CompositeZitadelBootstrap`.
+   - **GitOps**: `CompositeGitLabProjectSet`.
+   - **Secrets & Auth**: `CompositeVaultBootstrap`.
+   - **DNS**: `CompositeRoute53Record`.
+   - **Databases**: `CompositeRDSCluster`, `CompositeDocDBCluster`.
+3. **Function wiring**
+   - Use `function-go-templating` to build names, FQDNs, and secret names.
+   - `function-patch-and-transform` or `function-kcl` to default regions, enforce enums (engine versions), derive Route53 targets from Service statuses.
+   - `function-auto-ready` to hold compositions until dependent resources (e.g., ALB) surface hostnames.
+4. **Secret conventions**
+   - All compositions write outputs to predictable names: `${claimName}-db`, `${claimName}-oidc`, `${claimName}-dns`.
+5. **Packaging pipeline**
+   - Optional: add `Makefile` target or GitHub Action using `up xpkg build` to publish to OCI registry (internal).
+6. **Smoke tests**
+   - In a sandbox namespace, create sample claims (e.g., `ZitadelBootstrap` with stub values) to ensure functions work and resources reconcile (you can disable actual Terraform/GitLab API calls via mock ProviderConfigs if needed).
+
+_Exit criteria:_ Configuration package is applied via GitOps, XRDs + Compositions show `Healthy`, and sample claims reconcile.
+
+---
+
+### Phase 5 – Onboard applications via GitOps + Crossplane
+Now wire actual platform services using the compositions.
+
+1. **Vault finalization**
+   - Apply `VaultBootstrap` claim to enable JWT auth, create policies, bind ESO + Crossplane service accounts. Ensure secrets for provider configs are populated automatically.
+2. **Zitadel**
+   - Deploy runtime Helm chart (`gitops/apps/zitadel`) for control plane.
+   - Submit `ZitadelBootstrap` claim to create org/project/clients. Outputs land in `platform-secrets`.
+   - Use `XRoute53Record` claims to create `zitadel.<domain>` once Service exposes hostname.
+3. **GitLab**
+   - Provision Aurora DB via `RDSCluster` claim first.
+   - Deploy GitLab chart referencing the DB secret.
+   - Apply `GitLabProjectSet` claim to create initial groups/projects and emit deploy tokens.
+   - Publish DNS via `XRoute53Record`.
+4. **Harbor, Vault UI, External apps**
+   - For each, create DB claims (if needed), DNS claims, and ensure Helm values reference Crossplane-generated secrets.
+5. **Monitoring, Backup integration**
+   - Wire Crossplane-managed resources into Prometheus dashboards (e.g., RDS metrics) and Velero backups (CRDs + secrets). Update GitOps manifests accordingly.
+
+_Exit criteria:_ Every app folder under `gitops/apps/` is either a Helm/Kustomize chart consuming Crossplane outputs or a set of Crossplane claims. Argo CD shows full stack green.
+
+---
+
+### Phase 6 – Operational hardening & final apps
+1. **Observability (final application)**
+   - Deploy/finish Prometheus & Grafana (`gitops/apps/monitoring`) now that all workloads exist.
+   - Add rules/dashboards for Crossplane, provider pods, and managed resources; surface claim readiness metrics.
+2. **Backups (final application)**
+   - Complete Velero configuration (`gitops/apps/velero`), create backup storage locations, and schedule backups for namespaces containing Crossplane state (`crossplane-system`, `platform-secrets`, app namespaces).
+3. **Security**
+   - Kyverno rules to prevent manual edits to Crossplane-managed resources (label-based).
+   - Audit IAM roles/policies generated in Phase 2; ensure least privilege.
+4. **Runbooks**
+   - Document how to request new claims (inputs/outputs), rotate secrets, and recover from failure scenarios.
+
+_Exit criteria:_ Monitoring dashboards + backup schedules in place; documentation stored in repo (e.g., `docs/crossplane/`).
+
+---
