@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../base/platform-project.yaml
+  - ../../../base/storage-stack.yaml
+  - ../../../base/cert-manager.yaml
+  - ../../../base/ingress-nginx.yaml
+  - ../../../base/external-dns.yaml
+  - ../../../base/monitoring.yaml
+  - ../../../base/kyverno.yaml
+  - ../../../base/reflector.yaml
+  - ../../../base/reloader.yaml
+  - ../../../base/vault.yaml
+  - ../../../base/external-secrets.yaml
+  - ../../../base/harbor.yaml
+  - ../../../base/gitlab.yaml
+  - ../../../base/crossplane.yaml
+  - ../../../base/velero.yaml
+  - ../../../base/zitadel.yaml

@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '1'
+  labels:
+    app.kubernetes.io/name: crossplane
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+    targetRevision: main
+    path: gitops/apps/crossplane
+    directory:
+      recurse: true
+    plugin:
+      name: envsubst
+      env:
+      - name: CROSSPLANE_NAMESPACE
+        value: ${CROSSPLANE_NAMESPACE}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${CROSSPLANE_NAMESPACE}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - SkipDryRunOnMissingResource=true

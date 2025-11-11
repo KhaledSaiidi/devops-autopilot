@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: storage-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-4'
+  labels:
+    app.kubernetes.io/name: storage-stack
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+    targetRevision: main
+    path: gitops/apps/storage
+    directory:
+      recurse: true
+    plugin:
+      name: envsubst
+      env:
+      - name: EBS_CSI_NAMESPACE
+        value: ${EBS_CSI_NAMESPACE}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${EBS_CSI_NAMESPACE}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - SkipDryRunOnMissingResource=true
