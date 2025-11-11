@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: root-deployer
-  labels:
-    app.kubernetes.io/name: root-deployer
-    app.kubernetes.io/part-of: platform-baseline
