@@ -141,6 +141,29 @@ _Exit criteria:_ Configuration package is applied via GitOps, XRDs + Composition
 
 ---
 
+### Phase 4b – Package compositions + automate version wiring
+Keep the new Crossplane compositions in lockstep with GitOps by creating a dedicated packaging workspace and CI pipeline.
+
+1. **Repository layout**
+   - Add a root-level directory (e.g., `crossplane-packages/`) with `compositions/`, `functions/`, `configuration/`, and `pkg.yaml`.
+   - Include a manifest (`images.yaml` or similar) describing container images referenced by Vault/Zitadel bootstrap jobs so CI can bump them.
+2. **Build tooling**
+   - Provide a `Makefile` or script to run `up xpkg build` (or `kubectl crossplane build configuration`) and publish to an OCI registry (AWS ECR Public, GHCR, etc.).
+   - Store build metadata (version, digest, image tags) under `crossplane-packages/dist/` for later steps.
+3. **GitHub Action runner**
+   - New workflow runs on every push/PR touching `crossplane-packages/`:
+     1. Execute the build script and push the OCI artifact.
+     2. Parse the latest image tags/digests from the build output.
+     3. Patch `custom-config-infrastructure.yaml` (or a derived values file) with the new package version + image references so Crossplane claims consume the latest bits.
+     4. Commit the updates back to the PR (or open a release branch) with a clear changelog.
+4. **Promotion**
+   - Tag packages with `dev`, `stg`, `prod` channels and reference the appropriate tag from the GitOps manifests / Argo CD Applications.
+   - Document how to roll back to a previous package and how automation prevents manual edits.
+
+_Exit criteria:_ Packaging directory exists, the GitHub Action produces/publishes OCI configurations, and config values are updated automatically after each successful build.
+
+---
+
 ### Phase 5 – Onboard applications via GitOps + Crossplane
 Now wire actual platform services using the compositions.
 

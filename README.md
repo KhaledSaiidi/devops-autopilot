@@ -1,32 +1,117 @@
-# 🧭 EKS GitOps Autonomous Platform
+# 🚀 DevOps Autopilot for Production EKS
 
-## 🚀 Project Overview
+DevOps Autopilot is a production-grade reference implementation that turns a clean AWS account into a fully managed EKS platform in one push. Terraform builds the network, security boundaries, cluster, and IRSA roles; Ansible equips the bastion and deploys Argo CD with GitOps plugins; Argo CD’s app-of-apps layout keeps every platform workload—from cert-manager to Vault, Harbor, GitLab, Zitadel, and Crossplane—continuously reconciled. One configuration file powers every environment so recruiters, operators, and auditors immediately see a cohesive, self-healing story.
 
-This project delivers a **fully automated DevOps pipeline** that provisions, builds, and deploys applications to an **AWS EKS Kubernetes cluster** using **Terraform**, **CircleCI**, **Docker**, and **ArgoCD** — achieving **end-to-end automation** from infrastructure to application delivery.
-
-This implementation is built to operate autonomously with **self-driving GitOps workflows**, enabling continuous provisioning, deployment, and reconciliation without manual intervention.
-
----
-
-## 🧱 Core Objectives
-
-- **Zero-Touch Deployment:** Fully automated from code commit to running workloads on EKS.  
-- **Infrastructure as Code (IaC):** Declarative provisioning using modular Terraform configurations.  
-- **Continuous Integration (CI):** Automated build, test, and image publishing via CircleCI.  
-- **Continuous Delivery (CD):** GitOps-based application synchronization using ArgoCD.  
-- **Scalability & Reproducibility:** Modularized design supporting multi-environment setups (dev/stg/prod).  
+**Why it stands out**
+- Production-ready defaults: private networking, KMS-encrypted secrets, IRSA for every controller, hardened bastion with zero manual steps.
+- GitOps-first: Argo CD root application fans out into storage, ingress, security, secrets, observability, and identity stacks.
+- Ready for platform engineering: Crossplane, Vault, Zitadel, and GitLab land side-by-side, with future compositions packaged and shipped automatically.
+- Single-flight automation: the same scripts run locally or in CI to init, plan, apply, and bootstrap GitOps without snowflake steps.
 
 ---
 
-## ⚙️ Automation Flow
+## Platform Layers
 
-```mermaid
-graph TD
-A[Developer Commit Code] --> B[GitHub Repository]
-B --> C[CircleCI Pipeline Trigger]
-C --> D[Build & Test Application]
-D --> E[Push Docker Image to Registry]
-E --> F[Update Kubernetes Manifests]
-F --> G[Git Push to Config Repo]
-G --> H[ArgoCD Sync to EKS Cluster]
-H --> I[Application Deployed & Synced Automatically]
+- **Source-of-truth config** – `custom-config-infrastructure.yaml` plus `scripts/load-config.sh` export every value as `TF_VAR_*` / Ansible env vars. Update the file once to change CIDRs, cluster versions, IRSA toggles, or Argo CD behavior everywhere.
+- **Terraform stack** – `terraform/stacks/main` orchestrates reusable modules (`terraform/modules/*`) to provision VPC + NAT, IAM/KMS, EKS, managed node group + bastion, and IRSA roles for AWS Load Balancer Controller, EBS CSI, Cluster Autoscaler, and Crossplane core/data controllers. Local `artifacts/` files provide kubeconfig, inventories, and Arns for the next stages.
+- **Ansible bootstrap** – `ansible/playbooks/bootstrap-iac.yml` (roles: `bastion_setup`, `argocd`, `gitops_root_app`) installs kubectl/helm, copies kubeconfig/SSH material, deploys Argo CD via Helm, enables the lovely/envsubst CMP plugins, and applies the Argo CD root Application while injecting environment metadata as plugin env vars.
+- **GitOps tree** – `gitops/argo-apps` hosts the AppProject and every Argo CD `Application`. The root overlay syncs cert-manager, ingress, storage, Vault, Harbor, GitLab, Crossplane, Zitadel, Velero, monitoring, Kyverno, and supporting controllers in controlled sync-wave order. Workloads under `gitops/apps/<name>` can be Helm, Kustomize, or Crossplane claims.
+
+---
+
+## Single Config Contract (No Drift)
+
+- One file defines project metadata, backend storage, networking, IAM/IRSA toggles, cluster shape, node group preferences, bastion policy, and Ansible knobs (kubectl version, plugin settings, Argo CD namespace, etc.).
+- `scripts/load-config.sh` validates dependencies (`yq`, `jq`), exports Terraform variables, and sets Ansible env vars so every shell (local or GitHub Action) behaves identically.
+- Terraform, Ansible, and GitOps consume the same values through env vars or plugin env injection—no duplicated configuration blocks or hard-coded secrets.
+
+---
+
+## Automation Flow
+
+1. **Backend init** – `scripts/init-iac.sh` parses the config and runs `terraform init -reconfigure` with the right S3 bucket, key, region, and DynamoDB table.
+2. **Plan & apply** – `scripts/plan-iac.sh` and `scripts/apply-iac.sh` format/validate the stack, then create the full AWS footprint and emit kubeconfig/inventory/vars artifacts.
+3. **Bootstrap via Ansible** – `scripts/apply-ansible.sh` (orchestration-friendly) SSHes into the bastion, installs tooling, deploys Argo CD with CMP plugins, and applies the GitOps root Application template with all relevant env vars.
+4. **GitOps reconciliation** – Argo CD continuously syncs the app-of-apps tree, including Crossplane providers, IRSA-integrated controllers, Vault/ESO, Harbor caches, Zitadel auth, GitLab, monitoring, and Velero.
+
+The same flow runs locally or inside a single GitHub Action job—no bespoke CI glue.
+
+---
+
+## Terraform Stack Highlights
+
+- **Networking & security** – Dual-stack VPC, Kubernetes-tagged subnets, NAT gateways, security groups, and enforced CIDR detection for API and bastion access.
+- **Identity & encryption** – Dedicated IAM roles for control plane/nodes, customer-managed KMS key wired into secrets encryption, and fine-grained IRSA roles (ALB, EBS CSI, Cluster Autoscaler, Crossplane core/data with KMS + S3 + Secrets Manager privileges).
+- **Compute & access** – Managed node group with extra labels for autoscaler, optional SSH enforcement only via bastion, automatic EC2 key generation, and a managed bastion host that inherits your admin CIDRs.
+- **Artifacts-on-disk** – Terraform produces inventories, Ansible vars, kubeconfigs, and IRSA metadata so later scripts and human operators share the same facts.
+
+---
+
+## Bastion + Argo CD Bootstrap
+
+1. **`bastion_setup` role** – Creates secure `.kube` / `.ssh`, installs kubectl/helm idempotently, copies kubeconfig and SSH keys, and verifies API connectivity with retries.
+2. **`argocd` role** – Adds Helm repo, installs/updates Argo CD, exposes it via LoadBalancer, extends reconciliation/exec timeouts, and wires both envsubst and lovely CMP plugins with per-app overrides.
+3. **`gitops_root_app` role** – Renders and applies the root Application while injecting env vars (project, region, cluster endpoint, IRSA ARNs, subnet IDs, Vault namespace, etc.) so downstream Apps/Helm charts remain secretless but fully contextual.
+
+---
+
+## GitOps App-of-Apps Layout
+
+```
+gitops/argo-apps/
+├── base/                 # AppProject + per-app Application manifests
+└── overlays/default/root # Kustomize overlay enumerating every Application
+```
+
+- Sync waves ensure storage-stack → cert-manager → ingress → Vault/ESO → Harbor/GitLab → Crossplane → monitoring/velero.
+- lovely/envsubst plugins allow each Application to read values such as `EBS_CSI_ROLE_ARN`, `PUBLIC_SUBNET_IDS`, `AWS_REGION`, or `ARGOCD_NAMESPACE` that Ansible injected automatically.
+- Workloads under `gitops/apps/<name>` combine Helm charts, plain manifests, or forthcoming Crossplane claims (e.g., `apps/crossplane`, `apps/zitadel`, `apps/gitlab`).
+
+---
+
+## Crossplane Composition Packaging (Upcoming)
+
+A new root-level directory will host reusable Crossplane compositions (claims + compositions + functions). A dedicated GitHub Action runner will:
+
+1. Generate and package the compositions into OCI artifacts (via `up xpkg build` or similar) whenever manifests change.
+2. Detect the latest container image tags referenced in those compositions
+3. Update `custom-config-infrastructure.yaml` automatically with the published artifact versions so Crossplane can deploy databases, DNS records, and platform services using fresh images without manual edits.
+4. Publish the package and open a pull request summarizing the new versions consumed by GitOps.
+
+This packaging pipeline slots in immediately after Phase 4 of `project-next-phase.md`, ensuring compositions stay versioned, reproducible, and ready for tenant onboarding.
+
+---
+
+## Project Next Phase & Roadmap
+
+See `project-next-phase.md` for the full runbook.
+
+---
+
+## Repository Layout
+
+```
+ansible/                 # Playbooks + roles (bastion_setup, argocd, gitops_root_app)
+gitops/                  # Argo CD Applications + workload directories
+scripts/                 # init/plan/apply/destroy/apply-ansible, load-config helpers
+terraform/               # modules + root stack with templates for artifacts
+project-next-phase.md    # Ordered roadmap (phases 0–6 + packaging phase)
+custom-config-infrastructure.yaml
+.githooks/               # Pre-commit + commit-msg hooks (enable via `git config core.hooksPath .githooks`)
+```
+
+---
+
+## Getting Started Locally
+
+1. **Prerequisites** – Terraform ≥ 1.6, Ansible ≥ 2.16, `yq`, `jq`, `kustomize`, AWS credentials with permissions for VPC/EKS/IRSA/KMS.
+2. **Configure** – Edit `custom-config-infrastructure.yaml` for your project name, region, CIDRs, IRSA toggles, node group sizing, and Argo CD preferences.
+3. **Bootstrap** – Run:
+   ```bash
+   ./scripts/init-iac.sh
+   ./scripts/plan-iac.sh
+   ./scripts/apply-iac.sh
+   ./scripts/apply-ansible.sh
+   ```
+4. **Inspect** – Check `terraform/stacks/main/artifacts/`, run `terraform output`, and preview `kustomize build gitops/argo-apps/overlays/default/root`.
+5. **Iterate safely** – Update the config file, re-run apply scripts, and let Argo CD converge. Tear everything down with `scripts/destroy-iac.sh` when done.
