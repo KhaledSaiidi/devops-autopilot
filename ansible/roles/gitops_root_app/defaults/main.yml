@@ -5,7 +5,7 @@ gitops_root_app_namespace: "{{ argocd_namespace | default('argocd') }}"
 gitops_root_app_project: default
 gitops_root_app_repo_url: "https://github.com/KhaledSaiidi/devops-autopilot.git"
 gitops_root_app_target_revision: main
-gitops_root_app_path: gitops/argo-apps/root
+gitops_root_app_path: gitops/argo-apps
 gitops_root_app_destination_server: "https://kubernetes.default.svc"
 gitops_root_app_destination_namespace: "{{ argocd_namespace | default('argocd') }}"
 gitops_root_app_labels:

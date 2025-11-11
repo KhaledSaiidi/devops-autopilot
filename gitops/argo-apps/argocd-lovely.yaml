@@ -39,7 +39,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: ${EBS_CSI_NAMESPACE}
-  syncPolicy:
+  syncPolicy: &defaultSyncPolicy
     automated:
       prune: true
       selfHeal: true
@@ -48,6 +48,7 @@ applications:
     - ApplyOutOfSyncOnly=true
     - SkipDryRunOnMissingResource=true
 
+# Wave -3: ingress & DNS
 - name: cert-manager
   namespace: argocd
   project: platform
@@ -65,14 +66,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: ingress-nginx
   namespace: argocd
@@ -96,14 +90,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: ${ALB_CONTROLLER_NAMESPACE}
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: external-dns
   namespace: argocd
@@ -122,15 +109,9 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: dns-system
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
+# Wave -2: platform services
 - name: monitoring
   namespace: argocd
   project: platform
@@ -148,14 +129,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: kyverno
   namespace: argocd
@@ -174,14 +148,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: reflector
   namespace: argocd
@@ -200,14 +167,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: reflector
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: reloader
   namespace: argocd
@@ -226,14 +186,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: reloader
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: vault
   namespace: argocd
@@ -252,14 +205,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: vault
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: external-secrets
   namespace: argocd
@@ -278,15 +224,9 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: external-secrets
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
+# Wave 0: registries & tooling
 - name: harbor
   namespace: argocd
   project: platform
@@ -304,14 +244,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: harbor
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: gitlab
   namespace: argocd
@@ -330,15 +263,9 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: gitlab
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
+# Wave 1+: control-plane add-ons
 - name: crossplane
   namespace: argocd
   project: platform
@@ -361,14 +288,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: ${CROSSPLANE_NAMESPACE}
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: velero
   namespace: argocd
@@ -387,14 +307,7 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: velero
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 - name: zitadel
   namespace: argocd
@@ -413,39 +326,6 @@ applications:
   destination:
     server: https://kubernetes.default.svc
     namespace: zitadel
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
-
-- name: root-deployer
-  namespace: argocd
-  project: platform
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
-  labels:
-    app.kubernetes.io/name: root-deployer
-    app.kubernetes.io/part-of: platform-baseline
-  source:
-    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
-    targetRevision: main
-    path: gitops/apps/root-deployer
-    directory:
-      recurse: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: root-deployer
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-    - ApplyOutOfSyncOnly=true
-    - SkipDryRunOnMissingResource=true
+  syncPolicy: *defaultSyncPolicy
 
 clusters: []
