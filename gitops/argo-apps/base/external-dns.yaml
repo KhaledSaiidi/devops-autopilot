@@ -14,8 +14,8 @@ spec:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
     path: gitops/apps/external-dns
-    directory:
-      recurse: true
+    plugin:
+      name: argocd-lovely-plugin-v1.0
   destination:
     server: https://kubernetes.default.svc
     namespace: dns-system

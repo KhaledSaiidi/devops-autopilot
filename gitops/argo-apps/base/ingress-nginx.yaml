@@ -14,13 +14,15 @@ spec:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
     path: gitops/apps/ingress
-    directory:
-      recurse: true
     plugin:
-      name: envsubst
+      name: argocd-lovely-plugin-v1.0
       env:
-      - name: ALB_CONTROLLER_NAMESPACE
-        value: ${ALB_CONTROLLER_NAMESPACE}
+        - name: ALB_CONTROLLER_NAMESPACE
+          value: ${ALB_CONTROLLER_NAMESPACE}
+        - name: ALB_CONTROLLER_ROLE_ARN
+          value: ${ALB_CONTROLLER_ROLE_ARN}
+        - name: ALB_CONTROLLER_SERVICE_ACCOUNT
+          value: ${ALB_CONTROLLER_SERVICE_ACCOUNT}
   destination:
     server: https://kubernetes.default.svc
     namespace: ${ALB_CONTROLLER_NAMESPACE}

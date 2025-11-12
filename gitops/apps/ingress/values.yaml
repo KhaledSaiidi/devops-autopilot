@@ -1,0 +1,7 @@
+controller:
+  serviceAccount:
+    name: ${ALB_CONTROLLER_SERVICE_ACCOUNT}
+    annotations:
+      eks.amazonaws.com/role-arn: ${ALB_CONTROLLER_ROLE_ARN}
+chart:
+  description: "Placeholder values for ingress controller chart."

@@ -1,8 +1,0 @@
-apiVersion: argocd-lovely/v1alpha1
-kind: Config
-metadata:
-  name: storage-stack
-spec:
-  sources:
-    - type: kustomize
-      path: .

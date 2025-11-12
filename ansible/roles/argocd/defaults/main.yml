@@ -89,6 +89,7 @@ argocd_lovely_plugin_init_command: ""
 argocd_lovely_plugin_generate_command: |
   set -euo pipefail
   REPO_ROOT="$ARGOCD_APP_SOURCE_PATH"
+  APP_PATH="{{ "{{" }} .path {{ "}}" }}"
   TMP_ROOT="$(mktemp -d)"
   trap 'rm -rf "$TMP_ROOT"' EXIT
 
@@ -100,9 +101,23 @@ argocd_lovely_plugin_generate_command: |
       mv "${file}.rendered" "$file"
     done
 
+  cat > "$TMP_ROOT/argocd-lovely.yaml" << 'HEREDOC'
+  apiVersion: argocd-lovely/v1alpha1
+  kind: Config
+  metadata:
+    name: auto-generated
+  spec:
+    sources:
+      - type: kustomize
+        path: "__APP_PATH__"
+  HEREDOC
+
+  sed -i "s#__APP_PATH__#${APP_PATH}#g" "$TMP_ROOT/argocd-lovely.yaml"
+
   cd "$TMP_ROOT"
 
   {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
+
 argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
 
 # Readiness wait

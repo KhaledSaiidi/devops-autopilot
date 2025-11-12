@@ -14,13 +14,11 @@ spec:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
     path: gitops/apps/crossplane
-    directory:
-      recurse: true
     plugin:
-      name: envsubst
+      name: argocd-lovely-plugin-v1.0
       env:
-      - name: CROSSPLANE_NAMESPACE
-        value: ${CROSSPLANE_NAMESPACE}
+        - name: CROSSPLANE_NAMESPACE
+          value: ${CROSSPLANE_NAMESPACE}
   destination:
     server: https://kubernetes.default.svc
     namespace: ${CROSSPLANE_NAMESPACE}
