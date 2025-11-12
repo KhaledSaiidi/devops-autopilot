@@ -30,9 +30,51 @@ argocd_values_extra: {}  # dict merged into template values
 argocd_enable_envsubst_plugin: true
 argocd_envsubst_plugin_name: envsubst
 # The command can be adjusted per-app with .spec.source.plugin, but a generic plugin is handy:
-argocd_envsubst_command: >
-  bash -lc 'envsubst < "$ARGOCD_APP_SOURCE_PATH/{{ "{{" }} .path {{ "}}" }}" > out.yaml &&
-  kubectl apply -f out.yaml'
+argocd_envsubst_command: |
+  set -euo pipefail
+  REPO_ROOT="$ARGOCD_APP_SOURCE_PATH"
+  APP_PATH="{{ "{{" }} .path {{ "}}" }}"
+  SRC_DIR="${REPO_ROOT}/${APP_PATH}"
+
+  if [ ! -d "$SRC_DIR" ]; then
+    echo "Source path $SRC_DIR does not exist or is not a directory" >&2
+    exit 1
+  fi
+
+  TMP_ROOT="$(mktemp -d)"
+  trap 'rm -rf "$TMP_ROOT"' EXIT
+
+  rsync -a --delete "$REPO_ROOT"/ "$TMP_ROOT"/
+
+  WORK_DIR="${TMP_ROOT}/${APP_PATH}"
+  if [ ! -d "$WORK_DIR" ]; then
+    echo "Application path $APP_PATH missing after preparation" >&2
+    exit 1
+  fi
+
+  find "$TMP_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+    while IFS= read -r -d '' file; do
+      envsubst < "$file" > "${file}.rendered"
+      mv "${file}.rendered" "$file"
+    done
+
+  cd "$TMP_ROOT"
+
+  if [ -f "${APP_PATH}/kustomization.yaml" ] || [ -f "${APP_PATH}/kustomization.yml" ]; then
+    if command -v kustomize >/dev/null 2>&1; then
+      kustomize build "$APP_PATH"
+    else
+      kubectl kustomize "$APP_PATH"
+    fi
+  else
+    find "$APP_PATH" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+      sort -z |
+      while IFS= read -r -d '' file; do
+        printf -- "---\n"
+        cat "$file"
+        printf '\n'
+      done
+  fi
 
 # Plugin: lovely (multi-source config management)
 argocd_enable_lovely_plugin: true
@@ -44,14 +86,22 @@ argocd_lovely_plugin_source_binary_name: argocd-lovely-plugin
 argocd_lovely_plugin_binary_name: argocd-lovely-plugin-v1.0
 # init command is optional; leave blank to skip
 argocd_lovely_plugin_init_command: ""
-argocd_lovely_plugin_generate_command: >
-  set -e;
-  cd "${ARGOCD_APP_SOURCE_PATH}" &&
-  if command -v envsubst >/dev/null 2>&1 && [ -f argocd-lovely.yaml ]; then
-    tmp="$(mktemp)";
-    envsubst < argocd-lovely.yaml > "${tmp}";
-    mv "${tmp}" argocd-lovely.yaml;
-  fi &&
+argocd_lovely_plugin_generate_command: |
+  set -euo pipefail
+  REPO_ROOT="$ARGOCD_APP_SOURCE_PATH"
+  TMP_ROOT="$(mktemp -d)"
+  trap 'rm -rf "$TMP_ROOT"' EXIT
+
+  rsync -a --delete "$REPO_ROOT"/ "$TMP_ROOT"/
+
+  find "$TMP_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
+    while IFS= read -r -d '' file; do
+      envsubst < "$file" > "${file}.rendered"
+      mv "${file}.rendered" "$file"
+    done
+
+  cd "$TMP_ROOT"
+
   {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
 argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
 

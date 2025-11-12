@@ -75,7 +75,7 @@
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ argocd_kubeconfig }}"
-    template: argocd-root-app.yaml.j2
+    src: "{{ gitops_root_app_manifest_path }}"
 
 - name: Confirm root application presence
   kubernetes.core.k8s_info:

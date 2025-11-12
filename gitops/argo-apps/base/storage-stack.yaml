@@ -14,13 +14,15 @@ spec:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
     path: gitops/apps/storage
-    directory:
-      recurse: true
     plugin:
-      name: envsubst
+      name: argocd-lovely-plugin-v1.0
       env:
-      - name: EBS_CSI_NAMESPACE
-        value: ${EBS_CSI_NAMESPACE}
+        - name: EBS_CSI_NAMESPACE
+          value: ${EBS_CSI_NAMESPACE}
+        - name: EBS_CSI_SERVICE_ACCOUNT
+          value: ${EBS_CSI_SERVICE_ACCOUNT}
+        - name: EBS_CSI_ROLE_ARN
+          value: ${EBS_CSI_ROLE_ARN}
   destination:
     server: https://kubernetes.default.svc
     namespace: ${EBS_CSI_NAMESPACE}

@@ -1,0 +1,19 @@
+controller:
+  serviceAccount:
+    create: true
+    name: ${EBS_CSI_SERVICE_ACCOUNT}
+    annotations:
+      eks.amazonaws.com/role-arn: ${EBS_CSI_ROLE_ARN}
+  replicaCount: 2
+node:
+  tolerateAllTaints: true
+storageClasses:
+  - name: gp3
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+    parameters:
+      type: gp3
+      fsType: ext4
+chart:
+  version: "2.36.4"
+  releaseName: aws-ebs-csi-driver
