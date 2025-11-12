@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: crossplane-system
+  name: ${CROSSPLANE_NAMESPACE}
   labels:
-    app.kubernetes.io/name: crossplane-system
+    app.kubernetes.io/name: ${CROSSPLANE_NAMESPACE}
     app.kubernetes.io/part-of: platform-baseline

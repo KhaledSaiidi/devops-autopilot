@@ -14,7 +14,7 @@ gitops_root_app_labels:
 gitops_root_app_annotations: {}
 gitops_root_app_sync_options:
   - CreateNamespace=true
-gitops_root_app_plugin_name: ""
+gitops_root_app_plugin_name: "envsubst"
 gitops_root_app_plugin_env: []
 gitops_root_app_auto_plugin_env: []
 
