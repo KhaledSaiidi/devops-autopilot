@@ -1,0 +1,19 @@
+apiVersion: aws.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws-core
+  annotations:
+    autopilot.dev/role-arn: ${CROSSPLANE_CORE_ROLE_ARN}
+spec:
+  credentials:
+    source: IRSA
+---
+apiVersion: aws.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws-data
+  annotations:
+    autopilot.dev/role-arn: ${CROSSPLANE_DATA_ROLE_ARN}
+spec:
+  credentials:
+    source: IRSA

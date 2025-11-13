@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: ${CROSSPLANE_NAMESPACE}
 resources:
   - namespace.yaml
+  - serviceaccounts.yaml
+  - providerconfigs.yaml
 helmCharts:
   - name: placeholder
     repo: file://../.charts/placeholder

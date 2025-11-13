@@ -64,6 +64,14 @@
         value: "{{ gitops_root_app_name }}"
       - name: CROSSPLANE_NAMESPACE
         value: "{{ irsa.crossplane_namespace }}"
+      - name: CROSSPLANE_CORE_ROLE_ARN
+        value: "{{ irsa.crossplane_core_role_arn | default('') }}"
+      - name: CROSSPLANE_CORE_SERVICE_ACCOUNT
+        value: "{{ (irsa.crossplane_core_service_accounts | default([])) | first | default('') }}"
+      - name: CROSSPLANE_DATA_ROLE_ARN
+        value: "{{ irsa.crossplane_data_role_arn | default('') }}"
+      - name: CROSSPLANE_DATA_SERVICE_ACCOUNT
+        value: "{{ (irsa.crossplane_data_service_accounts | default([])) | first | default('') }}"
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:
