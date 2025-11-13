@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cni-prefix-tuning
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-2'
+  labels:
+    app.kubernetes.io/name: cni-prefix-tuning
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+    targetRevision: main
+    path: gitops/apps/cni-tuning
+    plugin:
+      name: argocd-lovely-plugin-v1.0
+      env:
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: CLUSTER_NAME
+          value: ${CLUSTER_NAME}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - SkipDryRunOnMissingResource=true

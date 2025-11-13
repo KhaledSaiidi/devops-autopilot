@@ -1,6 +1,6 @@
 ---
 # Root Argo CD application configuration
-gitops_root_app_name: argocd-root
+gitops_root_app_name: app-of-apps
 gitops_root_app_namespace: "{{ argocd_namespace | default('argocd') }}"
 gitops_root_app_project: default
 gitops_root_app_repo_url: "https://github.com/KhaledSaiidi/devops-autopilot.git"
@@ -18,4 +18,4 @@ gitops_root_app_plugin_name: "envsubst"
 gitops_root_app_plugin_env: []
 gitops_root_app_auto_plugin_env: []
 
-gitops_root_app_manifest_path: /tmp/argocd-root-app.yaml
+gitops_root_app_manifest_path: /tmp/app-of-apps.yaml
