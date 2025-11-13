@@ -5,6 +5,7 @@ resources:
   - ../../../base/storage-stack.yaml
   - ../../../base/cert-manager.yaml
   - ../../../base/ingress-nginx.yaml
+  - ../../../base/cni-tuning.yaml
   - ../../../base/external-dns.yaml
   - ../../../base/monitoring.yaml
   - ../../../base/kyverno.yaml
