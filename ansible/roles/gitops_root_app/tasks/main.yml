@@ -67,7 +67,7 @@
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:
-    src: argocd-root-app.yaml.j2
+    src: app-of-apps.yaml.j2
     dest: "{{ gitops_root_app_manifest_path }}"
     mode: "0600"
 
