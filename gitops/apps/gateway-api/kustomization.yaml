@@ -6,13 +6,8 @@ resources:
   - github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0
   - https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.15.0/config/crd/gateway/gateway-crds.yaml
   - manifests/gatewayclass.yaml
-  - resources/external-${GATEWAY_API_EXTERNAL_ENABLED}.yaml
-  - resources/internal-${GATEWAY_API_INTERNAL_ENABLED}.yaml
-patchesStrategicMerge:
-  - patches/external-tls-${GATEWAY_API_EXTERNAL_TLS_ENABLED}.yaml
-  - patches/external-waf-${GATEWAY_API_EXTERNAL_WAF_ENABLED}.yaml
-  - patches/internal-tls-${GATEWAY_API_INTERNAL_TLS_ENABLED}.yaml
-  - patches/internal-waf-${GATEWAY_API_INTERNAL_WAF_ENABLED}.yaml
+  - resources/external-gateway.yaml
+  - resources/internal-gateway.yaml
 helmCharts:
   - name: aws-load-balancer-controller
     repo: https://aws.github.io/eks-charts

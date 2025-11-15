@@ -16,8 +16,12 @@ spec:
       value: "${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}"
   shieldConfiguration:
     enabled: ${GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD}
+${GATEWAY_API_INTERNAL_WAF_BLOCK}
   tags:
 ${GATEWAY_API_LOAD_BALANCER_TAGS}
+  listenerConfigurations:
+    - protocolPort: HTTPS:${GATEWAY_API_INTERNAL_HTTPS_PORT}
+      defaultCertificate: ${GATEWAY_API_INTERNAL_TLS_CERT_ARN}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -38,6 +42,13 @@ spec:
     - name: internal-http
       protocol: HTTP
       port: ${GATEWAY_API_INTERNAL_HTTP_PORT}
+      hostname: ${GATEWAY_API_INTERNAL_HOSTNAME}
+      allowedRoutes:
+        namespaces:
+          from: ${GATEWAY_API_INTERNAL_ALLOWED_ROUTES}
+    - name: internal-https
+      protocol: HTTPS
+      port: ${GATEWAY_API_INTERNAL_HTTPS_PORT}
       hostname: ${GATEWAY_API_INTERNAL_HOSTNAME}
       allowedRoutes:
         namespaces:

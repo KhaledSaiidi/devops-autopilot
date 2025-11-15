@@ -1,8 +1,0 @@
-apiVersion: gateway.k8s.aws/v1beta1
-kind: LoadBalancerConfiguration
-metadata:
-  name: ${GATEWAY_API_EXTERNAL_CONFIG_NAME}
-  namespace: ${GATEWAY_API_NAMESPACE}
-spec:
-  wafV2:
-    webACL: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_WAF_ARN}
