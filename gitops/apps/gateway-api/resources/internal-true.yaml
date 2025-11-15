@@ -16,7 +16,8 @@ spec:
       value: "${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}"
   shieldConfiguration:
     enabled: ${GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD}
-  tags: ${GATEWAY_API_LOAD_BALANCER_TAGS}
+  tags:
+${GATEWAY_API_LOAD_BALANCER_TAGS}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
