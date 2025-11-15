@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ${ALB_CONTROLLER_NAMESPACE}
+  name: ${GATEWAY_API_NAMESPACE}
   labels:
-    app.kubernetes.io/name: ${ALB_CONTROLLER_NAMESPACE}
+    app.kubernetes.io/name: ${GATEWAY_API_NAMESPACE}
     app.kubernetes.io/part-of: platform-baseline

@@ -1,0 +1,24 @@
+apiVersion: gateway.k8s.aws/v1beta1
+kind: LoadBalancerConfiguration
+metadata:
+  name: ${GATEWAY_API_INTERNAL_CONFIG_NAME}
+  namespace: ${GATEWAY_API_NAMESPACE}
+spec:
+  listenerConfigurations:
+    - protocolPort: HTTPS:${GATEWAY_API_INTERNAL_HTTPS_PORT}
+      defaultCertificate: ${GATEWAY_API_INTERNAL_TLS_CERT_ARN}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ${GATEWAY_API_INTERNAL_NAME}
+  namespace: ${GATEWAY_API_NAMESPACE}
+spec:
+  listeners:
+    - name: internal-https
+      protocol: HTTPS
+      port: ${GATEWAY_API_INTERNAL_HTTPS_PORT}
+      hostname: ${GATEWAY_API_INTERNAL_HOSTNAME}
+      allowedRoutes:
+        namespaces:
+          from: ${GATEWAY_API_INTERNAL_ALLOWED_ROUTES}

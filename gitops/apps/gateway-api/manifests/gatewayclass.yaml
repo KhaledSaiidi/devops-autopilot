@@ -1,0 +1,9 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: ${GATEWAY_API_GATEWAY_CLASS_NAME}
+  labels:
+    app.kubernetes.io/name: gateway-api
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  controllerName: gateway.k8s.aws/alb

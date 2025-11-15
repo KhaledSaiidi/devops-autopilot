@@ -72,6 +72,134 @@
         value: "{{ irsa.crossplane_data_role_arn | default('') }}"
       - name: CROSSPLANE_DATA_SERVICE_ACCOUNT
         value: "{{ (irsa.crossplane_data_service_accounts | default([])) | first | default('') }}"
+      - name: GATEWAY_API_NAMESPACE
+        value: "{{ gateway_api.namespace | default(irsa.alb_controller_namespace) }}"
+      - name: GATEWAY_API_GATEWAY_CLASS_NAME
+        value: "{{ gateway_api.gateway_class_name | default('aws-alb-gateway-class') }}"
+      - name: GATEWAY_API_CONTROLLER_TARGET_TYPE
+        value: "{{ gateway_api.controller.default_target_type | default('ip') }}"
+      - name: GATEWAY_API_CONTROLLER_ENABLE_ALB_GATEWAY
+        value: "{{ (gateway_api.controller.enable_alb_gateway | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_CONTROLLER_ENABLE_NLB_GATEWAY
+        value: "{{ (gateway_api.controller.enable_nlb_gateway | default(false)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_CONTROLLER_ENABLE_SHIELD_ADDON
+        value: "{{ (gateway_api.controller.enable_shield_addon | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_CONTROLLER_ENABLE_WAF_ADDON
+        value: "{{ (gateway_api.controller.enable_waf_addon | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_CONTROLLER_ENABLE_WAFV2_ADDON
+        value: "{{ (gateway_api.controller.enable_wafv2_addon | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_CONTROLLER_LOG_LEVEL
+        value: "{{ gateway_api.controller.log_level | default('info') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_IP_ADDRESS_TYPE
+        value: "{{ gateway_api.load_balancer.ip_address_type | default('ipv4') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_EXTERNAL_SCHEME
+        value: "{{ gateway_api.load_balancer.external_scheme | default('internet-facing') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_SCHEME
+        value: "{{ gateway_api.load_balancer.internal_scheme | default('internal') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION
+        value: "{{ (gateway_api.load_balancer.deletion_protection_enabled | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT
+        value: "{{ gateway_api.load_balancer.idle_timeout_seconds | default(60) }}"
+      - name: GATEWAY_API_LOAD_BALANCER_EXTERNAL_WAF_ARN
+        value: "{{ gateway_api.load_balancer.external_wafv2_acl_arn | default('') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_WAF_ARN
+        value: "{{ gateway_api.load_balancer.internal_wafv2_acl_arn | default('') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_EXTERNAL_SHIELD
+        value: "{{ (gateway_api.load_balancer.external_shield_enabled | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD
+        value: "{{ (gateway_api.load_balancer.internal_shield_enabled | default(false)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_LOAD_BALANCER_TAGS
+        value: "{{ (gateway_api.load_balancer.tags | default({})) | to_nice_yaml | indent(4, true) }}"
+      - name: GATEWAY_API_EXTERNAL_ENABLED
+        value: "{{ (gateway_api.external_gateway.enabled | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_EXTERNAL_NAME
+        value: "{{ gateway_api.external_gateway.name | default('public-gateway') }}"
+      - name: GATEWAY_API_EXTERNAL_CONFIG_NAME
+        value: "{{ (gateway_api.external_gateway.name | default('public-gateway')) ~ '-config' }}"
+      - name: GATEWAY_API_EXTERNAL_HTTP_PORT
+        value: "{{ gateway_api.external_gateway.http_port | default(80) }}"
+      - name: GATEWAY_API_EXTERNAL_HTTPS_PORT
+        value: "{{ gateway_api.external_gateway.https_port | default(443) }}"
+      - name: GATEWAY_API_EXTERNAL_HOSTNAME
+        value: "{{ gateway_api.external_gateway.hostname | default('') }}"
+      - name: GATEWAY_API_EXTERNAL_ALLOWED_ROUTES
+        value: "{{ gateway_api.external_gateway.allowed_routes_from | default('All') }}"
+      - name: GATEWAY_API_EXTERNAL_TLS_CERT_ARN
+        value: "{{ gateway_api.external_gateway.tls_certificate_arn | default('') }}"
+      - name: GATEWAY_API_EXTERNAL_TLS_ENABLED
+        value: >-
+          {{
+            (
+              (
+                gateway_api.external_gateway.enabled | default(true)
+              )
+              and (
+                gateway_api.external_gateway.https_port | default(0) | int > 0
+              )
+              and (
+                gateway_api.external_gateway.tls_certificate_arn | default('') | length > 0
+              )
+            )
+            | ternary('true', 'false')
+          }}
+      - name: GATEWAY_API_EXTERNAL_WAF_ENABLED
+        value: >-
+          {{
+            (
+              (
+                gateway_api.external_gateway.enabled | default(true)
+              )
+              and (
+                gateway_api.load_balancer.external_wafv2_acl_arn | default('') | length > 0
+              )
+            )
+            | ternary('true', 'false')
+          }}
+      - name: GATEWAY_API_INTERNAL_ENABLED
+        value: "{{ (gateway_api.internal_gateway.enabled | default(true)) | ternary('true', 'false') }}"
+      - name: GATEWAY_API_INTERNAL_NAME
+        value: "{{ gateway_api.internal_gateway.name | default('internal-gateway') }}"
+      - name: GATEWAY_API_INTERNAL_CONFIG_NAME
+        value: "{{ (gateway_api.internal_gateway.name | default('internal-gateway')) ~ '-config' }}"
+      - name: GATEWAY_API_INTERNAL_HTTP_PORT
+        value: "{{ gateway_api.internal_gateway.http_port | default(8080) }}"
+      - name: GATEWAY_API_INTERNAL_HTTPS_PORT
+        value: "{{ gateway_api.internal_gateway.https_port | default(8443) }}"
+      - name: GATEWAY_API_INTERNAL_HOSTNAME
+        value: "{{ gateway_api.internal_gateway.hostname | default('') }}"
+      - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
+        value: "{{ gateway_api.internal_gateway.allowed_routes_from | default('Same') }}"
+      - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
+        value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
+      - name: GATEWAY_API_INTERNAL_TLS_ENABLED
+        value: >-
+          {{
+            (
+              (
+                gateway_api.internal_gateway.enabled | default(true)
+              )
+              and (
+                gateway_api.internal_gateway.https_port | default(0) | int > 0
+              )
+              and (
+                gateway_api.internal_gateway.tls_certificate_arn | default('') | length > 0
+              )
+            )
+            | ternary('true', 'false')
+          }}
+      - name: GATEWAY_API_INTERNAL_WAF_ENABLED
+        value: >-
+          {{
+            (
+              (
+                gateway_api.internal_gateway.enabled | default(true)
+              )
+              and (
+                gateway_api.load_balancer.internal_wafv2_acl_arn | default('') | length > 0
+              )
+            )
+            | ternary('true', 'false')
+          }}
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:

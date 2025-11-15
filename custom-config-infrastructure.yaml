@@ -92,3 +92,45 @@ ansible:
   argocd_wait_interval: 10
   argocd_reconciliation_timeout: "10m"
   argocd_exec_timeout: "600s"
+
+gateway_api:
+  namespace: ""
+  gateway_class_name: "aws-alb-gateway-class"
+  controller:
+    default_target_type: "ip"
+    enable_alb_gateway: true
+    enable_nlb_gateway: false
+    enable_shield_addon: true
+    enable_waf_addon: true
+    enable_wafv2_addon: true
+    log_level: "info"
+  load_balancer:
+    ip_address_type: "ipv4"
+    external_scheme: "internet-facing"
+    internal_scheme: "internal"
+    deletion_protection_enabled: true
+    idle_timeout_seconds: 60
+    tags:
+      Owner: "Khaled Saidi"
+      ManagedBy: "Terraform"
+      Environment: "devops-autopilot"
+    external_wafv2_acl_arn: ""
+    internal_wafv2_acl_arn: ""
+    external_shield_enabled: true
+    internal_shield_enabled: false
+  external_gateway:
+    enabled: true
+    name: "public-gateway"
+    http_port: 80
+    https_port: 443
+    hostname: ""
+    allowed_routes_from: "All"
+    tls_certificate_arn: ""
+  internal_gateway:
+    enabled: true
+    name: "internal-gateway"
+    http_port: 8080
+    https_port: 8443
+    hostname: ""
+    allowed_routes_from: "Same"
+    tls_certificate_arn: ""
