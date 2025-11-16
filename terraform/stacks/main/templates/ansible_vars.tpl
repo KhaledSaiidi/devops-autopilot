@@ -61,3 +61,37 @@ argocd_wait_timeout: ${argocd_wait_timeout}
 argocd_wait_interval: ${argocd_wait_interval}
 argocd_reconciliation_timeout: ${argocd_reconciliation_timeout}
 argocd_exec_timeout: ${argocd_exec_timeout}
+
+gateway_api:
+  namespace: "${gateway_api.namespace}"
+  gateway_class_name: "${gateway_api.gateway_class_name}"
+  controller:
+    default_target_type: "${gateway_api.controller.default_target_type}"
+    enable_alb_gateway: ${gateway_api.controller.enable_alb_gateway}
+    enable_nlb_gateway: ${gateway_api.controller.enable_nlb_gateway}
+    enable_shield_addon: ${gateway_api.controller.enable_shield_addon}
+    log_level: "${gateway_api.controller.log_level}"
+  load_balancer:
+    ip_address_type: "${gateway_api.load_balancer.ip_address_type}"
+    external_scheme: "${gateway_api.load_balancer.external_scheme}"
+    internal_scheme: "${gateway_api.load_balancer.internal_scheme}"
+    deletion_protection_enabled: ${gateway_api.load_balancer.deletion_protection_enabled}
+    idle_timeout_seconds: ${gateway_api.load_balancer.idle_timeout_seconds}
+    external_shield_enabled: ${gateway_api.load_balancer.external_shield_enabled}
+    internal_shield_enabled: ${gateway_api.load_balancer.internal_shield_enabled}
+  external_gateway:
+    enabled: ${gateway_api.external_gateway.enabled}
+    name: "${gateway_api.external_gateway.name}"
+    http_port: ${gateway_api.external_gateway.http_port}
+    https_port: ${gateway_api.external_gateway.https_port}
+    hostname: "${gateway_api.external_gateway.hostname}"
+    allowed_routes_from: "${gateway_api.external_gateway.allowed_routes_from}"
+    tls_certificate_arn: "${gateway_api.external_gateway.tls_certificate_arn}"
+  internal_gateway:
+    enabled: ${gateway_api.internal_gateway.enabled}
+    name: "${gateway_api.internal_gateway.name}"
+    http_port: ${gateway_api.internal_gateway.http_port}
+    https_port: ${gateway_api.internal_gateway.https_port}
+    hostname: "${gateway_api.internal_gateway.hostname}"
+    allowed_routes_from: "${gateway_api.internal_gateway.allowed_routes_from}"
+    tls_certificate_arn: "${gateway_api.internal_gateway.tls_certificate_arn}"

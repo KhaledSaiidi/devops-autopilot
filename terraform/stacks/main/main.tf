@@ -1,5 +1,7 @@
 locals {
-  artifacts_dir = "${path.root}/artifacts"
+  artifacts_dir         = "${path.root}/artifacts"
+  gateway_api_namespace = var.gateway_api_namespace != "" ? var.gateway_api_namespace : var.alb_controller_namespace
+  gateway_api_tags      = length(var.gateway_api_load_balancer.tags) > 0 ? var.gateway_api_load_balancer.tags : var.tags
 }
 resource "null_resource" "artifacts_dir" {
   provisioner "local-exec" {
@@ -205,6 +207,15 @@ resource "local_file" "ansible_vars" {
     argocd_wait_interval          = var.argocd_wait_interval
     argocd_reconciliation_timeout = var.argocd_reconciliation_timeout
     argocd_exec_timeout           = var.argocd_exec_timeout
+
+    gateway_api = {
+      namespace          = local.gateway_api_namespace
+      gateway_class_name = var.gateway_api_gateway_class_name
+      controller         = var.gateway_api_controller
+      load_balancer      = merge(var.gateway_api_load_balancer, { tags = local.gateway_api_tags })
+      external_gateway   = var.gateway_api_external_gateway
+      internal_gateway   = var.gateway_api_internal_gateway
+    }
   })
 
   depends_on = [null_resource.artifacts_dir]

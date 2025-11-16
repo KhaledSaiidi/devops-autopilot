@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gateway-api
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-4'
+  labels:
+    app.kubernetes.io/name: gateway-api
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+    targetRevision: main
+    path: gitops/apps/gateway-api
+    plugin:
+      name: argocd-lovely-plugin-v1.0
+      env:
+        - name: CLUSTER_NAME
+          value: ${CLUSTER_NAME}
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: VPC_ID
+          value: ${VPC_ID}
+        - name: ALB_CONTROLLER_NAMESPACE
+          value: ${ALB_CONTROLLER_NAMESPACE}
+        - name: ALB_CONTROLLER_ROLE_ARN
+          value: ${ALB_CONTROLLER_ROLE_ARN}
+        - name: ALB_CONTROLLER_SERVICE_ACCOUNT
+          value: ${ALB_CONTROLLER_SERVICE_ACCOUNT}
+        - name: GATEWAY_API_NAMESPACE
+          value: ${GATEWAY_API_NAMESPACE}
+        - name: GATEWAY_API_GATEWAY_CLASS_NAME
+          value: ${GATEWAY_API_GATEWAY_CLASS_NAME}
+        - name: GATEWAY_API_CONTROLLER_TARGET_TYPE
+          value: ${GATEWAY_API_CONTROLLER_TARGET_TYPE}
+        - name: GATEWAY_API_CONTROLLER_ENABLE_ALB_GATEWAY
+          value: ${GATEWAY_API_CONTROLLER_ENABLE_ALB_GATEWAY}
+        - name: GATEWAY_API_CONTROLLER_ENABLE_NLB_GATEWAY
+          value: ${GATEWAY_API_CONTROLLER_ENABLE_NLB_GATEWAY}
+        - name: GATEWAY_API_CONTROLLER_ENABLE_SHIELD_ADDON
+          value: ${GATEWAY_API_CONTROLLER_ENABLE_SHIELD_ADDON}
+        - name: GATEWAY_API_CONTROLLER_LOG_LEVEL
+          value: ${GATEWAY_API_CONTROLLER_LOG_LEVEL}
+        - name: GATEWAY_API_LOAD_BALANCER_IP_ADDRESS_TYPE
+          value: ${GATEWAY_API_LOAD_BALANCER_IP_ADDRESS_TYPE}
+        - name: GATEWAY_API_LOAD_BALANCER_EXTERNAL_SCHEME
+          value: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SCHEME}
+        - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_SCHEME
+          value: ${GATEWAY_API_LOAD_BALANCER_INTERNAL_SCHEME}
+        - name: GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION
+          value: ${GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION}
+        - name: GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT
+          value: ${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}
+        - name: GATEWAY_API_LOAD_BALANCER_EXTERNAL_SHIELD
+          value: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SHIELD}
+        - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD
+          value: ${GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD}
+        - name: GATEWAY_API_EXTERNAL_NAME
+          value: ${GATEWAY_API_EXTERNAL_NAME}
+        - name: GATEWAY_API_EXTERNAL_CONFIG_NAME
+          value: ${GATEWAY_API_EXTERNAL_CONFIG_NAME}
+        - name: GATEWAY_API_EXTERNAL_HTTP_PORT
+          value: ${GATEWAY_API_EXTERNAL_HTTP_PORT}
+        - name: GATEWAY_API_EXTERNAL_HTTPS_PORT
+          value: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
+        - name: GATEWAY_API_EXTERNAL_HOSTNAME
+          value: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+        - name: GATEWAY_API_EXTERNAL_ALLOWED_ROUTES
+          value: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
+        - name: GATEWAY_API_EXTERNAL_TLS_CERT_ARN
+          value: ${GATEWAY_API_EXTERNAL_TLS_CERT_ARN}
+        - name: GATEWAY_API_INTERNAL_NAME
+          value: ${GATEWAY_API_INTERNAL_NAME}
+        - name: GATEWAY_API_INTERNAL_CONFIG_NAME
+          value: ${GATEWAY_API_INTERNAL_CONFIG_NAME}
+        - name: GATEWAY_API_INTERNAL_HTTP_PORT
+          value: ${GATEWAY_API_INTERNAL_HTTP_PORT}
+        - name: GATEWAY_API_INTERNAL_HTTPS_PORT
+          value: ${GATEWAY_API_INTERNAL_HTTPS_PORT}
+        - name: GATEWAY_API_INTERNAL_HOSTNAME
+          value: ${GATEWAY_API_INTERNAL_HOSTNAME}
+        - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
+          value: ${GATEWAY_API_INTERNAL_ALLOWED_ROUTES}
+        - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
+          value: ${GATEWAY_API_INTERNAL_TLS_CERT_ARN}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${GATEWAY_API_NAMESPACE}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - SkipDryRunOnMissingResource=true

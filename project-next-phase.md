@@ -54,7 +54,7 @@ These apps bootstrap namespaces, storage, ingress, security, and secrets so Cros
    - Create gp3 StorageClass (default) + PVC smoke test.
    - _Validation_: `kubectl describe sc gp3` shows `is-default-class=true`; PVC binds.
 
-3. **Ingress & networking (`gitops/apps/ingress`)**
+3. **Ingress & networking (`gitops/apps/gateway-api`)**
    - Install AWS Load Balancer Controller with `${CLUSTER_NAME}`, `${AWS_REGION}`, `${VPC_ID}`, `${ALB_ROLE_ARN}`.
    - Ensure VPC subnets carry required tags (`kubernetes.io/role/*`).
    - _Validation_: Controller Deployment healthy; `kubectl get ingressclass alb`.

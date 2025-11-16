@@ -1,31 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ingress-nginx
+  name: databases
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '-3'
+    argocd.argoproj.io/sync-wave: '1'
   labels:
-    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/name: databases
     app.kubernetes.io/part-of: platform-baseline
 spec:
   project: platform
   source:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
-    path: gitops/apps/ingress
+    path: gitops/apps/databases
     plugin:
       name: argocd-lovely-plugin-v1.0
-      env:
-        - name: ALB_CONTROLLER_NAMESPACE
-          value: ${ALB_CONTROLLER_NAMESPACE}
-        - name: ALB_CONTROLLER_ROLE_ARN
-          value: ${ALB_CONTROLLER_ROLE_ARN}
-        - name: ALB_CONTROLLER_SERVICE_ACCOUNT
-          value: ${ALB_CONTROLLER_SERVICE_ACCOUNT}
   destination:
     server: https://kubernetes.default.svc
-    namespace: ${ALB_CONTROLLER_NAMESPACE}
+    namespace: databases
   syncPolicy:
     automated:
       prune: true

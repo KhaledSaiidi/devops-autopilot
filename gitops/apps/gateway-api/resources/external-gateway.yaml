@@ -1,0 +1,52 @@
+apiVersion: gateway.k8s.aws/v1beta1
+kind: LoadBalancerConfiguration
+metadata:
+  name: ${GATEWAY_API_EXTERNAL_CONFIG_NAME}
+  namespace: ${GATEWAY_API_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: gateway-api
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  scheme: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SCHEME}
+  ipAddressType: ${GATEWAY_API_LOAD_BALANCER_IP_ADDRESS_TYPE}
+  loadBalancerAttributes:
+  - key: deletion_protection.enabled
+    value: "${GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION}"
+  - key: idle_timeout.timeout_seconds
+    value: "${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}"
+  shieldConfiguration:
+    enabled: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SHIELD}
+  listenerConfigurations:
+  - protocolPort: "HTTPS:${GATEWAY_API_EXTERNAL_HTTPS_PORT}"
+    defaultCertificate: ${GATEWAY_API_EXTERNAL_TLS_CERT_ARN}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ${GATEWAY_API_EXTERNAL_NAME}
+  namespace: ${GATEWAY_API_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: gateway-api
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  gatewayClassName: ${GATEWAY_API_GATEWAY_CLASS_NAME}
+  infrastructure:
+    parametersRef:
+      group: gateway.k8s.aws
+      kind: LoadBalancerConfiguration
+      name: ${GATEWAY_API_EXTERNAL_CONFIG_NAME}
+  listeners:
+  - name: external-http
+    protocol: HTTP
+    port: ${GATEWAY_API_EXTERNAL_HTTP_PORT}
+    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    allowedRoutes:
+      namespaces:
+        from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
+  - name: external-https
+    protocol: HTTPS
+    port: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
+    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    allowedRoutes:
+      namespaces:
+        from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}

@@ -120,6 +120,8 @@ declare -A NODEGROUP_OPTIONAL=(
 )
 load_section "nodegroup" "" EMPTY_MAP EMPTY_MAP NODEGROUP_OPTIONAL
 
+load_section "gateway_api" "gateway_api_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+
 # -----------------------------------------------------------------------------
 # Backend configuration (always exported, even if empty)
 # -----------------------------------------------------------------------------
