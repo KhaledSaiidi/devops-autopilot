@@ -382,7 +382,6 @@ variable "gateway_api_load_balancer" {
     internal_scheme             = string
     deletion_protection_enabled = bool
     idle_timeout_seconds        = number
-    tags                        = map(string)
     external_shield_enabled     = bool
     internal_shield_enabled     = bool
   })
@@ -392,7 +391,6 @@ variable "gateway_api_load_balancer" {
     internal_scheme             = "internal"
     deletion_protection_enabled = true
     idle_timeout_seconds        = 60
-    tags                        = {}
     external_shield_enabled     = true
     internal_shield_enabled     = false
   }

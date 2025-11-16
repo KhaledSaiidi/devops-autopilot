@@ -100,21 +100,6 @@
         value: "{{ (gateway_api.load_balancer.external_shield_enabled | default(true)) | ternary('true', 'false') }}"
       - name: GATEWAY_API_LOAD_BALANCER_INTERNAL_SHIELD
         value: "{{ (gateway_api.load_balancer.internal_shield_enabled | default(false)) | ternary('true', 'false') }}"
-      - name: GATEWAY_API_LOAD_BALANCER_TAGS
-        value: >-
-          {% set _tags = gateway_api.load_balancer.tags | default({}) %}
-          {{
-            '\n'
-            ~ (
-              (_tags | length > 0)
-              | ternary(
-                  (_tags | to_nice_yaml | indent(4, True)),
-                  '    {}'
-                )
-            )
-          }}
-      - name: GATEWAY_API_EXTERNAL_ENABLED
-        value: "{{ (gateway_api.external_gateway.enabled | default(true)) | ternary('true', 'false') }}"
       - name: GATEWAY_API_EXTERNAL_NAME
         value: "{{ gateway_api.external_gateway.name | default('public-gateway') }}"
       - name: GATEWAY_API_EXTERNAL_CONFIG_NAME
@@ -129,24 +114,6 @@
         value: "{{ gateway_api.external_gateway.allowed_routes_from | default('All') }}"
       - name: GATEWAY_API_EXTERNAL_TLS_CERT_ARN
         value: "{{ gateway_api.external_gateway.tls_certificate_arn | default('') }}"
-      - name: GATEWAY_API_EXTERNAL_TLS_ENABLED
-        value: >-
-          {{
-            (
-              (
-                gateway_api.external_gateway.enabled | default(true)
-              )
-              and (
-                gateway_api.external_gateway.https_port | default(0) | int > 0
-              )
-              and (
-                gateway_api.external_gateway.tls_certificate_arn | default('') | length > 0
-              )
-            )
-            | ternary('true', 'false')
-          }}
-      - name: GATEWAY_API_INTERNAL_ENABLED
-        value: "{{ (gateway_api.internal_gateway.enabled | default(true)) | ternary('true', 'false') }}"
       - name: GATEWAY_API_INTERNAL_NAME
         value: "{{ gateway_api.internal_gateway.name | default('internal-gateway') }}"
       - name: GATEWAY_API_INTERNAL_CONFIG_NAME
@@ -161,22 +128,8 @@
         value: "{{ gateway_api.internal_gateway.allowed_routes_from | default('Same') }}"
       - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
         value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
-      - name: GATEWAY_API_INTERNAL_TLS_ENABLED
-        value: >-
-          {{
-            (
-              (
-                gateway_api.internal_gateway.enabled | default(true)
-              )
-              and (
-                gateway_api.internal_gateway.https_port | default(0) | int > 0
-              )
-              and (
-                gateway_api.internal_gateway.tls_certificate_arn | default('') | length > 0
-              )
-            )
-            | ternary('true', 'false')
-          }}
+      - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
+        value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:

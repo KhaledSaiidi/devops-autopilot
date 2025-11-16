@@ -107,10 +107,6 @@ gateway_api:
     internal_scheme: "internal"
     deletion_protection_enabled: true
     idle_timeout_seconds: 60
-    tags:
-      Owner: "Khaled Saidi"
-      ManagedBy: "Terraform"
-      Environment: "devops-autopilot"
     external_shield_enabled: true
     internal_shield_enabled: false
   external_gateway:

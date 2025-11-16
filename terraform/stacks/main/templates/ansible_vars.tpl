@@ -79,14 +79,6 @@ gateway_api:
     idle_timeout_seconds: ${gateway_api.load_balancer.idle_timeout_seconds}
     external_shield_enabled: ${gateway_api.load_balancer.external_shield_enabled}
     internal_shield_enabled: ${gateway_api.load_balancer.internal_shield_enabled}
-    tags:
-%{ if length(gateway_api.load_balancer.tags) == 0 }
-      {}
-%{ else }
-%{ for tag_key, tag_value in gateway_api.load_balancer.tags }
-      ${tag_key}: "${tag_value}"
-%{ endfor }
-%{ endif }
   external_gateway:
     enabled: ${gateway_api.external_gateway.enabled}
     name: "${gateway_api.external_gateway.name}"
