@@ -130,3 +130,45 @@ variable "crossplane_kms_key_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "create_cert_manager_role" {
+  description = "Create an IRSA role scoped for cert-manager Route53 DNS01 solver."
+  type        = bool
+  default     = true
+}
+
+variable "cert_manager_namespace" {
+  description = "Namespace housing the cert-manager ServiceAccount."
+  type        = string
+  default     = "cert-manager"
+}
+
+variable "cert_manager_service_account" {
+  description = "ServiceAccount used by cert-manager."
+  type        = string
+  default     = "cert-manager"
+}
+
+variable "create_external_dns_role" {
+  description = "Create an IRSA role for external-dns."
+  type        = bool
+  default     = true
+}
+
+variable "external_dns_namespace" {
+  description = "Namespace for the external-dns ServiceAccount."
+  type        = string
+  default     = "dns-system"
+}
+
+variable "external_dns_service_account" {
+  description = "ServiceAccount used by external-dns."
+  type        = string
+  default     = "external-dns"
+}
+
+variable "route53_zone_arns" {
+  description = "Route53 hosted zone ARNs a DNS-integrated workload may manage."
+  type        = list(string)
+  default     = []
+}

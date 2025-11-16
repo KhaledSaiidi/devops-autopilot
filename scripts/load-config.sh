@@ -121,6 +121,12 @@ declare -A NODEGROUP_OPTIONAL=(
 load_section "nodegroup" "" EMPTY_MAP EMPTY_MAP NODEGROUP_OPTIONAL
 
 load_section "gateway_api" "gateway_api_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+declare -A DNS_OPTIONAL=(
+  [hosted_zone_id]="false"
+)
+load_section "dns" "dns_" EMPTY_MAP EMPTY_MAP DNS_OPTIONAL
+load_section "cert_manager" "cert_manager_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+load_section "external_dns" "external_dns_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
 
 # -----------------------------------------------------------------------------
 # Backend configuration (always exported, even if empty)

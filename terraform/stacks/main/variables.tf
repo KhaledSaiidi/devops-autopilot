@@ -164,6 +164,42 @@ variable "crossplane_kms_key_arns" {
   default     = []
 }
 
+variable "create_cert_manager_role" {
+  description = "Create an IRSA role scoped to Route53 for cert-manager DNS01 challenges."
+  type        = bool
+  default     = true
+}
+
+variable "cert_manager_namespace" {
+  description = "Namespace where cert-manager runs."
+  type        = string
+  default     = "cert-manager"
+}
+
+variable "cert_manager_service_account" {
+  description = "cert-manager ServiceAccount name."
+  type        = string
+  default     = "cert-manager"
+}
+
+variable "create_external_dns_role" {
+  description = "Create an IRSA role for external-dns."
+  type        = bool
+  default     = true
+}
+
+variable "external_dns_namespace" {
+  description = "Namespace where external-dns runs."
+  type        = string
+  default     = "dns-system"
+}
+
+variable "external_dns_service_account" {
+  description = "ServiceAccount for external-dns."
+  type        = string
+  default     = "external-dns"
+}
+
 ############################################
 # EKS Cluster Settings
 ############################################
@@ -339,6 +375,118 @@ variable "argocd_exec_timeout" {
   description = "ArgoCD execution time"
   type        = string
   default     = ""
+}
+
+############################################
+# DNS and certificate automation
+############################################
+variable "dns_base_domain" {
+  description = "Primary Route53 domain (e.g., example.com)."
+  type        = string
+  default     = ""
+}
+
+variable "dns_hosted_zone_id" {
+  description = "Optional explicit hosted zone ID to use for DNS automation."
+  type        = string
+  default     = ""
+}
+
+variable "dns_environment_subdomain" {
+  description = "Environment subdomain appended before the base domain (defaults to project_name when empty)."
+  type        = string
+  default     = ""
+}
+
+variable "dns_internal_subdomain" {
+  description = "Label inserted before the environment domain for internal-only traffic (e.g., internal.env.example.com)."
+  type        = string
+  default     = "internal"
+}
+
+variable "dns_enable_external_certificate" {
+  description = "Automatically issue a wildcard ACM certificate for the external domain."
+  type        = bool
+  default     = true
+}
+
+variable "dns_enable_internal_certificate" {
+  description = "Automatically issue a wildcard ACM certificate for the internal domain."
+  type        = bool
+  default     = true
+}
+
+variable "cert_manager_issuer_name" {
+  description = "Global ClusterIssuer name."
+  type        = string
+  default     = "letsencrypt-dns"
+}
+
+variable "cert_manager_email" {
+  description = "Email used for ACME registration."
+  type        = string
+  default     = ""
+}
+
+variable "cert_manager_server" {
+  description = "ACME directory URL."
+  type        = string
+  default     = "https://acme-v02.api.letsencrypt.org/directory"
+}
+
+variable "cert_manager_private_key_secret_name" {
+  description = "Secret name storing the ACME account private key."
+  type        = string
+  default     = "letsencrypt-account-key"
+}
+
+variable "cert_manager_external_certificate_secret" {
+  description = "Secret name for the external wildcard certificate."
+  type        = string
+  default     = "external-wildcard-tls"
+}
+
+variable "cert_manager_internal_certificate_secret" {
+  description = "Secret name for the internal wildcard certificate."
+  type        = string
+  default     = "internal-wildcard-tls"
+}
+
+
+variable "external_dns_txt_owner_id" {
+  description = "Unique owner ID for external-dns TXT records."
+  type        = string
+  default     = ""
+}
+
+variable "external_dns_txt_prefix" {
+  description = "TXT prefix external-dns should use."
+  type        = string
+  default     = "_external-dns"
+}
+
+variable "external_dns_policy" {
+  description = "external-dns policy (sync/upsert-only)."
+  type        = string
+  default     = "upsert-only"
+}
+
+variable "external_dns_log_level" {
+  description = "external-dns log level."
+  type        = string
+  default     = "info"
+}
+
+variable "external_dns_interval" {
+  description = "Reconciliation interval."
+  type        = string
+  default     = "1m"
+}
+
+variable "external_dns_trigger_loop_on_event" {
+  description = "Trigger reconciliation on Kubernetes events."
+  type        = bool
+  default     = true
 }
 
 ############################################

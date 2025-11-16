@@ -93,6 +93,30 @@ ansible:
   argocd_reconciliation_timeout: "10m"
   argocd_exec_timeout: "600s"
 
+dns:
+  base_domain: "kube-forge.com"
+  hosted_zone_id: ""
+  environment_subdomain: ""
+  internal_subdomain: "internal"
+  enable_external_certificate: true
+  enable_internal_certificate: true
+
+cert_manager:
+  issuer_name: "letsencrypt-dns"
+  email: "ops@kube-forge.com"
+  server: "https://acme-v02.api.letsencrypt.org/directory"
+  private_key_secret_name: "letsencrypt-account-key"
+  external_certificate_secret: "external-wildcard-tls"
+  internal_certificate_secret: "internal-wildcard-tls"
+
+external_dns:
+  txt_owner_id: "devops-autopilot"
+  txt_prefix: "_external-dns"
+  policy: "upsert-only"
+  log_level: "info"
+  interval: "1m"
+  trigger_loop_on_event: true
+
 gateway_api:
   namespace: ""
   gateway_class_name: "aws-alb-gateway-class"

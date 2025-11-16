@@ -17,6 +17,9 @@ locals {
   crossplane_s3_bucket_arn   = "arn:aws:s3:::${var.project_name}-crossplane-*"
   crossplane_s3_objects_arn  = "${local.crossplane_s3_bucket_arn}/*"
   crossplane_secret_resource = "arn:aws:secretsmanager:*:*:secret:${var.project_name}-*"
+  has_route53_zones          = length(var.route53_zone_arns) > 0
+  cert_manager_subject       = "system:serviceaccount:${var.cert_manager_namespace}:${var.cert_manager_service_account}"
+  external_dns_subject       = "system:serviceaccount:${var.external_dns_namespace}:${var.external_dns_service_account}"
 }
 
 # Get OIDC root CA fingerprint
@@ -517,4 +520,180 @@ resource "aws_iam_role_policy" "crossplane_data" {
   name   = "${var.project_name}-crossplane-data"
   role   = aws_iam_role.crossplane_data[0].id
   policy = data.aws_iam_policy_document.crossplane_data_policy[0].json
+}
+
+############################################
+# cert-manager DNS01 (Route53) IRSA
+############################################
+data "aws_iam_policy_document" "cert_manager_trust" {
+  count = var.enable_irsa && var.create_cert_manager_role && local.has_route53_zones ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = [local.cert_manager_subject]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "cert_manager_dns" {
+  count = var.enable_irsa && var.create_cert_manager_role && local.has_route53_zones ? 1 : 0
+
+  statement {
+    sid       = "ChangeRecords"
+    effect    = "Allow"
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = var.route53_zone_arns
+  }
+
+  statement {
+    sid    = "DescribeZones"
+    effect = "Allow"
+    actions = [
+      "route53:GetHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListHostedZonesByName",
+      "route53:GetChange",
+      "route53:ListResourceRecordSets"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "cert_manager_dns" {
+  count       = var.enable_irsa && var.create_cert_manager_role && local.has_route53_zones ? 1 : 0
+  name        = "${var.project_name}-cert-manager-dns"
+  description = "Allows cert-manager to solve DNS01 challenges via Route53."
+  policy      = data.aws_iam_policy_document.cert_manager_dns[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-cert-manager-dns-policy"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role" "cert_manager" {
+  count              = var.enable_irsa && var.create_cert_manager_role && local.has_route53_zones ? 1 : 0
+  name               = "${var.project_name}-cert-manager"
+  assume_role_policy = data.aws_iam_policy_document.cert_manager_trust[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-cert-manager-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "cert_manager_dns" {
+  count      = var.enable_irsa && var.create_cert_manager_role && local.has_route53_zones ? 1 : 0
+  role       = aws_iam_role.cert_manager[0].name
+  policy_arn = aws_iam_policy.cert_manager_dns[0].arn
+}
+
+############################################
+# external-dns (Route53) IRSA
+############################################
+data "aws_iam_policy_document" "external_dns_trust" {
+  count = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = [local.external_dns_subject]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "external_dns" {
+  count = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
+
+  statement {
+    sid       = "ChangeRecords"
+    effect    = "Allow"
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = var.route53_zone_arns
+  }
+
+  statement {
+    sid    = "DescribeZones"
+    effect = "Allow"
+    actions = [
+      "route53:GetHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListHostedZonesByName",
+      "route53:GetChange",
+      "route53:ListResourceRecordSets"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "external_dns" {
+  count       = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
+  name        = "${var.project_name}-external-dns"
+  description = "Allows external-dns to manage Route53 DNS records."
+  policy      = data.aws_iam_policy_document.external_dns[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-external-dns-policy"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role" "external_dns" {
+  count              = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
+  name               = "${var.project_name}-external-dns"
+  assume_role_policy = data.aws_iam_policy_document.external_dns_trust[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-external-dns-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "external_dns" {
+  count      = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
+  role       = aws_iam_role.external_dns[0].name
+  policy_arn = aws_iam_policy.external_dns[0].arn
 }

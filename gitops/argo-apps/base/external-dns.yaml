@@ -16,9 +16,34 @@ spec:
     path: gitops/apps/external-dns
     plugin:
       name: argocd-lovely-plugin-v1.0
+      env:
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: DNS_ROOT_DOMAIN
+          value: ${DNS_ROOT_DOMAIN}
+        - name: DNS_INTERNAL_LABEL
+          value: ${DNS_INTERNAL_LABEL}
+        - name: EXTERNAL_DNS_NAMESPACE
+          value: ${EXTERNAL_DNS_NAMESPACE}
+        - name: EXTERNAL_DNS_SERVICE_ACCOUNT
+          value: ${EXTERNAL_DNS_SERVICE_ACCOUNT}
+        - name: EXTERNAL_DNS_ROLE_ARN
+          value: ${EXTERNAL_DNS_ROLE_ARN}
+        - name: EXTERNAL_DNS_TXT_OWNER_ID
+          value: ${EXTERNAL_DNS_TXT_OWNER_ID}
+        - name: EXTERNAL_DNS_TXT_PREFIX
+          value: ${EXTERNAL_DNS_TXT_PREFIX}
+        - name: EXTERNAL_DNS_POLICY
+          value: ${EXTERNAL_DNS_POLICY}
+        - name: EXTERNAL_DNS_LOG_LEVEL
+          value: ${EXTERNAL_DNS_LOG_LEVEL}
+        - name: EXTERNAL_DNS_INTERVAL
+          value: ${EXTERNAL_DNS_INTERVAL}
+        - name: EXTERNAL_DNS_TRIGGER_LOOP_ON_EVENT
+          value: ${EXTERNAL_DNS_TRIGGER_LOOP_ON_EVENT}
   destination:
     server: https://kubernetes.default.svc
-    namespace: dns-system
+    namespace: ${EXTERNAL_DNS_NAMESPACE}
   syncPolicy:
     automated:
       prune: true
