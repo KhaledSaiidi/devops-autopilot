@@ -3,19 +3,19 @@ kind: Kustomization
 resources:
   - ../../../base/platform-project.yaml
   - ../../../base/storage-stack.yaml
+  - ../../../base/cni-tuning.yaml
   - ../../../base/cert-manager.yaml
   - ../../../base/gateway-api.yaml
-  - ../../../base/cni-tuning.yaml
   - ../../../base/external-dns.yaml
-  - ../../../base/monitoring.yaml
   - ../../../base/kyverno.yaml
   - ../../../base/reflector.yaml
   - ../../../base/reloader.yaml
+  - ../../../base/crossplane.yaml
   - ../../../base/vault.yaml
   - ../../../base/external-secrets.yaml
-  - ../../../base/harbor.yaml
   - ../../../base/databases.yaml
+  - ../../../base/harbor.yaml
   - ../../../base/gitlab.yaml
-  - ../../../base/crossplane.yaml
-  - ../../../base/velero.yaml
   - ../../../base/zitadel.yaml
+  - ../../../base/velero.yaml
+  - ../../../base/monitoring.yaml

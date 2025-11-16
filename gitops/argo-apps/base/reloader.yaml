@@ -4,7 +4,7 @@ metadata:
   name: reloader
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '-2'
+    argocd.argoproj.io/sync-wave: '-3'
   labels:
     app.kubernetes.io/name: reloader
     app.kubernetes.io/part-of: platform-baseline

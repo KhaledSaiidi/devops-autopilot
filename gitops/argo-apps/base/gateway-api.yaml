@@ -4,7 +4,7 @@ metadata:
   name: gateway-api
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '-3'
+    argocd.argoproj.io/sync-wave: '-4'
   labels:
     app.kubernetes.io/name: gateway-api
     app.kubernetes.io/part-of: platform-baseline
