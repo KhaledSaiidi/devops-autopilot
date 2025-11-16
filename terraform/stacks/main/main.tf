@@ -2,7 +2,7 @@ locals {
   artifacts_dir         = "${path.root}/artifacts"
   gateway_api_namespace = var.gateway_api_namespace != "" ? var.gateway_api_namespace : var.alb_controller_namespace
 
-  dns_base_domain       = trim(var.dns_base_domain)
+  dns_base_domain       = trimspace(var.dns_base_domain)
   dns_env_subdomain     = var.project_name
   dns_internal_label    = "internal"
   dns_root_domain       = local.dns_base_domain != "" ? (local.dns_env_subdomain != "" ? "${local.dns_env_subdomain}.${local.dns_base_domain}" : local.dns_base_domain) : ""
