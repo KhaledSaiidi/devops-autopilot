@@ -25,18 +25,10 @@ spec:
           value: ${CERT_MANAGER_SERVICE_ACCOUNT}
         - name: CERT_MANAGER_ROLE_ARN
           value: ${CERT_MANAGER_ROLE_ARN}
-        - name: CERT_MANAGER_ISSUER_NAME
-          value: ${CERT_MANAGER_ISSUER_NAME}
         - name: CERT_MANAGER_EMAIL
           value: ${CERT_MANAGER_EMAIL}
         - name: CERT_MANAGER_SERVER
           value: ${CERT_MANAGER_SERVER}
-        - name: CERT_MANAGER_PRIVATE_KEY_SECRET_NAME
-          value: ${CERT_MANAGER_PRIVATE_KEY_SECRET_NAME}
-        - name: CERT_MANAGER_EXTERNAL_CERT_SECRET
-          value: ${CERT_MANAGER_EXTERNAL_CERT_SECRET}
-        - name: CERT_MANAGER_INTERNAL_CERT_SECRET
-          value: ${CERT_MANAGER_INTERNAL_CERT_SECRET}
         - name: DNS_HOSTED_ZONE_ID
           value: ${DNS_HOSTED_ZONE_ID}
         - name: DNS_EXTERNAL_WILDCARD

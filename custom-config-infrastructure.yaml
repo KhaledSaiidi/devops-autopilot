@@ -95,30 +95,21 @@ ansible:
 
 dns:
   base_domain: "kube-forge.com"
-  hosted_zone_id: ""
-  environment_subdomain: ""
-  internal_subdomain: "internal"
-  enable_external_certificate: true
-  enable_internal_certificate: true
+  hosted_zone_id: "Z032863786J0OF6PKT1D"
 
 cert_manager:
-  issuer_name: "letsencrypt-dns"
-  email: "ops@kube-forge.com"
-  server: "https://acme-v02.api.letsencrypt.org/directory"
-  private_key_secret_name: "letsencrypt-account-key"
-  external_certificate_secret: "external-wildcard-tls"
-  internal_certificate_secret: "internal-wildcard-tls"
-
+  email: "khaled.saiidi@outlook.com"
+  # server: "https://acme-v02.api.letsencrypt.org/directory"
+  server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 external_dns:
   txt_owner_id: "devops-autopilot"
   txt_prefix: "_external-dns"
-  policy: "upsert-only"
+  policy: "sync"
   log_level: "info"
   interval: "1m"
   trigger_loop_on_event: true
 
 gateway_api:
-  namespace: ""
   gateway_class_name: "aws-alb-gateway-class"
   controller:
     default_target_type: "ip"
@@ -138,14 +129,10 @@ gateway_api:
     name: "public-gateway"
     http_port: 80
     https_port: 443
-    hostname: ""
     allowed_routes_from: "All"
-    tls_certificate_arn: ""
   internal_gateway:
     enabled: true
     name: "internal-gateway"
     http_port: 8080
     https_port: 8443
-    hostname: ""
     allowed_routes_from: "Same"
-    tls_certificate_arn: ""

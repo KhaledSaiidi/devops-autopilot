@@ -103,22 +103,15 @@ gateway_api:
     tls_certificate_arn: "${gateway_api.internal_gateway.tls_certificate_arn}"
 dns:
   base_domain: "${dns.base_domain}"
-  environment_subdomain: "${dns.environment_subdomain}"
   root_domain: "${dns.root_domain}"
   internal_label: "${dns.internal_label}"
   hosted_zone_id: "${dns.hosted_zone_id}"
   hosted_zone_arn: "${dns.hosted_zone_arn}"
   external_wildcard_domain: "${dns.external_wildcard_domain}"
   internal_wildcard_domain: "${dns.internal_wildcard_domain}"
-  create_external_cert: ${dns.create_external_cert}
-  create_internal_cert: ${dns.create_internal_cert}
 cert_manager:
-  issuer_name: "${cert_manager.issuer_name}"
   email: "${cert_manager.email}"
   server: "${cert_manager.server}"
-  private_key_secret_name: "${cert_manager.private_key_secret_name}"
-  external_certificate_secret: "${cert_manager.external_certificate_secret}"
-  internal_certificate_secret: "${cert_manager.internal_certificate_secret}"
 external_dns:
   txt_owner_id: "${external_dns.txt_owner_id}"
   txt_prefix: "${external_dns.txt_prefix}"

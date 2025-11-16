@@ -4,8 +4,8 @@ locals {
   gateway_api_tags      = length(var.gateway_api_load_balancer.tags) > 0 ? var.gateway_api_load_balancer.tags : var.tags
 
   dns_base_domain       = trim(var.dns_base_domain)
-  dns_env_subdomain     = trim(var.dns_environment_subdomain) != "" ? trim(var.dns_environment_subdomain) : var.project_name
-  dns_internal_label    = trim(var.dns_internal_subdomain) != "" ? trim(var.dns_internal_subdomain) : "internal"
+  dns_env_subdomain     = var.project_name
+  dns_internal_label    = "internal"
   dns_root_domain       = local.dns_base_domain != "" ? (local.dns_env_subdomain != "" ? "${local.dns_env_subdomain}.${local.dns_base_domain}" : local.dns_base_domain) : ""
   dns_external_wildcard = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
   dns_internal_wildcard = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
@@ -13,8 +13,8 @@ locals {
   dns_hosted_zone_arn   = local.dns_hosted_zone_id != "" ? "arn:aws:route53:::hostedzone/${local.dns_hosted_zone_id}" : ""
   dns_external_hostname = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
   dns_internal_hostname = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
-  create_external_cert  = local.dns_external_wildcard != "" && local.dns_hosted_zone_id != "" && var.dns_enable_external_certificate
-  create_internal_cert  = local.dns_internal_wildcard != "" && local.dns_hosted_zone_id != "" && var.dns_enable_internal_certificate
+  create_external_cert  = local.dns_external_wildcard != "" && local.dns_hosted_zone_id != ""
+  create_internal_cert  = local.dns_internal_wildcard != "" && local.dns_hosted_zone_id != ""
   route53_zone_arns     = local.dns_hosted_zone_arn != "" ? [local.dns_hosted_zone_arn] : []
 
   external_gateway_hostname = var.gateway_api_external_gateway.hostname != "" ? var.gateway_api_external_gateway.hostname : local.dns_external_hostname
@@ -356,24 +356,17 @@ resource "local_file" "ansible_vars" {
 
     dns = {
       base_domain              = local.dns_base_domain
-      environment_subdomain    = local.dns_env_subdomain
       root_domain              = local.dns_root_domain
       internal_label           = local.dns_internal_label
       hosted_zone_id           = local.dns_hosted_zone_id
       hosted_zone_arn          = local.dns_hosted_zone_arn
       external_wildcard_domain = local.dns_external_wildcard
       internal_wildcard_domain = local.dns_internal_wildcard
-      create_external_cert     = local.create_external_cert
-      create_internal_cert     = local.create_internal_cert
     }
 
     cert_manager = {
-      issuer_name                 = var.cert_manager_issuer_name
-      email                       = var.cert_manager_email
-      server                      = var.cert_manager_server
-      private_key_secret_name     = var.cert_manager_private_key_secret_name
-      external_certificate_secret = var.cert_manager_external_certificate_secret
-      internal_certificate_secret = var.cert_manager_internal_certificate_secret
+      email  = var.cert_manager_email
+      server = var.cert_manager_server
     }
 
     external_dns = {

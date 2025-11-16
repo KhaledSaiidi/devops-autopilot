@@ -9,9 +9,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  secretName: ${CERT_MANAGER_EXTERNAL_CERT_SECRET}
+  secretName: external-wildcard-tls
   issuerRef:
-    name: ${CERT_MANAGER_ISSUER_NAME}
+    name: letsencrypt-dns
     kind: ClusterIssuer
   dnsNames:
   - ${DNS_EXTERNAL_WILDCARD}
@@ -27,9 +27,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  secretName: ${CERT_MANAGER_INTERNAL_CERT_SECRET}
+  secretName: internal-wildcard-tls
   issuerRef:
-    name: ${CERT_MANAGER_ISSUER_NAME}
+    name: letsencrypt-dns
     kind: ClusterIssuer
   dnsNames:
   - ${DNS_INTERNAL_WILDCARD}

@@ -392,36 +392,6 @@ variable "dns_hosted_zone_id" {
   default     = ""
 }
 
-variable "dns_environment_subdomain" {
-  description = "Environment subdomain appended before the base domain (defaults to project_name when empty)."
-  type        = string
-  default     = ""
-}
-
-variable "dns_internal_subdomain" {
-  description = "Label inserted before the environment domain for internal-only traffic (e.g., internal.env.example.com)."
-  type        = string
-  default     = "internal"
-}
-
-variable "dns_enable_external_certificate" {
-  description = "Automatically issue a wildcard ACM certificate for the external domain."
-  type        = bool
-  default     = true
-}
-
-variable "dns_enable_internal_certificate" {
-  description = "Automatically issue a wildcard ACM certificate for the internal domain."
-  type        = bool
-  default     = true
-}
-
-variable "cert_manager_issuer_name" {
-  description = "Global ClusterIssuer name."
-  type        = string
-  default     = "letsencrypt-dns"
-}
-
 variable "cert_manager_email" {
   description = "Email used for ACME registration."
   type        = string
@@ -432,24 +402,6 @@ variable "cert_manager_server" {
   description = "ACME directory URL."
   type        = string
   default     = "https://acme-v02.api.letsencrypt.org/directory"
-}
-
-variable "cert_manager_private_key_secret_name" {
-  description = "Secret name storing the ACME account private key."
-  type        = string
-  default     = "letsencrypt-account-key"
-}
-
-variable "cert_manager_external_certificate_secret" {
-  description = "Secret name for the external wildcard certificate."
-  type        = string
-  default     = "external-wildcard-tls"
-}
-
-variable "cert_manager_internal_certificate_secret" {
-  description = "Secret name for the internal wildcard certificate."
-  type        = string
-  default     = "internal-wildcard-tls"
 }
 
 
