@@ -70,8 +70,6 @@ gateway_api:
     enable_alb_gateway: ${gateway_api.controller.enable_alb_gateway}
     enable_nlb_gateway: ${gateway_api.controller.enable_nlb_gateway}
     enable_shield_addon: ${gateway_api.controller.enable_shield_addon}
-    enable_waf_addon: ${gateway_api.controller.enable_waf_addon}
-    enable_wafv2_addon: ${gateway_api.controller.enable_wafv2_addon}
     log_level: "${gateway_api.controller.log_level}"
   load_balancer:
     ip_address_type: "${gateway_api.load_balancer.ip_address_type}"
@@ -79,8 +77,6 @@ gateway_api:
     internal_scheme: "${gateway_api.load_balancer.internal_scheme}"
     deletion_protection_enabled: ${gateway_api.load_balancer.deletion_protection_enabled}
     idle_timeout_seconds: ${gateway_api.load_balancer.idle_timeout_seconds}
-    external_wafv2_acl_arn: "${gateway_api.load_balancer.external_wafv2_acl_arn}"
-    internal_wafv2_acl_arn: "${gateway_api.load_balancer.internal_wafv2_acl_arn}"
     external_shield_enabled: ${gateway_api.load_balancer.external_shield_enabled}
     internal_shield_enabled: ${gateway_api.load_balancer.internal_shield_enabled}
     tags:

@@ -100,9 +100,6 @@ gateway_api:
     default_target_type: "ip"
     enable_alb_gateway: true
     enable_nlb_gateway: false
-    enable_shield_addon: true
-    enable_waf_addon: true
-    enable_wafv2_addon: true
     log_level: "info"
   load_balancer:
     ip_address_type: "ipv4"
@@ -114,8 +111,6 @@ gateway_api:
       Owner: "Khaled Saidi"
       ManagedBy: "Terraform"
       Environment: "devops-autopilot"
-    external_wafv2_acl_arn: ""
-    internal_wafv2_acl_arn: ""
     external_shield_enabled: true
     internal_shield_enabled: false
   external_gateway:

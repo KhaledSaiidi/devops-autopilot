@@ -10,18 +10,16 @@ spec:
   scheme: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SCHEME}
   ipAddressType: ${GATEWAY_API_LOAD_BALANCER_IP_ADDRESS_TYPE}
   loadBalancerAttributes:
-    - key: deletion_protection.enabled
-      value: "${GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION}"
-    - key: idle_timeout.timeout_seconds
-      value: "${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}"
+  - key: deletion_protection.enabled
+    value: "${GATEWAY_API_LOAD_BALANCER_DELETION_PROTECTION}"
+  - key: idle_timeout.timeout_seconds
+    value: "${GATEWAY_API_LOAD_BALANCER_IDLE_TIMEOUT}"
   shieldConfiguration:
     enabled: ${GATEWAY_API_LOAD_BALANCER_EXTERNAL_SHIELD}
-${GATEWAY_API_EXTERNAL_WAF_BLOCK}
-  tags:
-${GATEWAY_API_LOAD_BALANCER_TAGS}
-  listenerConfigurations:
-    - protocolPort: HTTPS:${GATEWAY_API_EXTERNAL_HTTPS_PORT}
-      defaultCertificate: ${GATEWAY_API_EXTERNAL_TLS_CERT_ARN}
+tags: ${GATEWAY_API_LOAD_BALANCER_TAGS}
+listenerConfigurations:
+- protocolPort: HTTPS:${GATEWAY_API_EXTERNAL_HTTPS_PORT}
+  defaultCertificate: ${GATEWAY_API_EXTERNAL_TLS_CERT_ARN}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -39,17 +37,17 @@ spec:
       kind: LoadBalancerConfiguration
       name: ${GATEWAY_API_EXTERNAL_CONFIG_NAME}
   listeners:
-    - name: external-http
-      protocol: HTTP
-      port: ${GATEWAY_API_EXTERNAL_HTTP_PORT}
-      hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
-      allowedRoutes:
-        namespaces:
-          from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
-    - name: external-https
-      protocol: HTTPS
-      port: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
-      hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
-      allowedRoutes:
-        namespaces:
-          from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
+  - name: external-http
+    protocol: HTTP
+    port: ${GATEWAY_API_EXTERNAL_HTTP_PORT}
+    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    allowedRoutes:
+      namespaces:
+        from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
+  - name: external-https
+    protocol: HTTPS
+    port: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
+    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    allowedRoutes:
+      namespaces:
+        from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}

@@ -363,8 +363,6 @@ variable "gateway_api_controller" {
     enable_alb_gateway  = bool
     enable_nlb_gateway  = bool
     enable_shield_addon = bool
-    enable_waf_addon    = bool
-    enable_wafv2_addon  = bool
     log_level           = string
   })
   default = {
@@ -372,8 +370,6 @@ variable "gateway_api_controller" {
     enable_alb_gateway  = true
     enable_nlb_gateway  = false
     enable_shield_addon = true
-    enable_waf_addon    = true
-    enable_wafv2_addon  = true
     log_level           = "info"
   }
 }
@@ -387,8 +383,6 @@ variable "gateway_api_load_balancer" {
     deletion_protection_enabled = bool
     idle_timeout_seconds        = number
     tags                        = map(string)
-    external_wafv2_acl_arn      = string
-    internal_wafv2_acl_arn      = string
     external_shield_enabled     = bool
     internal_shield_enabled     = bool
   })
@@ -399,8 +393,6 @@ variable "gateway_api_load_balancer" {
     deletion_protection_enabled = true
     idle_timeout_seconds        = 60
     tags                        = {}
-    external_wafv2_acl_arn      = ""
-    internal_wafv2_acl_arn      = ""
     external_shield_enabled     = true
     internal_shield_enabled     = false
   }
