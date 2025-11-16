@@ -459,83 +459,54 @@ variable "gateway_api_gateway_class_name" {
 variable "gateway_api_controller" {
   description = "Controller-level toggles for AWS Load Balancer Controller Gateway API features."
   type = object({
-    default_target_type = string
-    enable_alb_gateway  = bool
-    enable_nlb_gateway  = bool
-    enable_shield_addon = bool
-    log_level           = string
+    default_target_type = optional(string, "ip")
+    enable_alb_gateway  = optional(bool, true)
+    enable_nlb_gateway  = optional(bool, false)
+    enable_shield_addon = optional(bool, true)
+    log_level           = optional(string, "info")
   })
-  default = {
-    default_target_type = "ip"
-    enable_alb_gateway  = true
-    enable_nlb_gateway  = false
-    enable_shield_addon = true
-    log_level           = "info"
-  }
+  default = {}
 }
 
 variable "gateway_api_load_balancer" {
   description = "Base load balancer configuration for AWS Gateway API Gateways."
   type = object({
-    ip_address_type             = string
-    external_scheme             = string
-    internal_scheme             = string
-    deletion_protection_enabled = bool
-    idle_timeout_seconds        = number
-    external_shield_enabled     = bool
-    internal_shield_enabled     = bool
+    ip_address_type             = optional(string, "ipv4")
+    external_scheme             = optional(string, "internet-facing")
+    internal_scheme             = optional(string, "internal")
+    deletion_protection_enabled = optional(bool, true)
+    idle_timeout_seconds        = optional(number, 60)
+    external_shield_enabled     = optional(bool, true)
+    internal_shield_enabled     = optional(bool, false)
+    tags                        = optional(map(string), {})
   })
-  default = {
-    ip_address_type             = "ipv4"
-    external_scheme             = "internet-facing"
-    internal_scheme             = "internal"
-    deletion_protection_enabled = true
-    idle_timeout_seconds        = 60
-    external_shield_enabled     = true
-    internal_shield_enabled     = false
-  }
+  default = {}
 }
 
 variable "gateway_api_external_gateway" {
   description = "Public (internet-facing) Gateway definition."
   type = object({
-    enabled             = bool
-    name                = string
-    http_port           = number
-    https_port          = number
-    hostname            = string
-    allowed_routes_from = string
-    tls_certificate_arn = string
+    enabled             = optional(bool, true)
+    name                = optional(string, "public-gateway")
+    http_port           = optional(number, 80)
+    https_port          = optional(number, 443)
+    hostname            = optional(string, "")
+    allowed_routes_from = optional(string, "All")
+    tls_certificate_arn = optional(string, "")
   })
-  default = {
-    enabled             = true
-    name                = "public-gateway"
-    http_port           = 80
-    https_port          = 443
-    hostname            = ""
-    allowed_routes_from = "All"
-    tls_certificate_arn = ""
-  }
+  default = {}
 }
 
 variable "gateway_api_internal_gateway" {
   description = "Private (internal) Gateway definition."
   type = object({
-    enabled             = bool
-    name                = string
-    http_port           = number
-    https_port          = number
-    hostname            = string
-    allowed_routes_from = string
-    tls_certificate_arn = string
+    enabled             = optional(bool, true)
+    name                = optional(string, "internal-gateway")
+    http_port           = optional(number, 8080)
+    https_port          = optional(number, 8443)
+    hostname            = optional(string, "")
+    allowed_routes_from = optional(string, "Same")
+    tls_certificate_arn = optional(string, "")
   })
-  default = {
-    enabled             = true
-    name                = "internal-gateway"
-    http_port           = 8080
-    https_port          = 8443
-    hostname            = ""
-    allowed_routes_from = "Same"
-    tls_certificate_arn = ""
-  }
+  default = {}
 }

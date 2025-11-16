@@ -1,7 +1,6 @@
 locals {
   artifacts_dir         = "${path.root}/artifacts"
   gateway_api_namespace = var.gateway_api_namespace != "" ? var.gateway_api_namespace : var.alb_controller_namespace
-  gateway_api_tags      = length(var.gateway_api_load_balancer.tags) > 0 ? var.gateway_api_load_balancer.tags : var.tags
 
   dns_base_domain       = trim(var.dns_base_domain)
   dns_env_subdomain     = var.project_name
@@ -337,7 +336,7 @@ resource "local_file" "ansible_vars" {
       namespace          = local.gateway_api_namespace
       gateway_class_name = var.gateway_api_gateway_class_name
       controller         = var.gateway_api_controller
-      load_balancer      = merge(var.gateway_api_load_balancer, { tags = local.gateway_api_tags })
+      load_balancer      = var.gateway_api_load_balancer
       external_gateway = merge(
         var.gateway_api_external_gateway,
         {

@@ -115,6 +115,7 @@ gateway_api:
     default_target_type: "ip"
     enable_alb_gateway: true
     enable_nlb_gateway: false
+    enable_shield_addon: false
     log_level: "info"
   load_balancer:
     ip_address_type: "ipv4"
