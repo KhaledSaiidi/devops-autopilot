@@ -1,24 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vault
+  name: cluster-autoscaler
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '-2'
+    argocd.argoproj.io/sync-wave: '-4'
   labels:
-    app.kubernetes.io/name: vault
+    app.kubernetes.io/name: cluster-autoscaler
     app.kubernetes.io/part-of: platform-baseline
 spec:
   project: platform
   source:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
-    path: gitops/apps/vault
+    path: gitops/apps/cluster-autoscaler
     plugin:
       name: argocd-lovely-plugin-v1.0
   destination:
     server: https://kubernetes.default.svc
-    namespace: vault
+    namespace: kube-system
   syncPolicy:
     automated:
       prune: true
