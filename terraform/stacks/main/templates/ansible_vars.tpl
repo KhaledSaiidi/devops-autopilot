@@ -40,6 +40,12 @@ irsa:
 %{ for sa in crossplane_data_service_accounts }
     - "${sa}"
 %{ endfor }
+  cert_manager_role_arn: "${cert_manager_role_arn}"
+  cert_manager_namespace: "${cert_manager_namespace}"
+  cert_manager_service_account: "${cert_manager_service_account}"
+  external_dns_role_arn: "${external_dns_role_arn}"
+  external_dns_namespace: "${external_dns_namespace}"
+  external_dns_service_account: "${external_dns_service_account}"
 
 iam_roles:
   eks_cluster_role_arn: "${eks_cluster_role_arn}"
@@ -95,3 +101,21 @@ gateway_api:
     hostname: "${gateway_api.internal_gateway.hostname}"
     allowed_routes_from: "${gateway_api.internal_gateway.allowed_routes_from}"
     tls_certificate_arn: "${gateway_api.internal_gateway.tls_certificate_arn}"
+dns:
+  base_domain: "${dns.base_domain}"
+  root_domain: "${dns.root_domain}"
+  internal_label: "${dns.internal_label}"
+  hosted_zone_id: "${dns.hosted_zone_id}"
+  hosted_zone_arn: "${dns.hosted_zone_arn}"
+  external_wildcard_domain: "${dns.external_wildcard_domain}"
+  internal_wildcard_domain: "${dns.internal_wildcard_domain}"
+cert_manager:
+  email: "${cert_manager.email}"
+  server: "${cert_manager.server}"
+external_dns:
+  txt_owner_id: "${external_dns.txt_owner_id}"
+  txt_prefix: "${external_dns.txt_prefix}"
+  policy: "${external_dns.policy}"
+  log_level: "${external_dns.log_level}"
+  interval: "${external_dns.interval}"
+  trigger_loop_on_event: ${external_dns.trigger_loop_on_event}

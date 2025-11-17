@@ -1,2 +1,13 @@
-chart:
-  description: "Placeholder values for cert-manager chart (replace with real settings)."
+installCRDs: true
+global:
+  leaderElection:
+    namespace: ${CERT_MANAGER_NAMESPACE}
+serviceAccount:
+  create: true
+  name: ${CERT_MANAGER_SERVICE_ACCOUNT}
+  annotations:
+    eks.amazonaws.com/role-arn: ${CERT_MANAGER_ROLE_ARN}
+webhook:
+  securePort: 10250
+prometheus:
+  enabled: true

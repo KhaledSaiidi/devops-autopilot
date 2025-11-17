@@ -27,3 +27,13 @@ output "crossplane_data_role_arn" {
   description = "IRSA role ARN for Crossplane data-plane controllers."
   value       = try(aws_iam_role.crossplane_data[0].arn, null)
 }
+
+output "cert_manager_role_arn" {
+  description = "IRSA role ARN for cert-manager DNS automation."
+  value       = try(aws_iam_role.cert_manager[0].arn, null)
+}
+
+output "external_dns_role_arn" {
+  description = "IRSA role ARN for external-dns."
+  value       = try(aws_iam_role.external_dns[0].arn, null)
+}

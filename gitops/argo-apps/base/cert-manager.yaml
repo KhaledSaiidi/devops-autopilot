@@ -16,9 +16,28 @@ spec:
     path: gitops/apps/cert-manager
     plugin:
       name: argocd-lovely-plugin-v1.0
+      env:
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: CERT_MANAGER_NAMESPACE
+          value: ${CERT_MANAGER_NAMESPACE}
+        - name: CERT_MANAGER_SERVICE_ACCOUNT
+          value: ${CERT_MANAGER_SERVICE_ACCOUNT}
+        - name: CERT_MANAGER_ROLE_ARN
+          value: ${CERT_MANAGER_ROLE_ARN}
+        - name: CERT_MANAGER_EMAIL
+          value: ${CERT_MANAGER_EMAIL}
+        - name: CERT_MANAGER_SERVER
+          value: ${CERT_MANAGER_SERVER}
+        - name: DNS_HOSTED_ZONE_ID
+          value: ${DNS_HOSTED_ZONE_ID}
+        - name: DNS_EXTERNAL_WILDCARD
+          value: ${DNS_EXTERNAL_WILDCARD}
+        - name: DNS_INTERNAL_WILDCARD
+          value: ${DNS_INTERNAL_WILDCARD}
   destination:
     server: https://kubernetes.default.svc
-    namespace: cert-manager
+    namespace: ${CERT_MANAGER_NAMESPACE}
   syncPolicy:
     automated:
       prune: true

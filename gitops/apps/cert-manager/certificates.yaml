@@ -1,0 +1,35 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: external-wildcard
+  namespace: ${CERT_MANAGER_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/part-of: platform-baseline
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  secretName: external-wildcard-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+  - ${DNS_EXTERNAL_WILDCARD}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-wildcard
+  namespace: ${CERT_MANAGER_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/part-of: platform-baseline
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  secretName: internal-wildcard-tls
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+  - ${DNS_INTERNAL_WILDCARD}

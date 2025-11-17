@@ -72,6 +72,46 @@
         value: "{{ irsa.crossplane_data_role_arn | default('') }}"
       - name: CROSSPLANE_DATA_SERVICE_ACCOUNT
         value: "{{ (irsa.crossplane_data_service_accounts | default([])) | first | default('') }}"
+      - name: CERT_MANAGER_NAMESPACE
+        value: "{{ irsa.cert_manager_namespace | default('cert-manager') }}"
+      - name: CERT_MANAGER_SERVICE_ACCOUNT
+        value: "{{ irsa.cert_manager_service_account | default('cert-manager') }}"
+      - name: CERT_MANAGER_ROLE_ARN
+        value: "{{ irsa.cert_manager_role_arn | default('') }}"
+      - name: EXTERNAL_DNS_NAMESPACE
+        value: "{{ irsa.external_dns_namespace | default('dns-system') }}"
+      - name: EXTERNAL_DNS_SERVICE_ACCOUNT
+        value: "{{ irsa.external_dns_service_account | default('external-dns') }}"
+      - name: EXTERNAL_DNS_ROLE_ARN
+        value: "{{ irsa.external_dns_role_arn | default('') }}"
+      - name: DNS_BASE_DOMAIN
+        value: "{{ dns.base_domain | default('') }}"
+      - name: DNS_ROOT_DOMAIN
+        value: "{{ dns.root_domain | default('') }}"
+      - name: DNS_INTERNAL_LABEL
+        value: "{{ dns.internal_label | default('internal') }}"
+      - name: DNS_HOSTED_ZONE_ID
+        value: "{{ dns.hosted_zone_id | default('') }}"
+      - name: DNS_EXTERNAL_WILDCARD
+        value: "{{ dns.external_wildcard_domain | default('') }}"
+      - name: DNS_INTERNAL_WILDCARD
+        value: "{{ dns.internal_wildcard_domain | default('') }}"
+      - name: CERT_MANAGER_EMAIL
+        value: "{{ cert_manager.email | default('') }}"
+      - name: CERT_MANAGER_SERVER
+        value: "{{ cert_manager.server | default('https://acme-v02.api.letsencrypt.org/directory') }}"
+      - name: EXTERNAL_DNS_TXT_OWNER_ID
+        value: "{{ external_dns.txt_owner_id | default(project_name) }}"
+      - name: EXTERNAL_DNS_TXT_PREFIX
+        value: "{{ external_dns.txt_prefix | default('_external-dns') }}"
+      - name: EXTERNAL_DNS_POLICY
+        value: "{{ external_dns.policy | default('upsert-only') }}"
+      - name: EXTERNAL_DNS_LOG_LEVEL
+        value: "{{ external_dns.log_level | default('info') }}"
+      - name: EXTERNAL_DNS_INTERVAL
+        value: "{{ external_dns.interval | default('1m') }}"
+      - name: EXTERNAL_DNS_TRIGGER_LOOP_ON_EVENT
+        value: "{{ (external_dns.trigger_loop_on_event | default(true)) | ternary('true', 'false') }}"
       - name: GATEWAY_API_NAMESPACE
         value: "{{ gateway_api.namespace | default(irsa.alb_controller_namespace) }}"
       - name: GATEWAY_API_GATEWAY_CLASS_NAME

@@ -121,6 +121,13 @@ declare -A NODEGROUP_OPTIONAL=(
 load_section "nodegroup" "" EMPTY_MAP EMPTY_MAP NODEGROUP_OPTIONAL
 
 load_section "gateway_api" "gateway_api_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+load_section "dns" "dns_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+if [[ -z "${TF_VAR_dns_hosted_zone_id:-}" ]]; then
+  echo "❌ dns.hosted_zone_id is required but missing in ${CONFIG_FILE}" >&2
+  exit 1
+fi
+load_section "cert_manager" "cert_manager_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
+load_section "external_dns" "external_dns_" EMPTY_MAP EMPTY_MAP EMPTY_MAP
 
 # -----------------------------------------------------------------------------
 # Backend configuration (always exported, even if empty)

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: cert-manager
+  name: ${CERT_MANAGER_NAMESPACE}
   labels:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/part-of: platform-baseline
