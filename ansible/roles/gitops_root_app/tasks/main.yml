@@ -170,6 +170,18 @@
         value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
       - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
         value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
+      - name: CLUSTER_AUTOSCALER_NAMESPACE
+        value: "{{ irsa.cluster_autoscaler_namespace | default('kube-system') }}"
+      - name: CLUSTER_AUTOSCALER_SERVICE_ACCOUNT
+        value: "{{ irsa.cluster_autoscaler_service_account | default('cluster-autoscaler') }}"
+      - name: CLUSTER_AUTOSCALER_ROLE_ARN
+        value: "{{ irsa.cluster_autoscaler_role_arn | default('') }}"
+      - name: NODEGROUP_DESIRED_SIZE
+        value: "{{ nodegroup.desired_size | default('') | string }}"
+      - name: NODEGROUP_MIN_SIZE
+        value: "{{ nodegroup.min_size | default('') | string }}"
+      - name: NODEGROUP_MAX_SIZE
+        value: "{{ nodegroup.max_size | default('') | string }}"
 
 - name: Render root application manifest for auditing
   ansible.builtin.template:

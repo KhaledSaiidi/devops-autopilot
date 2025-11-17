@@ -68,7 +68,7 @@ These apps bootstrap namespaces, storage, ingress, security, and secrets so Cros
    - _Validation_: `kubectl logs deployment/cluster-autoscaler -n kube-system` shows node group discovery.
 
 6. **Security & policy controls**
-   - Install Kyverno + policy bundles (`gitops/apps/kyverno`), metrics-server (`gitops/apps/metrics`), reflector/reloader if desired.
+   - Install Kyverno + policy bundles (`gitops/apps/kyverno`), metrics-server (`gitops/apps/metrics`), reflector(most common usecase Replicate TLS Secrets by cert-manager)/reloader if desired.
    - _Validation_: `kubectl top nodes` works; Kyverno enforces baseline policies.
 
 7. **Vault deployment (`gitops/apps/vault`)**

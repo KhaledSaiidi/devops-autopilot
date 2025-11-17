@@ -16,9 +16,26 @@ spec:
     path: gitops/apps/cluster-autoscaler
     plugin:
       name: argocd-lovely-plugin-v1.0
+      env:
+        - name: CLUSTER_NAME
+          value: ${CLUSTER_NAME}
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: CLUSTER_AUTOSCALER_NAMESPACE
+          value: ${CLUSTER_AUTOSCALER_NAMESPACE}
+        - name: CLUSTER_AUTOSCALER_SERVICE_ACCOUNT
+          value: ${CLUSTER_AUTOSCALER_SERVICE_ACCOUNT}
+        - name: CLUSTER_AUTOSCALER_ROLE_ARN
+          value: ${CLUSTER_AUTOSCALER_ROLE_ARN}
+        - name: NODEGROUP_DESIRED_SIZE
+          value: ${NODEGROUP_DESIRED_SIZE}
+        - name: NODEGROUP_MIN_SIZE
+          value: ${NODEGROUP_MIN_SIZE}
+        - name: NODEGROUP_MAX_SIZE
+          value: ${NODEGROUP_MAX_SIZE}
   destination:
     server: https://kubernetes.default.svc
-    namespace: kube-system
+    namespace: ${CLUSTER_AUTOSCALER_NAMESPACE}
   syncPolicy:
     automated:
       prune: true
