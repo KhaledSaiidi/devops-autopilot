@@ -292,26 +292,28 @@ resource "local_file" "ansible_vars" {
     private_subnet_ids = module.vpc.private_subnet_ids
 
     # IRSA / roles
-    ebs_csi_role_arn                 = module.irsa.ebs_csi_role_arn
-    ebs_csi_namespace                = var.ebs_csi_namespace
-    ebs_csi_service_account          = var.ebs_csi_service_account
-    ca_role_arn                      = module.irsa.cluster_autoscaler_role_arn
-    alb_role_arn                     = module.irsa.alb_controller_role_arn
-    alb_controller_namespace         = var.alb_controller_namespace
-    alb_controller_service_account   = var.alb_controller_service_account
-    eks_cluster_role_arn             = module.iam.eks_cluster_role_arn
-    eks_node_role_arn                = module.iam.eks_node_role_arn
-    crossplane_core_role_arn         = module.irsa.crossplane_core_role_arn
-    crossplane_data_role_arn         = module.irsa.crossplane_data_role_arn
-    crossplane_namespace             = var.crossplane_namespace
-    crossplane_core_service_accounts = var.crossplane_core_service_accounts
-    crossplane_data_service_accounts = var.crossplane_data_service_accounts
-    cert_manager_role_arn            = module.irsa.cert_manager_role_arn
-    cert_manager_namespace           = var.cert_manager_namespace
-    cert_manager_service_account     = var.cert_manager_service_account
-    external_dns_role_arn            = module.irsa.external_dns_role_arn
-    external_dns_namespace           = var.external_dns_namespace
-    external_dns_service_account     = var.external_dns_service_account
+    ebs_csi_role_arn                   = module.irsa.ebs_csi_role_arn
+    ebs_csi_namespace                  = var.ebs_csi_namespace
+    ebs_csi_service_account            = var.ebs_csi_service_account
+    ca_role_arn                        = module.irsa.cluster_autoscaler_role_arn
+    alb_role_arn                       = module.irsa.alb_controller_role_arn
+    alb_controller_namespace           = var.alb_controller_namespace
+    alb_controller_service_account     = var.alb_controller_service_account
+    cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
+    cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
+    eks_cluster_role_arn               = module.iam.eks_cluster_role_arn
+    eks_node_role_arn                  = module.iam.eks_node_role_arn
+    crossplane_core_role_arn           = module.irsa.crossplane_core_role_arn
+    crossplane_data_role_arn           = module.irsa.crossplane_data_role_arn
+    crossplane_namespace               = var.crossplane_namespace
+    crossplane_core_service_accounts   = var.crossplane_core_service_accounts
+    crossplane_data_service_accounts   = var.crossplane_data_service_accounts
+    cert_manager_role_arn              = module.irsa.cert_manager_role_arn
+    cert_manager_namespace             = var.cert_manager_namespace
+    cert_manager_service_account       = var.cert_manager_service_account
+    external_dns_role_arn              = module.irsa.external_dns_role_arn
+    external_dns_namespace             = var.external_dns_namespace
+    external_dns_service_account       = var.external_dns_service_account
 
     # Tooling versions (optional)
     kubectl_version = var.kubectl_version
@@ -320,6 +322,9 @@ resource "local_file" "ansible_vars" {
     # Bastion convenience (read-only info for play logic)
     bastion_public_ip      = module.nodegroup.bastion_public_ip
     kubeconfig_remote_path = "/home/ec2-user/.kube/config"
+    nodegroup_desired_size = var.desired_size
+    nodegroup_min_size     = var.min_size
+    nodegroup_max_size     = var.max_size
 
     # Argo CD overrides
     argocd_namespace              = var.argocd_namespace
