@@ -1,2 +1,48 @@
-chart:
-  description: "Placeholder values for crossplane chart."
+image:
+  repository: crossplane/crossplane
+  tag: v1.15.2
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+args:
+  - "--enable-composition-functions"
+
+priorityClassName: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 1
+    memory: 768Mi
+
+metrics:
+  enabled: true
+
+rbacManager:
+  deploy: true
+  replicaCount: 1
+  image:
+    repository: crossplane/crossplane
+    tag: v1.15.2
+    pullPolicy: IfNotPresent
+  args:
+    - "--enable-composition-functions"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

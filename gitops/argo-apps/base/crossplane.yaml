@@ -19,6 +19,14 @@ spec:
       env:
         - name: CROSSPLANE_NAMESPACE
           value: ${CROSSPLANE_NAMESPACE}
+        - name: CROSSPLANE_CORE_ROLE_ARN
+          value: ${CROSSPLANE_CORE_ROLE_ARN}
+        - name: CROSSPLANE_CORE_SERVICE_ACCOUNT
+          value: ${CROSSPLANE_CORE_SERVICE_ACCOUNT}
+        - name: CROSSPLANE_DATA_ROLE_ARN
+          value: ${CROSSPLANE_DATA_ROLE_ARN}
+        - name: CROSSPLANE_DATA_SERVICE_ACCOUNT
+          value: ${CROSSPLANE_DATA_SERVICE_ACCOUNT}
   destination:
     server: https://kubernetes.default.svc
     namespace: ${CROSSPLANE_NAMESPACE}

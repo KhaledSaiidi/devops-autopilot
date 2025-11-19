@@ -1,0 +1,157 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-family-aws
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/upbound/provider-family-aws:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_CORE_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-ec2
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-ec2:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_CORE_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-iam
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-iam:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_CORE_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-route53
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-route53:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_CORE_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-docdb
+  labels:
+    app.kubernetes.io/part-of: crossplane-data
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-docdb:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_DATA_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-rds
+  labels:
+    app.kubernetes.io/part-of: crossplane-data
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-rds:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_DATA_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+  labels:
+    app.kubernetes.io/part-of: crossplane-data
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.5.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_DATA_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-ansible
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-ansible:v0.5.0
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-gitlab
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-gitlab:v0.6.0
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-grafana
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-grafana:v0.5.0
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-helm
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.17.0
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-kubernetes
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.12.1
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-terraform
+  labels:
+    app.kubernetes.io/part-of: crossplane-data
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-terraform:v0.9.0
+  packagePullPolicy: IfNotPresent
+  serviceAccountName: ${CROSSPLANE_DATA_SERVICE_ACCOUNT}
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-vault
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-vault:v0.5.1
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-zitadel
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-zitadel:v0.2.0
+  packagePullPolicy: IfNotPresent
