@@ -14,7 +14,7 @@ resources:
   - ../../../base/reloader.yaml
   - ../../../base/vault.yaml
   - ../../../base/external-secrets.yaml
-  - ../../../base/databases.yaml
+  - ../../../base/stateful-resources.yaml
   - ../../../base/harbor.yaml
   - ../../../base/gitlab.yaml
   - ../../../base/zitadel.yaml

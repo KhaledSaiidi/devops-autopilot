@@ -1,24 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: databases
+  name: stateful-resources
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: '1'
   labels:
-    app.kubernetes.io/name: databases
+    app.kubernetes.io/name: stateful-resources
     app.kubernetes.io/part-of: platform-baseline
 spec:
   project: platform
   source:
     repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
     targetRevision: main
-    path: gitops/apps/databases
+    path: gitops/apps/stateful-resources
     plugin:
       name: argocd-lovely-plugin-v1.0
   destination:
     server: https://kubernetes.default.svc
-    namespace: databases
+    namespace: stateful-resources
   syncPolicy:
     automated:
       prune: true
