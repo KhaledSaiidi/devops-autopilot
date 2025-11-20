@@ -1,0 +1,49 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-go-templating
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.7.1
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.3.1
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-auto-ready
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.2.1
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-extra-resources
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-extra-resources:v0.3.0
+  packagePullPolicy: IfNotPresent
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-kcl
+  labels:
+    app.kubernetes.io/part-of: crossplane-core
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-kcl:v0.2.0
+  packagePullPolicy: IfNotPresent

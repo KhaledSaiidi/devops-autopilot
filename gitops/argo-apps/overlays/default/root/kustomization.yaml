@@ -7,8 +7,8 @@ resources:
   - ../../../base/cni-tuning.yaml
   - ../../../base/cluster-autoscaler.yaml
   - ../../../base/gateway-api.yaml
-  - ../../../base/crossplane.yaml
   - ../../../base/external-dns.yaml
+  - ../../../base/crossplane.yaml
   - ../../../base/kyverno.yaml
   - ../../../base/reflector.yaml
   - ../../../base/reloader.yaml
