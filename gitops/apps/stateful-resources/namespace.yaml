@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: databases
+  name: stateful-resources
   labels:
-    app.kubernetes.io/name: databases
+    app.kubernetes.io/name: stateful-resources
     app.kubernetes.io/part-of: platform-baseline
