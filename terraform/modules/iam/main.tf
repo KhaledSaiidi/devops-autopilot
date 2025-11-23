@@ -75,3 +75,53 @@ resource "aws_iam_role_policy_attachment" "ecr_readonly" {
   role       = aws_iam_role.eks_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
+
+#############################
+# Bastion Instance Role
+#############################
+resource "aws_iam_role" "bastion_role" {
+  name = "${var.project_name}-bastion-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-bastion-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+# Minimal permissions to allow aws eks get-token to work from the bastion.
+resource "aws_iam_role_policy" "bastion_eks_auth" {
+  name = "${var.project_name}-bastion-eks-auth"
+  role = aws_iam_role.bastion_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "sts:GetCallerIdentity"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "bastion" {
+  name = "${var.project_name}-bastion-instance-profile"
+  role = aws_iam_role.bastion_role.name
+}

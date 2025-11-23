@@ -122,6 +122,11 @@ variable "enable_bastion" {
   type    = bool
   default = true
 }
+variable "bastion_instance_profile_name" {
+  description = "IAM instance profile to attach to the bastion instance."
+  type        = string
+  default     = null
+}
 variable "bastion_instance_type" {
   type    = string
   default = "t3.micro"

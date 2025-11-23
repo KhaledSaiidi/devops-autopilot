@@ -12,3 +12,8 @@ output "eks_node_role_arn" {
   description = "IAM role ARN for the EKS worker nodes."
   value       = aws_iam_role.eks_node_role.arn
 }
+
+output "bastion_instance_profile_name" {
+  description = "Instance profile name for the bastion host."
+  value       = aws_iam_instance_profile.bastion.name
+}

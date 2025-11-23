@@ -241,6 +241,7 @@ resource "aws_instance" "bastion" {
   subnet_id                   = var.public_subnet_ids[0]
   associate_public_ip_address = true
   key_name                    = local.effective_ssh_key_name
+  iam_instance_profile        = var.bastion_instance_profile_name
 
   vpc_security_group_ids = [aws_security_group.bastion_sg[0].id]
 
