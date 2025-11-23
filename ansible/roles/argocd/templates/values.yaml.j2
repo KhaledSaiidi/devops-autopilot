@@ -37,7 +37,7 @@ configs:
               if ! command -v envsubst >/dev/null 2>&1; then
                 echo "envsubst not found in repo-server image"; exit 1;
               fi
-              {{ argocd_envsubst_command }}
+              {{ argocd_envsubst_command | trim | indent(14, true) }}
 {% endif %}
 {% if argocd_enable_lovely_plugin %}
 {% if argocd_enable_envsubst_plugin %}
@@ -49,13 +49,13 @@ configs:
           command: ["/bin/sh", "-lc"]
           args:
             - |
-              {{ argocd_lovely_plugin_init_command }}
+              {{ argocd_lovely_plugin_init_command | trim | indent(14, true) }}
 {% endif %}
         generate:
           command: ["/bin/sh", "-lc"]
           args:
             - |
-              {{ argocd_lovely_plugin_generate_command }}
+              {{ argocd_lovely_plugin_generate_command | trim | indent(14, true) }}
 {% if argocd_lovely_plugin_discover_file_name %}
         discover:
           fileName: {{ argocd_lovely_plugin_discover_file_name }}

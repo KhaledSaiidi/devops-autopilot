@@ -16,23 +16,41 @@
     group: "{{ ansible_user }}"
     mode: "0700"
 
-- name: Ensure python3-pip is installed (for k8s modules)
-  ansible.builtin.package:
-    name: python3-pip
-    state: present
-  when: bastion_setup_install_k8s_python_deps | bool
-
 - name: Ensure AWS CLI is installed
   ansible.builtin.package:
     name: awscli
     state: present
 
-- name: Install Python dependencies required by kubernetes.core/community.kubernetes
+- name: Install system Python deps for k8s modules (apt-based)
+  ansible.builtin.package:
+    name:
+      - python3-kubernetes
+      - python3-openshift
+      - python3-yaml
+    state: present
+  when:
+    - bastion_setup_install_k8s_python_deps | bool
+    - ansible_pkg_mgr == "apt"
+
+- name: Ensure python3-pip is installed (for pip fallback)
+  ansible.builtin.package:
+    name: python3-pip
+    state: present
+  when:
+    - bastion_setup_install_k8s_python_deps | bool
+    - ansible_pkg_mgr != "apt"
+
+- name: Install Python deps for k8s modules via pip fallback
   ansible.builtin.pip:
-    name: "{{ bastion_setup_k8s_python_packages }}"
+    name:
+      - "kubernetes>=26.1.0"
+      - "openshift>=0.13.2"
+      - "PyYAML>=6.0.0"
     executable: pip3
     extra_args: "--upgrade"
-  when: bastion_setup_install_k8s_python_deps | bool
+  when:
+    - bastion_setup_install_k8s_python_deps | bool
+    - ansible_pkg_mgr != "apt"
 
 # -------- kubectl (arch-aware, idempotent) --------
 - name: Detect desired kubectl tag (e.g., v1.34.1)
