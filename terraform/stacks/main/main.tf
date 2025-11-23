@@ -220,6 +220,54 @@ module "nodegroup" {
   tags                  = var.tags
 }
 
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+data "aws_caller_identity" "current" {}
+
+# Manage aws-auth ConfigMap to include node role and bastion role.
+resource "kubernetes_manifest" "aws_auth" {
+  depends_on = [
+    module.eks,
+    module.nodegroup
+  ]
+
+  field_manager {
+    name            = "terraform-aws-auth"
+    force_conflicts = true
+  }
+
+  manifest = {
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    metadata = {
+      name      = "aws-auth"
+      namespace = "kube-system"
+    }
+    data = {
+      mapRoles = yamlencode([
+        {
+          rolearn  = module.iam.eks_node_role_arn
+          username = "system:node:{{EC2PrivateDNSName}}"
+          groups   = ["system:bootstrappers", "system:nodes"]
+        },
+        {
+          rolearn  = module.iam.bastion_role_arn
+          username = "bastion"
+          groups   = ["system:masters"]
+        }
+      ])
+    }
+  }
+}
+
 ############################################
 # 6) IRSA roles (after cluster exists)
 ############################################

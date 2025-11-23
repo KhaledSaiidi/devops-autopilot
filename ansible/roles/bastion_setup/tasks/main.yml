@@ -22,6 +22,11 @@
     state: present
   when: bastion_setup_install_k8s_python_deps | bool
 
+- name: Ensure AWS CLI is installed
+  ansible.builtin.package:
+    name: awscli
+    state: present
+
 - name: Install Python dependencies required by kubernetes.core/community.kubernetes
   ansible.builtin.pip:
     name: "{{ bastion_setup_k8s_python_packages }}"
