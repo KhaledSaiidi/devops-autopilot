@@ -31,15 +31,6 @@ resource "aws_eks_node_group" "this" {
     version = "$Latest"
   }
 
-  # --- SSH remote access ---
-  dynamic "remote_access" {
-    for_each = (var.enable_ssh && local.effective_ssh_key_name != null && var.enable_bastion) ? [1] : []
-    content {
-      ec2_ssh_key               = local.effective_ssh_key_name
-      source_security_group_ids = [aws_security_group.bastion_sg[0].id]
-    }
-  }
-
   scaling_config {
     desired_size = var.desired_size
     max_size     = var.max_size
@@ -48,7 +39,6 @@ resource "aws_eks_node_group" "this" {
 
   ami_type             = var.ami_type
   capacity_type        = var.capacity_type
-  disk_size            = var.disk_size
   instance_types       = var.instance_types
   version              = var.eks_version
   force_update_version = var.force_update_version
@@ -124,10 +114,29 @@ resource "local_file" "private_key" {
 
 locals {
   effective_ssh_key_name = var.create_ssh_key ? aws_key_pair.eks_keypair[0].key_name : var.ssh_key_name
+  bastion_sg_id          = try(aws_security_group.bastion_sg[0].id, null)
+  worker_sg_id           = aws_security_group.worker_sg.id
 }
 
 resource "aws_launch_template" "workers" {
   name_prefix = "${var.cluster_name}-workers-"
+
+  key_name = local.effective_ssh_key_name
+
+  vpc_security_group_ids = compact([
+    local.worker_sg_id,
+    var.cluster_sg_id,
+    local.bastion_sg_id
+  ])
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = var.disk_size
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
+  }
 
   tag_specifications {
     resource_type = "instance"
@@ -173,6 +182,49 @@ resource "aws_security_group" "bastion_sg" {
       error_message = "bastion_sg requires at least one admin CIDR (auto-detect should provide caller /32)."
     }
   }
+}
+
+# Worker security group: allow control plane, node-to-node, and SSH from bastion.
+resource "aws_security_group" "worker_sg" {
+  name   = "${var.project_name}-worker-sg"
+  vpc_id = data.aws_vpc.selected.id
+
+  # Node-to-node
+  ingress {
+    description = "Node-to-node"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  # Control plane to nodes
+  ingress {
+    description     = "Control plane to nodes"
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    security_groups = [var.cluster_sg_id]
+  }
+
+  # SSH from bastion
+  ingress {
+    description     = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = compact([local.bastion_sg_id])
+  }
+
+  egress {
+    description = "All egress"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge({ Name = "${var.project_name}-worker-sg" }, var.tags)
 }
 data "aws_subnet" "pub0" {
   id = var.public_subnet_ids[0]

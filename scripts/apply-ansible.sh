@@ -98,7 +98,7 @@ CHECK_FLAG=""
 case "${ANSIBLE_DRY_RUN:-}" in 1|true|True) CHECK_FLAG="--check" ;; esac
 
 verbosity_from_env() {
-  case "${ANSIBLE_VERBOSITY:-normal}" in
+  case "${ANSIBLE_DEBUG_LEVEL:-normal}" in
     quiet) echo "" ;;
     normal)      echo "-v" ;;
     verbose)         echo "-vv" ;;

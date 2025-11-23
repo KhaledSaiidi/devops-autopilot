@@ -191,6 +191,7 @@ module "nodegroup" {
   source              = "../../modules/nodegroup"
   project_name        = var.project_name
   cluster_name        = module.eks.cluster_name
+  cluster_sg_id       = module.eks.cluster_security_group_id
   node_group_role_arn = module.iam.eks_node_role_arn
   private_subnet_ids  = module.vpc.private_subnet_ids
 

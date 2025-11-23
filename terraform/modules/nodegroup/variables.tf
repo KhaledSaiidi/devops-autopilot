@@ -12,6 +12,11 @@ variable "node_group_role_arn" {
   type        = string
 }
 
+variable "cluster_sg_id" {
+  description = "EKS cluster security group ID (control plane SG)."
+  type        = string
+}
+
 variable "private_subnet_ids" {
   description = "List of private subnet IDs where nodes will run."
   type        = list(string)
