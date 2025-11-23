@@ -26,6 +26,11 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = var.node_group_role_arn
   subnet_ids      = var.private_subnet_ids
 
+  launch_template {
+    id      = aws_launch_template.workers.id
+    version = "$Latest"
+  }
+
   # --- SSH remote access ---
   dynamic "remote_access" {
     for_each = (var.enable_ssh && local.effective_ssh_key_name != null && var.enable_bastion) ? [1] : []
@@ -119,6 +124,24 @@ resource "local_file" "private_key" {
 
 locals {
   effective_ssh_key_name = var.create_ssh_key ? aws_key_pair.eks_keypair[0].key_name : var.ssh_key_name
+}
+
+resource "aws_launch_template" "workers" {
+  name_prefix = "${var.cluster_name}-workers-"
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = merge(
+      {
+        Name = "${var.cluster_name}-worker"
+      },
+      var.tags
+    )
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Allow SSH *to bastion* only from approved CIDRs
