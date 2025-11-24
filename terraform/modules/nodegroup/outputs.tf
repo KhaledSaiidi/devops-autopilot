@@ -3,6 +3,11 @@ output "bastion_public_ip" {
   description = "Public IP of the bastion host (if enabled)."
 }
 
+output "bastion_security_group_id" {
+  value       = try(aws_security_group.bastion_sg[0].id, null)
+  description = "Security group ID for the bastion host (if enabled)."
+}
+
 output "ssh_key_name" {
   value       = local.effective_ssh_key_name
   description = "AWS key pair name in use for bastion and nodes."

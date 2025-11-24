@@ -12,6 +12,11 @@ variable "node_group_role_arn" {
   type        = string
 }
 
+variable "cluster_sg_id" {
+  description = "EKS cluster security group ID (control plane SG)."
+  type        = string
+}
+
 variable "private_subnet_ids" {
   description = "List of private subnet IDs where nodes will run."
   type        = list(string)
@@ -116,6 +121,11 @@ variable "create_ssh_key" {
 variable "enable_bastion" {
   type    = bool
   default = true
+}
+variable "bastion_instance_profile_name" {
+  description = "IAM instance profile to attach to the bastion instance."
+  type        = string
+  default     = null
 }
 variable "bastion_instance_type" {
   type    = string

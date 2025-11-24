@@ -82,7 +82,7 @@ ansible:
   kubectl_version: "v1.34.1"
   helm_version: "v3.19.0"
   dry_run: false
-  verbosity: "debug" # one of: quiet, normal, verbose, high, debug
+  debug_level: "verbose" # one of: quiet, normal, verbose, high, debug
   argocd_namespace: "argocd"
   argocd_create_namespace: true
   argocd_server_service_type: LoadBalancer

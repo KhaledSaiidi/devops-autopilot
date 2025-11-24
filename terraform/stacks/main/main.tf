@@ -188,11 +188,13 @@ module "eks" {
 # 5) Nodegroup (private subnets)
 ############################################
 module "nodegroup" {
-  source              = "../../modules/nodegroup"
-  project_name        = var.project_name
-  cluster_name        = module.eks.cluster_name
-  node_group_role_arn = module.iam.eks_node_role_arn
-  private_subnet_ids  = module.vpc.private_subnet_ids
+  source                        = "../../modules/nodegroup"
+  project_name                  = var.project_name
+  cluster_name                  = module.eks.cluster_name
+  cluster_sg_id                 = module.eks.cluster_security_group_id
+  node_group_role_arn           = module.iam.eks_node_role_arn
+  private_subnet_ids            = module.vpc.private_subnet_ids
+  bastion_instance_profile_name = module.iam.bastion_instance_profile_name
 
   # SSH control
   enable_ssh     = var.enable_ssh
@@ -216,6 +218,58 @@ module "nodegroup" {
   force_update_version  = var.force_update_version
   extra_labels          = var.extra_labels
   tags                  = var.tags
+}
+
+data "aws_caller_identity" "current" {}
+
+# Manage aws-auth ConfigMap via kubectl server-side apply to adopt existing object.
+resource "null_resource" "aws_auth" {
+  depends_on = [
+    module.eks,
+    module.nodegroup
+  ]
+
+  triggers = {
+    node_role    = module.iam.eks_node_role_arn
+    bastion_role = module.iam.bastion_role_arn
+    kubeconfig   = module.eks.kubeconfig_path
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      set -euo pipefail
+      cat <<'EOF' | kubectl --kubeconfig="${module.eks.kubeconfig_path}" apply --server-side --force-conflicts -f -
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: aws-auth
+        namespace: kube-system
+      data:
+        mapRoles: |
+          - rolearn: ${module.iam.eks_node_role_arn}
+            username: system:node:{{EC2PrivateDNSName}}
+            groups:
+              - system:bootstrappers
+              - system:nodes
+          - rolearn: ${module.iam.bastion_role_arn}
+            username: bastion
+            groups:
+              - system:masters
+      EOF
+    EOT
+    interpreter = ["/bin/bash", "-c"]
+  }
+}
+
+# Allow bastion SG to reach the EKS control plane (private endpoint) on 443.
+resource "aws_security_group_rule" "cluster_api_from_bastion" {
+  description              = "Allow bastion to reach EKS API"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = module.eks.cluster_security_group_id
+  source_security_group_id = module.nodegroup.bastion_security_group_id
 }
 
 ############################################

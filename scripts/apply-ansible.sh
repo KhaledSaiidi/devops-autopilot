@@ -98,7 +98,7 @@ CHECK_FLAG=""
 case "${ANSIBLE_DRY_RUN:-}" in 1|true|True) CHECK_FLAG="--check" ;; esac
 
 verbosity_from_env() {
-  case "${ANSIBLE_VERBOSITY:-normal}" in
+  case "${ANSIBLE_DEBUG_LEVEL:-normal}" in
     quiet) echo "" ;;
     normal)      echo "-v" ;;
     verbose)         echo "-vv" ;;
@@ -139,15 +139,6 @@ if [[ "$have_k8s_core" != "yes" || "$have_comm_k8s" != "yes" ]]; then
     --collections-path "$COLL_PATH" --force-with-deps
 else
   log "Ansible collections already present in $COLL_PATH"
-fi
-
-# Optional: Python libs needed by kubernetes.core/community.kubernetes modules on the controller
-# Set INSTALL_PY_K8S_DEPS=0 to skip
-if [[ "${INSTALL_PY_K8S_DEPS:-1}" != "0" ]]; then
-  if command -v python3 >/dev/null 2>&1; then
-    log "Ensuring python deps for k8s modules (kubernetes, openshift, pyyaml) ..."
-    python3 -m pip install --user -q "kubernetes>=26.1.0" "openshift>=0.13.2" pyyaml || true
-  fi
 fi
 
 set -x

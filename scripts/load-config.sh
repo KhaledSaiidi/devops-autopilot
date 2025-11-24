@@ -140,7 +140,7 @@ export TF_BACKEND_DYNAMODB_TABLE=$(yq -r '.project.dynamodb_table // ""' "$CONFI
 # Ansible-driven values
 # -----------------------------------------------------------------------------
 declare -A ANSIBLE_ENV_MAP=(
-  [verbosity]="ANSIBLE_VERBOSITY"
+  [debug_level]="ANSIBLE_DEBUG_LEVEL"
   [dry_run]="ANSIBLE_DRY_RUN"
   [ansible_enabled]="ANSIBLE_ENABLED"
 )
