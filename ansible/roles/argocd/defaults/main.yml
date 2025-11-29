@@ -7,7 +7,7 @@ argocd_create_namespace: true
 argocd_helm_repo_name: argo
 argocd_helm_repo_url: https://argoproj.github.io/argo-helm
 argocd_chart_name: argo/argo-cd
-argocd_chart_version: ""   # pin like "6.9.4" if you want deterministic installs
+argocd_chart_version: "7.6.12"   # pin like "6.9.4" if you want deterministic installs
 
 # Service exposure
 argocd_server_service_type: LoadBalancer
@@ -29,6 +29,9 @@ argocd_values_extra: {}  # dict merged into template values
 # Plugin: envsubst (GitOps)
 argocd_enable_envsubst_plugin: true
 argocd_envsubst_plugin_name: envsubst
+argocd_envsubst_image: alpine:3.19
+argocd_envsubst_download_url: https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-x86_64
+argocd_envsubst_install_dir: /envsubst-bin
 # The command can be adjusted per-app with .spec.source.plugin, but a generic plugin is handy:
 argocd_envsubst_command: |
   set -euo pipefail
