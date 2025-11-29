@@ -34,8 +34,10 @@ configs:
           command: ["/bin/sh", "-lc"]
           args:
             - |
-              if ! command -v envsubst >/dev/null 2>&1; then
-                echo "envsubst not found in repo-server image"; exit 1;
+              if [ -f "{{ argocd_envsubst_install_dir }}/envsubst" ]; then
+                export PATH="{{ argocd_envsubst_install_dir }}:$PATH"
+              elif ! command -v envsubst >/dev/null 2>&1; then
+                echo "envsubst not found in repo-server image or {{ argocd_envsubst_install_dir }}"; exit 1;
               fi
               {{ argocd_envsubst_command | trim | indent(14, true) }}
 {% endif %}
@@ -64,15 +66,28 @@ configs:
 {% endif %}
 {% endif %}
 
-{% if argocd_enable_lovely_plugin %}
+{% if argocd_enable_lovely_plugin or argocd_enable_envsubst_plugin %}
 repoServer:
   extraVolumes:
+{% if argocd_enable_lovely_plugin %}
     - name: argocd-lovely-plugin
       emptyDir: {}
+{% endif %}
+{% if argocd_enable_envsubst_plugin %}
+    - name: envsubst-tools
+      emptyDir: {}
+{% endif %}
   extraVolumeMounts:
+{% if argocd_enable_lovely_plugin %}
     - name: argocd-lovely-plugin
       mountPath: {{ argocd_lovely_plugin_install_dir }}
+{% endif %}
+{% if argocd_enable_envsubst_plugin %}
+    - name: envsubst-tools
+      mountPath: {{ argocd_envsubst_install_dir }}
+{% endif %}
   initContainers:
+{% if argocd_enable_lovely_plugin %}
     - name: install-{{ argocd_lovely_plugin_name | regex_replace('[^a-z0-9-]', '-') }}
       image: "{{ argocd_lovely_plugin_image }}"
       imagePullPolicy: "{{ argocd_lovely_plugin_image_pull_policy }}"
@@ -85,7 +100,21 @@ repoServer:
       volumeMounts:
         - name: argocd-lovely-plugin
           mountPath: {{ argocd_lovely_plugin_install_dir }}
-
+{% endif %}
+{% if argocd_enable_envsubst_plugin %}
+    - name: install-envsubst
+      image: "{{ argocd_envsubst_image }}"
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -euo pipefail
+          mkdir -p {{ argocd_envsubst_install_dir }}
+          cp /usr/bin/envsubst {{ argocd_envsubst_install_dir }}/envsubst
+          chmod 0555 {{ argocd_envsubst_install_dir }}/envsubst
+      volumeMounts:
+        - name: envsubst-tools
+          mountPath: {{ argocd_envsubst_install_dir }}
+{% endif %}
 {% endif %}
 
 # Merge in extra values from defaults or play vars

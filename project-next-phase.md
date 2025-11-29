@@ -202,3 +202,72 @@ _Exit criteria:_ Every app folder under `gitops/apps/` is either a Helm/Kustomiz
 _Exit criteria:_ Monitoring dashboards + backup schedules in place; documentation stored in repo (e.g., `docs/crossplane/`).
 
 ---
+
+
+
+Current Terraform Approach (Wrong):
+Terraform creates:
+  ├── ACM certs for *.devops-autopilot.kube-forge.com
+  └── ACM certs for *.internal.devops-autopilot.kube-forge.com
+  
+Problems:
+  ❌ Certificates in AWS ACM (not Kubernetes)
+  ❌ Not GitOps-friendly
+  ❌ No delegated zones (platform/internal)
+  ❌ Can't use cert-manager + Let's Encrypt
+
+
+Your Desired Approach (Correct):
+kube-forge.com
+    └── devops-autopilot.kube-forge.com
+            ├── platform.devops-autopilot.kube-forge.com (Crossplane creates)
+            │       └── *.platform.devops-autopilot.kube-forge.com (cert-manager)
+            └── internal.devops-autopilot.kube-forge.com (Crossplane creates)
+                    └── *.internal.devops-autopilot.kube-forge.com (cert-manager)
+
+Flow:
+  1. Crossplane → Creates delegated Route53 zones
+  2. cert-manager → Issues Let's Encrypt certs (DNS-01 challenge)
+  3. External DNS → Creates A/CNAME records for apps
+  4. Gateway API → Uses cert-manager Secrets (not ACM)
+
+Phase 1: Terraform Cleanup 🧹
+Remove ACM certificate resources
+Keep IRSA roles (needed for Crossplane, cert-manager, External DNS)
+Update locals and Ansible vars
+Phase 2: Crossplane DNS Infrastructure 🏗️ ← YOUR MISSING PIECE!
+New ArgoCD App: dns-infrastructure (sync-wave -3)
+
+Creates:
+
+platform.devops-autopilot.kube-forge.com hosted zone (Crossplane Zone resource)
+internal.devops-autopilot.kube-forge.com hosted zone (Crossplane Zone resource)
+NS delegation records in parent zone (devops-autopilot.kube-forge.com)
+This ensures:
+
+kube-forge.com (Z032863786J0OF6PKT1D)
+    └── devops-autopilot.kube-forge.com
+            ├── NS → platform.devops-autopilot.kube-forge.com (Crossplane creates this!)
+            └── NS → internal.devops-autopilot.kube-forge.com (Crossplane creates this!)
+Phase 3: cert-manager Configuration 🔐
+New ArgoCD App: cert-manager-config (sync-wave -4)
+
+Creates:
+
+ClusterIssuer for Let's Encrypt
+Wildcard cert for *.platform.devops-autopilot.kube-forge.com
+Wildcard cert for *.internal.devops-autopilot.kube-forge.com
+Phase 4-6: External DNS, Gateway API updates, Root App integration
+Sync-Wave Order (Ensures Proper Deployment):
+-6: storage-stack
+-5: cert-manager
+-4: gateway-api, cert-manager-config (NEW)
+-3: crossplane, dns-infrastructure (NEW), external-dns
+-2: vault
+-1: external-secrets
+ 0+: Your applications
+Key Features:
+✅ Hosted zone creation via Crossplane ✅ NS delegation to parent zone ✅ Wildcard certificates via cert-manager ✅ Automatic DNS records via External DNS ✅ Gateway API integration with cert-manager Secrets ✅ Organized by sync-waves for proper ordering ✅ Verification steps for each phase ✅ Rollback plan if needed
+
+Ready to proceed with implementation?
+
