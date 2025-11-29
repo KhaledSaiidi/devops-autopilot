@@ -107,8 +107,10 @@ repoServer:
       command: ["/bin/sh", "-c"]
       args:
         - |
-          wget -O {{ argocd_envsubst_install_dir }}/envsubst {{ argocd_envsubst_download_url }} && \
-          chmod +x {{ argocd_envsubst_install_dir }}/envsubst
+          set -euo pipefail
+          mkdir -p {{ argocd_envsubst_install_dir }}
+          cp /usr/bin/envsubst {{ argocd_envsubst_install_dir }}/envsubst
+          chmod 0555 {{ argocd_envsubst_install_dir }}/envsubst
       volumeMounts:
         - name: envsubst-tools
           mountPath: {{ argocd_envsubst_install_dir }}
