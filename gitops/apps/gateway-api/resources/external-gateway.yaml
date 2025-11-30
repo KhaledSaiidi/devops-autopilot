@@ -38,14 +38,14 @@ spec:
   - name: external-http
     protocol: HTTP
     port: ${GATEWAY_API_EXTERNAL_HTTP_PORT}
-    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    hostname: ${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
     allowedRoutes:
       namespaces:
         from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
   - name: external-https
     protocol: HTTPS
     port: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
-    hostname: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+    hostname: ${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
     allowedRoutes:
       namespaces:
         from: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}

@@ -66,7 +66,7 @@ spec:
         - name: GATEWAY_API_EXTERNAL_HTTPS_PORT
           value: ${GATEWAY_API_EXTERNAL_HTTPS_PORT}
         - name: GATEWAY_API_EXTERNAL_HOSTNAME
-          value: ${GATEWAY_API_EXTERNAL_HOSTNAME}
+          value: ${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
         - name: GATEWAY_API_EXTERNAL_ALLOWED_ROUTES
           value: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
         - name: GATEWAY_API_INTERNAL_NAME
@@ -78,7 +78,15 @@ spec:
         - name: GATEWAY_API_INTERNAL_HTTPS_PORT
           value: ${GATEWAY_API_INTERNAL_HTTPS_PORT}
         - name: GATEWAY_API_INTERNAL_HOSTNAME
-          value: ${GATEWAY_API_INTERNAL_HOSTNAME}
+          value: ${DNS_INTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
+        - name: PROJECT_NAME
+          value: ${PROJECT_NAME}
+        - name: DNS_BASE_DOMAIN
+          value: ${DNS_BASE_DOMAIN}
+        - name: DNS_EXTERNAL_LABEL
+          value: ${DNS_EXTERNAL_LABEL}
+        - name: DNS_INTERNAL_LABEL
+          value: ${DNS_INTERNAL_LABEL}
         - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
           value: ${GATEWAY_API_INTERNAL_ALLOWED_ROUTES}
   destination:

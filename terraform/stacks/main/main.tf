@@ -5,14 +5,18 @@ locals {
   dns_base_domain       = trimspace(var.dns_base_domain)
   dns_env_subdomain     = var.project_name
   dns_internal_label    = "internal"
+  dns_external_label    = var.dns_external_label != "" ? var.dns_external_label : "platform"
   dns_root_domain       = local.dns_base_domain != "" ? (local.dns_env_subdomain != "" ? "${local.dns_env_subdomain}.${local.dns_base_domain}" : local.dns_base_domain) : ""
-  dns_external_wildcard = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
-  dns_internal_wildcard = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
+  dns_external_fqdn     = local.dns_base_domain != "" ? "${local.dns_external_label}.${local.dns_root_domain}" : ""
+  dns_internal_fqdn     = local.dns_base_domain != "" ? "${local.dns_internal_label}.${local.dns_root_domain}" : ""
+  dns_external_wildcard = local.dns_external_fqdn != "" ? "*.${local.dns_external_fqdn}" : ""
+  dns_internal_wildcard = local.dns_internal_fqdn != "" ? "*.${local.dns_internal_fqdn}" : ""
   dns_hosted_zone_id    = var.dns_hosted_zone_id != "" ? var.dns_hosted_zone_id : try(data.aws_route53_zone.primary[0].zone_id, "")
   dns_hosted_zone_arn   = local.dns_hosted_zone_id != "" ? "arn:aws:route53:::hostedzone/${local.dns_hosted_zone_id}" : ""
-  dns_external_hostname = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
-  dns_internal_hostname = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
-  route53_zone_arns     = local.dns_hosted_zone_arn != "" ? [local.dns_hosted_zone_arn] : []
+  dns_external_hostname = local.dns_external_wildcard
+  dns_internal_hostname = local.dns_internal_wildcard
+  # Allow DNS-integrated components (external-dns, cert-manager) to manage delegated zones created later.
+  route53_zone_arns = local.dns_hosted_zone_arn != "" ? ["arn:aws:route53:::hostedzone/*"] : []
 
   external_gateway_hostname = var.gateway_api_external_gateway.hostname != "" ? var.gateway_api_external_gateway.hostname : local.dns_external_hostname
   internal_gateway_hostname = var.gateway_api_internal_gateway.hostname != "" ? var.gateway_api_internal_gateway.hostname : local.dns_internal_hostname
@@ -325,16 +329,12 @@ resource "local_file" "ansible_vars" {
     dns = {
       base_domain              = local.dns_base_domain
       root_domain              = local.dns_root_domain
+      external_label           = local.dns_external_label
       internal_label           = local.dns_internal_label
       hosted_zone_id           = local.dns_hosted_zone_id
       hosted_zone_arn          = local.dns_hosted_zone_arn
-      parent_hosted_zone_id    = local.dns_hosted_zone_id
-      platform_subdomain       = local.dns_env_subdomain
-      platform_zone_fqdn       = "platform.${local.dns_env_subdomain}.${local.dns_base_domain}"
-      internal_zone_fqdn       = "${local.dns_internal_label}.${local.dns_env_subdomain}.${local.dns_base_domain}"
-      platform_zone_id         = ""
-      internal_zone_id         = ""
-      platform_wildcard_domain = "*.platform.${local.dns_env_subdomain}.${local.dns_base_domain}"
+      external_fqdn            = local.dns_external_fqdn
+      internal_fqdn            = local.dns_internal_fqdn
       external_wildcard_domain = local.dns_external_wildcard
       internal_wildcard_domain = local.dns_internal_wildcard
     }

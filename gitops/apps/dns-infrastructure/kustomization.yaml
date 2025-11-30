@@ -4,3 +4,4 @@ resources:
   - xrd.yaml
   - composition-aws.yaml
   - zones.yaml
+images: []

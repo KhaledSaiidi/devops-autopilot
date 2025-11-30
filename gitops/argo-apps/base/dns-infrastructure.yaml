@@ -21,12 +21,14 @@ spec:
           value: ${AWS_REGION}
         - name: DNS_BASE_DOMAIN
           value: ${DNS_BASE_DOMAIN}
-        - name: DNS_PLATFORM_SUBDOMAIN
-          value: ${DNS_PLATFORM_SUBDOMAIN}
+        - name: DNS_EXTERNAL_LABEL
+          value: ${DNS_EXTERNAL_LABEL}
         - name: DNS_INTERNAL_LABEL
           value: ${DNS_INTERNAL_LABEL}
-        - name: DNS_PARENT_HOSTED_ZONE_ID
-          value: ${DNS_PARENT_HOSTED_ZONE_ID}
+        - name: PROJECT_NAME
+          value: ${PROJECT_NAME}
+        - name: DNS_HOSTED_ZONE_ID
+          value: ${DNS_HOSTED_ZONE_ID}
         - name: VPC_ID
           value: ${VPC_ID}
   destination:

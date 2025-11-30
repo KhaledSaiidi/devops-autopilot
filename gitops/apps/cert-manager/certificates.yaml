@@ -14,7 +14,7 @@ spec:
     name: letsencrypt-dns
     kind: ClusterIssuer
   dnsNames:
-  - ${DNS_PLATFORM_WILDCARD}
+  - "*.${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}"
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -32,4 +32,4 @@ spec:
     name: letsencrypt-dns
     kind: ClusterIssuer
   dnsNames:
-  - ${DNS_INTERNAL_WILDCARD}
+  - "*.${DNS_INTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}"

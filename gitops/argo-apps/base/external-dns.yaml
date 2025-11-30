@@ -23,14 +23,12 @@ spec:
           value: ${DNS_ROOT_DOMAIN}
         - name: DNS_BASE_DOMAIN
           value: ${DNS_BASE_DOMAIN}
+        - name: DNS_EXTERNAL_LABEL
+          value: ${DNS_EXTERNAL_LABEL}
         - name: DNS_INTERNAL_LABEL
           value: ${DNS_INTERNAL_LABEL}
-        - name: DNS_PLATFORM_SUBDOMAIN
-          value: ${DNS_PLATFORM_SUBDOMAIN}
-        - name: DNS_PLATFORM_ZONE_ID
-          value: ${DNS_PLATFORM_ZONE_ID}
-        - name: DNS_INTERNAL_ZONE_ID
-          value: ${DNS_INTERNAL_ZONE_ID}
+        - name: PROJECT_NAME
+          value: ${PROJECT_NAME}
         - name: EXTERNAL_DNS_NAMESPACE
           value: ${EXTERNAL_DNS_NAMESPACE}
         - name: EXTERNAL_DNS_SERVICE_ACCOUNT

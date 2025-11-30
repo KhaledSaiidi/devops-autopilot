@@ -13,11 +13,8 @@ sources:
   - ingress
   - gateway-httproute
 domainFilters:
-  - platform.${DNS_PLATFORM_SUBDOMAIN}.${DNS_BASE_DOMAIN}
-  - ${DNS_INTERNAL_LABEL}.${DNS_PLATFORM_SUBDOMAIN}.${DNS_BASE_DOMAIN}
-zoneIdFilters:
-  - ${DNS_PLATFORM_ZONE_ID}
-  - ${DNS_INTERNAL_ZONE_ID}
+  - ${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
+  - ${DNS_INTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
 serviceAccount:
   create: true
   name: ${EXTERNAL_DNS_SERVICE_ACCOUNT}
