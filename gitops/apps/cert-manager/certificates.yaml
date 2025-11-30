@@ -14,7 +14,7 @@ spec:
     name: letsencrypt-dns
     kind: ClusterIssuer
   dnsNames:
-  - ${DNS_EXTERNAL_WILDCARD}
+  - ${DNS_PLATFORM_WILDCARD}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

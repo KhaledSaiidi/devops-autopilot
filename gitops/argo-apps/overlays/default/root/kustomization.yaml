@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ../../../base/platform-project.yaml
   - ../../../base/storage-stack.yaml
+  - ../../../base/dns-infrastructure.yaml
   - ../../../base/cert-manager.yaml
   - ../../../base/cni-tuning.yaml
   - ../../../base/cluster-autoscaler.yaml

@@ -29,10 +29,12 @@ spec:
           value: ${CERT_MANAGER_EMAIL}
         - name: CERT_MANAGER_SERVER
           value: ${CERT_MANAGER_SERVER}
-        - name: DNS_HOSTED_ZONE_ID
-          value: ${DNS_HOSTED_ZONE_ID}
-        - name: DNS_EXTERNAL_WILDCARD
-          value: ${DNS_EXTERNAL_WILDCARD}
+        - name: DNS_PLATFORM_ZONE_ID
+          value: ${DNS_PLATFORM_ZONE_ID}
+        - name: DNS_INTERNAL_ZONE_ID
+          value: ${DNS_INTERNAL_ZONE_ID}
+        - name: DNS_PLATFORM_WILDCARD
+          value: ${DNS_PLATFORM_WILDCARD}
         - name: DNS_INTERNAL_WILDCARD
           value: ${DNS_INTERNAL_WILDCARD}
   destination:

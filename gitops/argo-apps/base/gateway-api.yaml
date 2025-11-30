@@ -69,8 +69,6 @@ spec:
           value: ${GATEWAY_API_EXTERNAL_HOSTNAME}
         - name: GATEWAY_API_EXTERNAL_ALLOWED_ROUTES
           value: ${GATEWAY_API_EXTERNAL_ALLOWED_ROUTES}
-        - name: GATEWAY_API_EXTERNAL_TLS_CERT_ARN
-          value: ${GATEWAY_API_EXTERNAL_TLS_CERT_ARN}
         - name: GATEWAY_API_INTERNAL_NAME
           value: ${GATEWAY_API_INTERNAL_NAME}
         - name: GATEWAY_API_INTERNAL_CONFIG_NAME
@@ -83,8 +81,6 @@ spec:
           value: ${GATEWAY_API_INTERNAL_HOSTNAME}
         - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
           value: ${GATEWAY_API_INTERNAL_ALLOWED_ROUTES}
-        - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
-          value: ${GATEWAY_API_INTERNAL_TLS_CERT_ARN}
   destination:
     server: https://kubernetes.default.svc
     namespace: ${GATEWAY_API_NAMESPACE}

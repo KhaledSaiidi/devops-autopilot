@@ -1,0 +1,67 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: delegatedzones.aws.dns.autopilot.dev
+  labels:
+    crossplane.io/xrd: delegatedzones.dns.autopilot.dev
+spec:
+  compositeTypeRef:
+    apiVersion: dns.autopilot.dev/v1alpha1
+    kind: DelegatedZone
+  mode: Pipeline
+  pipeline:
+    - step: render
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: template.fn.crossplane.io/v1beta1
+        kind: Templating
+        spec:
+          template: |
+            resources:
+            - name: hosted-zone
+              base:
+                apiVersion: route53.aws.upbound.io/v1beta1
+                kind: Zone
+                metadata:
+                  labels:
+                    autopilot.dev/managed-by: crossplane
+                spec:
+                  forProvider:
+                    name: {{ .context.composite.spec.parameters.zone }}
+                    comment: Delegated zone for {{ .context.composite.spec.parameters.zone }}
+                    {{- if .context.composite.spec.parameters.private }}
+                    privateZone: true
+                    vpc:
+                      - vpcId: {{ .context.composite.spec.parameters.vpcId }}
+                        vpcRegion: {{ .context.composite.spec.parameters.region }}
+                    {{- end }}
+                    tags:
+                      autopilot.dev/managed-by: crossplane
+                  providerConfigRef:
+                    name: aws-core
+              readinessChecks:
+                - type: MatchString
+                  fieldPath: "status.atProvider.id"
+                  matchString: ".+"
+            - name: parent-ns
+              base:
+                apiVersion: route53.aws.upbound.io/v1beta1
+                kind: Record
+                metadata:
+                  labels:
+                    autopilot.dev/managed-by: crossplane
+                spec:
+                  forProvider:
+                    name: {{ .context.composite.spec.parameters.zone }}.
+                    type: NS
+                    ttl: 300
+                    zoneId: {{ .context.composite.spec.parameters.parentZoneId }}
+                    records:
+                    {{- range .observed.resources.hosted-zone.status.atProvider.nameServers }}
+                    - {{ . }}
+                    {{- end }}
+                  providerConfigRef:
+                    name: aws-core
+              readinessChecks:
+                - type: None

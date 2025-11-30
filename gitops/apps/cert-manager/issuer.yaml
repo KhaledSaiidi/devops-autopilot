@@ -16,5 +16,9 @@ spec:
     solvers:
     - dns01:
         route53:
-          hostedZoneID: ${DNS_HOSTED_ZONE_ID}
+          hostedZoneID: ${DNS_PLATFORM_ZONE_ID}
+          region: ${AWS_REGION}
+    - dns01:
+        route53:
+          hostedZoneID: ${DNS_INTERNAL_ZONE_ID}
           region: ${AWS_REGION}
