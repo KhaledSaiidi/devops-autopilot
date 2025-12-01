@@ -4,7 +4,7 @@ metadata:
   name: crossplane
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '-3'
+    argocd.argoproj.io/sync-wave: '-5'
   labels:
     app.kubernetes.io/name: crossplane
     app.kubernetes.io/part-of: platform-baseline
