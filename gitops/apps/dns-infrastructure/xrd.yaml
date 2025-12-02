@@ -1,0 +1,58 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: delegatedzones.dns.autopilot.dev
+spec:
+  group: dns.autopilot.dev
+  names:
+    kind: DelegatedZone
+    plural: delegatedzones
+  claimNames:
+    kind: DelegatedZoneClaim
+    plural: delegatedzoneclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    zone:
+                      type: string
+                    parentZoneId:
+                      type: string
+                    region:
+                      type: string
+                    private:
+                      type: boolean
+                      default: false
+                    vpcId:
+                      type: string
+                  required:
+                    - zone
+                    - parentZoneId
+                    - region
+              required:
+                - parameters
+          required:
+            - spec
+      additionalPrinterColumns:
+        - name: Zone
+          type: string
+          jsonPath: ".spec.parameters.zone"
+        - name: Parent
+          type: string
+          jsonPath: ".spec.parameters.parentZoneId"
+        - name: Private
+          type: boolean
+          jsonPath: ".spec.parameters.private"
+        - name: VPC
+          type: string
+          jsonPath: ".spec.parameters.vpcId"

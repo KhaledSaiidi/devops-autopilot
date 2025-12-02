@@ -3,12 +3,13 @@ kind: Kustomization
 resources:
   - ../../../base/platform-project.yaml
   - ../../../base/storage-stack.yaml
+  - ../../../base/crossplane.yaml
   - ../../../base/cert-manager.yaml
   - ../../../base/cni-tuning.yaml
   - ../../../base/cluster-autoscaler.yaml
+  - ../../../base/dns-infrastructure.yaml
   - ../../../base/gateway-api.yaml
   - ../../../base/external-dns.yaml
-  - ../../../base/crossplane.yaml
   - ../../../base/kyverno.yaml
   - ../../../base/reflector.yaml
   - ../../../base/reloader.yaml

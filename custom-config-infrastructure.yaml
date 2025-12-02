@@ -96,6 +96,8 @@ ansible:
 dns:
   base_domain: "kube-forge.com"
   hosted_zone_id: "Z032863786J0OF6PKT1D"
+  external_label: "platform"
+  internal_label: "internal"
 
 cert_manager:
   email: "khaled.saiidi@outlook.com"
@@ -131,9 +133,11 @@ gateway_api:
     http_port: 80
     https_port: 443
     allowed_routes_from: "All"
+    hostname: "platform.devops-autopilot.kube-forge.com"
   internal_gateway:
     enabled: true
     name: "internal-gateway"
     http_port: 8080
     https_port: 8443
     allowed_routes_from: "Same"
+    hostname: "internal.devops-autopilot.kube-forge.com"

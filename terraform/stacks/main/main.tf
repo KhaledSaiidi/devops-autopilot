@@ -5,21 +5,23 @@ locals {
   dns_base_domain       = trimspace(var.dns_base_domain)
   dns_env_subdomain     = var.project_name
   dns_internal_label    = "internal"
+  dns_external_label    = var.dns_external_label != "" ? var.dns_external_label : "platform"
   dns_root_domain       = local.dns_base_domain != "" ? (local.dns_env_subdomain != "" ? "${local.dns_env_subdomain}.${local.dns_base_domain}" : local.dns_base_domain) : ""
-  dns_external_wildcard = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
-  dns_internal_wildcard = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
+  dns_external_fqdn     = local.dns_base_domain != "" ? "${local.dns_external_label}.${local.dns_root_domain}" : ""
+  dns_internal_fqdn     = local.dns_base_domain != "" ? "${local.dns_internal_label}.${local.dns_root_domain}" : ""
+  dns_external_wildcard = local.dns_external_fqdn != "" ? "*.${local.dns_external_fqdn}" : ""
+  dns_internal_wildcard = local.dns_internal_fqdn != "" ? "*.${local.dns_internal_fqdn}" : ""
   dns_hosted_zone_id    = var.dns_hosted_zone_id != "" ? var.dns_hosted_zone_id : try(data.aws_route53_zone.primary[0].zone_id, "")
   dns_hosted_zone_arn   = local.dns_hosted_zone_id != "" ? "arn:aws:route53:::hostedzone/${local.dns_hosted_zone_id}" : ""
-  dns_external_hostname = local.dns_root_domain != "" ? "*.${local.dns_root_domain}" : ""
-  dns_internal_hostname = local.dns_root_domain != "" ? "*.${local.dns_internal_label}.${local.dns_root_domain}" : ""
-  create_external_cert  = local.dns_external_wildcard != "" && local.dns_hosted_zone_id != ""
-  create_internal_cert  = local.dns_internal_wildcard != "" && local.dns_hosted_zone_id != ""
-  route53_zone_arns     = local.dns_hosted_zone_arn != "" ? [local.dns_hosted_zone_arn] : []
+  dns_external_hostname = local.dns_external_wildcard
+  dns_internal_hostname = local.dns_internal_wildcard
+  # Allow DNS-integrated components (external-dns, cert-manager) to manage delegated zones created later.
+  route53_zone_arns = local.dns_hosted_zone_arn != "" ? ["arn:aws:route53:::hostedzone/*"] : []
 
   external_gateway_hostname = var.gateway_api_external_gateway.hostname != "" ? var.gateway_api_external_gateway.hostname : local.dns_external_hostname
   internal_gateway_hostname = var.gateway_api_internal_gateway.hostname != "" ? var.gateway_api_internal_gateway.hostname : local.dns_internal_hostname
-  external_gateway_tls_arn  = var.gateway_api_external_gateway.tls_certificate_arn != "" ? var.gateway_api_external_gateway.tls_certificate_arn : try(aws_acm_certificate_validation.external[0].certificate_arn, "")
-  internal_gateway_tls_arn  = var.gateway_api_internal_gateway.tls_certificate_arn != "" ? var.gateway_api_internal_gateway.tls_certificate_arn : try(aws_acm_certificate_validation.internal[0].certificate_arn, "")
+  external_gateway_tls_arn  = var.gateway_api_external_gateway.tls_certificate_arn
+  internal_gateway_tls_arn  = var.gateway_api_internal_gateway.tls_certificate_arn
 }
 
 data "aws_route53_zone" "primary" {
@@ -28,92 +30,6 @@ data "aws_route53_zone" "primary" {
   private_zone = false
 }
 
-############################################
-# DNS wildcards -> ACM certificates
-############################################
-resource "aws_acm_certificate" "external" {
-  count             = local.create_external_cert ? 1 : 0
-  domain_name       = local.dns_external_wildcard
-  validation_method = "DNS"
-
-  tags = merge(
-    {
-      Name      = "${var.project_name}-external-wildcard"
-      ManagedBy = "Terraform"
-    },
-    var.tags
-  )
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_route53_record" "external_validation" {
-  for_each = local.create_external_cert ? {
-    for dvo in aws_acm_certificate.external[0].domain_validation_options :
-    dvo.domain_name => {
-      name  = dvo.resource_record_name
-      type  = dvo.resource_record_type
-      value = dvo.resource_record_value
-    }
-  } : {}
-
-  name            = each.value.name
-  type            = each.value.type
-  ttl             = 60
-  records         = [each.value.value]
-  zone_id         = local.dns_hosted_zone_id
-  allow_overwrite = true
-}
-
-resource "aws_acm_certificate_validation" "external" {
-  count                   = local.create_external_cert ? 1 : 0
-  certificate_arn         = aws_acm_certificate.external[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.external_validation : record.fqdn]
-}
-
-resource "aws_acm_certificate" "internal" {
-  count             = local.create_internal_cert ? 1 : 0
-  domain_name       = local.dns_internal_wildcard
-  validation_method = "DNS"
-
-  tags = merge(
-    {
-      Name      = "${var.project_name}-internal-wildcard"
-      ManagedBy = "Terraform"
-    },
-    var.tags
-  )
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_route53_record" "internal_validation" {
-  for_each = local.create_internal_cert ? {
-    for dvo in aws_acm_certificate.internal[0].domain_validation_options :
-    dvo.domain_name => {
-      name  = dvo.resource_record_name
-      type  = dvo.resource_record_type
-      value = dvo.resource_record_value
-    }
-  } : {}
-
-  name            = each.value.name
-  type            = each.value.type
-  ttl             = 60
-  records         = [each.value.value]
-  zone_id         = local.dns_hosted_zone_id
-  allow_overwrite = true
-}
-
-resource "aws_acm_certificate_validation" "internal" {
-  count                   = local.create_internal_cert ? 1 : 0
-  certificate_arn         = aws_acm_certificate.internal[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.internal_validation : record.fqdn]
-}
 resource "null_resource" "artifacts_dir" {
   provisioner "local-exec" {
     command = "mkdir -p ${local.artifacts_dir}"
@@ -399,15 +315,13 @@ resource "local_file" "ansible_vars" {
       external_gateway = merge(
         var.gateway_api_external_gateway,
         {
-          hostname            = local.external_gateway_hostname
-          tls_certificate_arn = local.external_gateway_tls_arn
+          hostname = local.external_gateway_hostname
         }
       )
       internal_gateway = merge(
         var.gateway_api_internal_gateway,
         {
-          hostname            = local.internal_gateway_hostname
-          tls_certificate_arn = local.internal_gateway_tls_arn
+          hostname = local.internal_gateway_hostname
         }
       )
     }
@@ -415,9 +329,12 @@ resource "local_file" "ansible_vars" {
     dns = {
       base_domain              = local.dns_base_domain
       root_domain              = local.dns_root_domain
+      external_label           = local.dns_external_label
       internal_label           = local.dns_internal_label
       hosted_zone_id           = local.dns_hosted_zone_id
       hosted_zone_arn          = local.dns_hosted_zone_arn
+      external_fqdn            = local.dns_external_fqdn
+      internal_fqdn            = local.dns_internal_fqdn
       external_wildcard_domain = local.dns_external_wildcard
       internal_wildcard_domain = local.dns_internal_wildcard
     }

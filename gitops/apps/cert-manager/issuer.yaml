@@ -16,5 +16,9 @@ spec:
     solvers:
     - dns01:
         route53:
-          hostedZoneID: ${DNS_HOSTED_ZONE_ID}
+          hostedZoneName: "${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}."
+          region: ${AWS_REGION}
+    - dns01:
+        route53:
+          hostedZoneName: "${DNS_INTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}."
           region: ${AWS_REGION}

@@ -386,6 +386,12 @@ variable "dns_base_domain" {
   default     = ""
 }
 
+variable "dns_external_label" {
+  description = "Label for the public/platform delegated zone."
+  type        = string
+  default     = "platform"
+}
+
 variable "dns_hosted_zone_id" {
   description = "Optional explicit hosted zone ID to use for DNS automation."
   type        = string

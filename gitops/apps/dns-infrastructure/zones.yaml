@@ -1,0 +1,29 @@
+apiVersion: dns.autopilot.dev/v1alpha1
+kind: DelegatedZone
+metadata:
+  name: platform-zone
+  labels:
+    autopilot.dev/part-of: dns-infrastructure
+spec:
+  compositionRef:
+    name: delegatedzones.aws.dns.autopilot.dev
+  parameters:
+    zone: ${DNS_EXTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
+    parentZoneId: ${DNS_HOSTED_ZONE_ID}
+    region: ${AWS_REGION}
+    private: false
+---
+apiVersion: dns.autopilot.dev/v1alpha1
+kind: DelegatedZone
+metadata:
+  name: internal-zone
+  labels:
+    autopilot.dev/part-of: dns-infrastructure
+spec:
+  compositionRef:
+    name: delegatedzones.aws.dns.autopilot.dev
+  parameters:
+    zone: ${DNS_INTERNAL_LABEL}.${PROJECT_NAME}.${DNS_BASE_DOMAIN}
+    parentZoneId: ${DNS_HOSTED_ZONE_ID}
+    region: ${AWS_REGION}
+    private: false

@@ -88,10 +88,16 @@
         value: "{{ dns.base_domain | default('') }}"
       - name: DNS_ROOT_DOMAIN
         value: "{{ dns.root_domain | default('') }}"
+      - name: DNS_EXTERNAL_LABEL
+        value: "{{ dns.external_label | default('platform') }}"
       - name: DNS_INTERNAL_LABEL
         value: "{{ dns.internal_label | default('internal') }}"
       - name: DNS_HOSTED_ZONE_ID
         value: "{{ dns.hosted_zone_id | default('') }}"
+      - name: DNS_EXTERNAL_FQDN
+        value: "{{ dns.external_fqdn | default('') }}"
+      - name: DNS_INTERNAL_FQDN
+        value: "{{ dns.internal_fqdn | default('') }}"
       - name: DNS_EXTERNAL_WILDCARD
         value: "{{ dns.external_wildcard_domain | default('') }}"
       - name: DNS_INTERNAL_WILDCARD
@@ -152,8 +158,6 @@
         value: "{{ gateway_api.external_gateway.hostname | default('') }}"
       - name: GATEWAY_API_EXTERNAL_ALLOWED_ROUTES
         value: "{{ gateway_api.external_gateway.allowed_routes_from | default('All') }}"
-      - name: GATEWAY_API_EXTERNAL_TLS_CERT_ARN
-        value: "{{ gateway_api.external_gateway.tls_certificate_arn | default('') }}"
       - name: GATEWAY_API_INTERNAL_NAME
         value: "{{ gateway_api.internal_gateway.name | default('internal-gateway') }}"
       - name: GATEWAY_API_INTERNAL_CONFIG_NAME
@@ -166,10 +170,6 @@
         value: "{{ gateway_api.internal_gateway.hostname | default('') }}"
       - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
         value: "{{ gateway_api.internal_gateway.allowed_routes_from | default('Same') }}"
-      - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
-        value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
-      - name: GATEWAY_API_INTERNAL_TLS_CERT_ARN
-        value: "{{ gateway_api.internal_gateway.tls_certificate_arn | default('') }}"
       - name: CLUSTER_AUTOSCALER_NAMESPACE
         value: "{{ irsa.cluster_autoscaler_namespace | default('kube-system') }}"
       - name: CLUSTER_AUTOSCALER_SERVICE_ACCOUNT

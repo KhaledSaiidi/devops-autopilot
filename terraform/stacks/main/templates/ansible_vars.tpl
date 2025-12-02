@@ -111,9 +111,12 @@ gateway_api:
 dns:
   base_domain: "${dns.base_domain}"
   root_domain: "${dns.root_domain}"
+  external_label: "${dns.external_label}"
   internal_label: "${dns.internal_label}"
   hosted_zone_id: "${dns.hosted_zone_id}"
   hosted_zone_arn: "${dns.hosted_zone_arn}"
+  external_fqdn: "${dns.external_fqdn}"
+  internal_fqdn: "${dns.internal_fqdn}"
   external_wildcard_domain: "${dns.external_wildcard_domain}"
   internal_wildcard_domain: "${dns.internal_wildcard_domain}"
 cert_manager:
