@@ -11,7 +11,7 @@ The plan below is a fully ordered runbook that takes us from this point to a pro
    - Snapshot Terraform outputs (especially VPC, subnet IDs, IAM ARNs) to confirm all `${VAR}` placeholders used by GitOps resolve correctly.
    - Document bastion access + `kubectl` commands for verification.
 2. **Validate Root App**
-   - In Argo CD UI/CLI, confirm the root Application is `Healthy/Synced`. Fix any path or plugin issues (envsubst CMP) before onboarding new apps.
+   - In Argo CD UI/CLI, confirm the root Application is `Healthy/Synced`. Fix any path or lovely CMP sidecar issues before onboarding new apps.
 3. **Establish verification checklist**
    - Define the minimum smoke tests for each upcoming wave (e.g., `kubectl get ns`, `kubectl top nodes`, etc.) so you know when a phase completes.
 
@@ -270,4 +270,3 @@ Key Features:
 ✅ Hosted zone creation via Crossplane ✅ NS delegation to parent zone ✅ Wildcard certificates via cert-manager ✅ Automatic DNS records via External DNS ✅ Gateway API integration with cert-manager Secrets ✅ Organized by sync-waves for proper ordering ✅ Verification steps for each phase ✅ Rollback plan if needed
 
 Ready to proceed with implementation?
-

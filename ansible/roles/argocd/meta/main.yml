@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: argocd
   author: khaleds
-  description: Argo CD installation with envsubst plugin via Helm.
+  description: Argo CD installation from Terraform-rendered Helm values.
   license: MIT
   min_ansible_version: "2.15"
   platforms:

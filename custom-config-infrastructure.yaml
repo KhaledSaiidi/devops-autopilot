@@ -86,8 +86,6 @@ ansible:
   argocd_namespace: "argocd"
   argocd_create_namespace: true
   argocd_server_service_type: LoadBalancer
-  argocd_enable_envsubst_plugin: true
-  argocd_enable_lovely_plugin: true
   argocd_wait_timeout: 600
   argocd_wait_interval: 10
   argocd_reconciliation_timeout: "10m"

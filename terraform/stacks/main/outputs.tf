@@ -101,3 +101,13 @@ output "ansible_vars_path" {
   value       = abspath(local_file.ansible_vars.filename)
   description = "Absolute path to the generated Ansible vars YAML."
 }
+
+output "argocd_values_path" {
+  value       = module.argocd.argocd_values_path
+  description = "Absolute path to the rendered Argo CD Helm values file."
+}
+
+output "argocd_root_app_path" {
+  value       = module.argocd.argocd_root_app_path
+  description = "Absolute path to the rendered Argo CD root Application manifest."
+}

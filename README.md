@@ -14,7 +14,7 @@ DevOps Autopilot is a production-grade reference implementation that turns a cle
 
 - **Source-of-truth config** – `custom-config-infrastructure.yaml` plus `scripts/load-config.sh` export every value as `TF_VAR_*` / Ansible env vars. Update the file once to change CIDRs, cluster versions, IRSA toggles, or Argo CD behavior everywhere.
 - **Terraform stack** – `terraform/stacks/main` orchestrates reusable modules (`terraform/modules/*`) to provision VPC + NAT, IAM/KMS, EKS, managed node group + bastion, and IRSA roles for AWS Load Balancer Controller, EBS CSI, Cluster Autoscaler, and Crossplane core/data controllers. Local `artifacts/` files provide kubeconfig, inventories, and Arns for the next stages.
-- **Ansible bootstrap** – `ansible/playbooks/bootstrap-iac.yml` (roles: `bastion_setup`, `argocd`, `gitops_root_app`) installs kubectl/helm, copies kubeconfig/SSH material, deploys Argo CD via Helm, enables the lovely/envsubst CMP plugins, and applies the Argo CD root Application while injecting environment metadata as plugin env vars.
+- **Ansible bootstrap** – `ansible/playbooks/bootstrap-iac.yml` (roles: `bastion_setup`, `argocd`, `gitops_root_app`) installs kubectl/helm, copies kubeconfig/SSH material, deploys Argo CD from Terraform-rendered artifacts, and applies the Terraform-rendered root Application.
 - **GitOps tree** – `gitops/argo-apps` hosts the AppProject and every Argo CD `Application`. The root overlay syncs cert-manager, ingress, storage, Vault, Harbor, GitLab, Crossplane, Zitadel, Velero, monitoring, Kyverno, and supporting controllers in controlled sync-wave order. Workloads under `gitops/apps/<name>` can be Helm, Kustomize, or Crossplane claims.
 
 ---
@@ -23,7 +23,7 @@ DevOps Autopilot is a production-grade reference implementation that turns a cle
 
 - One file defines project metadata, backend storage, networking, IAM/IRSA toggles, cluster shape, node group preferences, bastion policy, and Ansible knobs (kubectl version, plugin settings, Argo CD namespace, etc.).
 - `scripts/load-config.sh` validates dependencies (`yq`, `jq`), exports Terraform variables, and sets Ansible env vars so every shell (local or GitHub Action) behaves identically.
-- Terraform, Ansible, and GitOps consume the same values through env vars or plugin env injection—no duplicated configuration blocks or hard-coded secrets.
+- Terraform, Ansible, and GitOps consume the same values through rendered artifacts and plugin env injection—no duplicated configuration blocks or hard-coded secrets.
 
 ---
 
@@ -31,7 +31,7 @@ DevOps Autopilot is a production-grade reference implementation that turns a cle
 
 1. **Backend init** – `scripts/init-iac.sh` parses the config and runs `terraform init -reconfigure` with the right S3 bucket, key, region, and DynamoDB table.
 2. **Plan & apply** – `scripts/plan-iac.sh` and `scripts/apply-iac.sh` format/validate the stack, then create the full AWS footprint and emit kubeconfig/inventory/vars artifacts.
-3. **Bootstrap via Ansible** – `scripts/apply-ansible.sh` (orchestration-friendly) SSHes into the bastion, installs tooling, deploys Argo CD with CMP plugins, and applies the GitOps root Application template with all relevant env vars.
+3. **Bootstrap via Ansible** – `scripts/apply-ansible.sh` (orchestration-friendly) SSHes into the bastion, installs tooling, copies Terraform-rendered Argo CD artifacts, deploys Argo CD, and applies the GitOps root Application manifest.
 4. **GitOps reconciliation** – Argo CD continuously syncs the app-of-apps tree, including Crossplane providers, IRSA-integrated controllers, Vault/ESO, Harbor caches, Zitadel auth, GitLab, monitoring, and Velero.
 
 The same flow runs locally or inside a single GitHub Action job—no bespoke CI glue.
@@ -43,15 +43,15 @@ The same flow runs locally or inside a single GitHub Action job—no bespoke CI 
 - **Networking & security** – Dual-stack VPC, Kubernetes-tagged subnets, NAT gateways, security groups, and enforced CIDR detection for API and bastion access.
 - **Identity & encryption** – Dedicated IAM roles for control plane/nodes, customer-managed KMS key wired into secrets encryption, and fine-grained IRSA roles (ALB, EBS CSI, Cluster Autoscaler, Crossplane core/data with KMS + S3 + Secrets Manager privileges).
 - **Compute & access** – Managed node group with extra labels for autoscaler, optional SSH enforcement only via bastion, automatic EC2 key generation, and a managed bastion host that inherits your admin CIDRs.
-- **Artifacts-on-disk** – Terraform produces inventories, Ansible vars, kubeconfigs, and IRSA metadata so later scripts and human operators share the same facts.
+- **Artifacts-on-disk** – Terraform produces inventories, Ansible vars, kubeconfigs, Argo CD Helm values, root app manifests, and IRSA metadata so later scripts and human operators share the same facts.
 
 ---
 
 ## Bastion + Argo CD Bootstrap
 
 1. **`bastion_setup` role** – Creates secure `.kube` / `.ssh`, installs kubectl/helm idempotently, copies kubeconfig and SSH keys, and verifies API connectivity with retries.
-2. **`argocd` role** – Adds Helm repo, installs/updates Argo CD, exposes it via LoadBalancer, extends reconciliation/exec timeouts, and wires both envsubst and lovely CMP plugins with per-app overrides.
-3. **`gitops_root_app` role** – Renders and applies the root Application while injecting env vars (project, region, cluster endpoint, IRSA ARNs, subnet IDs, Vault namespace, etc.) so downstream Apps/Helm charts remain secretless but fully contextual.
+2. **`argocd` role** – Adds the Helm repo, copies the Terraform-rendered values file to the bastion, and installs/updates Argo CD with the lovely CMP sidecar.
+3. **`gitops_root_app` role** – Copies the Terraform-rendered root Application manifest to the bastion and applies it directly.
 
 ---
 
@@ -64,7 +64,7 @@ gitops/argo-apps/
 ```
 
 - Sync waves ensure storage-stack → cert-manager → ingress → Vault/ESO → Harbor/GitLab → Crossplane → monitoring/velero.
-- lovely/envsubst plugins allow each Application to read values such as `EBS_CSI_ROLE_ARN`, `PUBLIC_SUBNET_IDS`, `AWS_REGION`, or `ARGOCD_NAMESPACE` that Ansible injected automatically.
+- The lovely CMP sidecar allows each Application to read values such as `EBS_CSI_ROLE_ARN`, `PUBLIC_SUBNET_IDS`, `AWS_REGION`, or `ARGOCD_NAMESPACE` that Terraform rendered into the root app manifest.
 - Workloads under `gitops/apps/<name>` combine Helm charts, plain manifests, or forthcoming Crossplane claims (e.g., `apps/crossplane`, `apps/zitadel`, `apps/gitlab`).
 
 ---

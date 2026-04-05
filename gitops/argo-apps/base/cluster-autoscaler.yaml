@@ -15,7 +15,6 @@ spec:
     targetRevision: main
     path: gitops/apps/cluster-autoscaler
     plugin:
-      name: argocd-lovely-plugin-v1.0
       env:
         - name: CLUSTER_NAME
           value: ${CLUSTER_NAME}

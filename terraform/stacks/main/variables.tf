@@ -340,18 +340,6 @@ variable "argocd_server_service_type" {
   type        = string
   default     = ""
 }
-
-variable "argocd_enable_envsubst_plugin" {
-  description = "Argocd enable envsubst plugin"
-  type        = bool
-  default     = true
-}
-
-variable "argocd_enable_lovely_plugin" {
-  description = "Argocd enable lovely plugin"
-  type        = bool
-  default     = true
-}
 variable "argocd_wait_timeout" {
   description = "ArgoCD wait timeout in seconds"
   type        = number

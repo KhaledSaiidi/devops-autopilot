@@ -223,6 +223,119 @@ module "irsa" {
   route53_zone_arns                  = local.route53_zone_arns
 }
 
+module "argocd" {
+  source = "../../modules/argocd"
+
+  artifacts_dir                 = local.artifacts_dir
+  project_name                  = var.project_name
+  aws_region                    = var.aws_region
+  argocd_namespace              = var.argocd_namespace
+  argocd_server_service_type    = var.argocd_server_service_type
+  argocd_reconciliation_timeout = var.argocd_reconciliation_timeout
+  argocd_exec_timeout           = var.argocd_exec_timeout
+
+  cluster = {
+    name                 = module.eks.cluster_name
+    endpoint             = module.eks.cluster_endpoint
+    oidc_issuer_url      = module.eks.oidc_issuer_url
+    kubeconfig_path      = module.eks.kubeconfig_path
+    ssh_private_key_path = module.nodegroup.ssh_private_key_path
+  }
+
+  networking = {
+    vpc_id             = module.vpc.vpc_id
+    public_subnet_ids  = module.vpc.public_subnet_ids
+    private_subnet_ids = module.vpc.private_subnet_ids
+  }
+
+  iam_roles = {
+    eks_cluster_role_arn = module.iam.eks_cluster_role_arn
+    eks_node_role_arn    = module.iam.eks_node_role_arn
+  }
+
+  irsa = {
+    ebs_csi_role_arn                   = module.irsa.ebs_csi_role_arn
+    ebs_csi_namespace                  = var.ebs_csi_namespace
+    ebs_csi_service_account            = var.ebs_csi_service_account
+    cluster_autoscaler_role_arn        = module.irsa.cluster_autoscaler_role_arn
+    cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
+    cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
+    alb_controller_role_arn            = module.irsa.alb_controller_role_arn
+    alb_controller_namespace           = var.alb_controller_namespace
+    alb_controller_service_account     = var.alb_controller_service_account
+    crossplane_namespace               = var.crossplane_namespace
+    crossplane_core_role_arn           = module.irsa.crossplane_core_role_arn
+    crossplane_core_service_accounts   = var.crossplane_core_service_accounts
+    crossplane_data_role_arn           = module.irsa.crossplane_data_role_arn
+    crossplane_data_service_accounts   = var.crossplane_data_service_accounts
+    cert_manager_role_arn              = module.irsa.cert_manager_role_arn
+    cert_manager_namespace             = var.cert_manager_namespace
+    cert_manager_service_account       = var.cert_manager_service_account
+    external_dns_role_arn              = module.irsa.external_dns_role_arn
+    external_dns_namespace             = var.external_dns_namespace
+    external_dns_service_account       = var.external_dns_service_account
+  }
+
+  bastion_public_ip = module.nodegroup.bastion_public_ip
+
+  nodegroup = {
+    desired_size = var.desired_size
+    min_size     = var.min_size
+    max_size     = var.max_size
+  }
+
+  dns = {
+    base_domain              = local.dns_base_domain
+    root_domain              = local.dns_root_domain
+    external_label           = local.dns_external_label
+    internal_label           = local.dns_internal_label
+    hosted_zone_id           = local.dns_hosted_zone_id
+    external_fqdn            = local.dns_external_fqdn
+    internal_fqdn            = local.dns_internal_fqdn
+    external_wildcard_domain = local.dns_external_wildcard
+    internal_wildcard_domain = local.dns_internal_wildcard
+  }
+
+  cert_manager = {
+    email  = var.cert_manager_email
+    server = var.cert_manager_server
+  }
+
+  external_dns = {
+    txt_owner_id          = var.external_dns_txt_owner_id != "" ? var.external_dns_txt_owner_id : var.project_name
+    txt_prefix            = var.external_dns_txt_prefix
+    policy                = var.external_dns_policy
+    log_level             = var.external_dns_log_level
+    interval              = var.external_dns_interval
+    trigger_loop_on_event = var.external_dns_trigger_loop_on_event
+  }
+
+  gateway_api = {
+    namespace          = local.gateway_api_namespace
+    gateway_class_name = var.gateway_api_gateway_class_name
+    controller         = var.gateway_api_controller
+    load_balancer      = var.gateway_api_load_balancer
+    external_gateway = {
+      name                = var.gateway_api_external_gateway.name
+      http_port           = var.gateway_api_external_gateway.http_port
+      https_port          = var.gateway_api_external_gateway.https_port
+      hostname            = local.external_gateway_hostname
+      allowed_routes_from = var.gateway_api_external_gateway.allowed_routes_from
+    }
+    internal_gateway = {
+      name                = var.gateway_api_internal_gateway.name
+      http_port           = var.gateway_api_internal_gateway.http_port
+      https_port          = var.gateway_api_internal_gateway.https_port
+      hostname            = local.internal_gateway_hostname
+      allowed_routes_from = var.gateway_api_internal_gateway.allowed_routes_from
+    }
+  }
+
+  depends_on = [
+    null_resource.artifacts_dir
+  ]
+}
+
 #########################
 # Generate inventory file
 #########################
@@ -232,12 +345,17 @@ resource "local_file" "ansible_inventory" {
   file_permission = "0644"
 
   content = templatefile("${path.module}/templates/inventory.tpl", {
-    bastion_public_ip    = module.nodegroup.bastion_public_ip
-    ansible_user         = "ec2-user"
-    ssh_private_key_path = module.nodegroup.ssh_private_key_path
+    bastion_public_ip          = module.nodegroup.bastion_public_ip
+    ansible_user               = "ec2-user"
+    ssh_private_key_path       = module.nodegroup.ssh_private_key_path
+    argocd_values_local_path   = module.argocd.argocd_values_path
+    gitops_root_app_local_path = module.argocd.argocd_root_app_path
   })
 
-  depends_on = [null_resource.artifacts_dir]
+  depends_on = [
+    null_resource.artifacts_dir,
+    module.argocd
+  ]
 }
 
 resource "local_file" "ansible_vars" {
@@ -290,22 +408,22 @@ resource "local_file" "ansible_vars" {
     helm_version    = var.helm_version
 
     # Bastion convenience (read-only info for play logic)
-    bastion_public_ip      = module.nodegroup.bastion_public_ip
-    kubeconfig_remote_path = "/home/ec2-user/.kube/config"
-    nodegroup_desired_size = var.desired_size
-    nodegroup_min_size     = var.min_size
-    nodegroup_max_size     = var.max_size
+    bastion_public_ip          = module.nodegroup.bastion_public_ip
+    kubeconfig_remote_path     = "/home/ec2-user/.kube/config"
+    nodegroup_desired_size     = var.desired_size
+    nodegroup_min_size         = var.min_size
+    nodegroup_max_size         = var.max_size
+    argocd_values_local_path   = module.argocd.argocd_values_path
+    gitops_root_app_local_path = module.argocd.argocd_root_app_path
 
     # Argo CD overrides
-    argocd_namespace              = var.argocd_namespace
+    argocd_namespace              = module.argocd.argocd_namespace
     argocd_create_namespace       = var.argocd_create_namespace
-    argocd_server_service_type    = var.argocd_server_service_type
-    argocd_enable_envsubst_plugin = var.argocd_enable_envsubst_plugin
-    argocd_enable_lovely_plugin   = var.argocd_enable_lovely_plugin
+    argocd_server_service_type    = module.argocd.argocd_server_service_type
     argocd_wait_timeout           = var.argocd_wait_timeout
     argocd_wait_interval          = var.argocd_wait_interval
     argocd_reconciliation_timeout = var.argocd_reconciliation_timeout
-    argocd_exec_timeout           = var.argocd_exec_timeout
+    argocd_exec_timeout           = module.argocd.argocd_exec_timeout
 
     gateway_api = {
       namespace          = local.gateway_api_namespace
@@ -354,7 +472,10 @@ resource "local_file" "ansible_vars" {
     }
   })
 
-  depends_on = [null_resource.artifacts_dir]
+  depends_on = [
+    null_resource.artifacts_dir,
+    module.argocd
+  ]
 }
 
 #########################

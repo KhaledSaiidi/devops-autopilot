@@ -1,5 +1,7 @@
 # Kubernetes access
 argocd_kubeconfig: "{{ kubeconfig_remote_path | default('~/.kube/config') }}"
+argocd_values_local_path: "{{ artifacts.argocd_values_local_path | default('') }}"
+argocd_values_remote_path: "/tmp/argocd-values.yaml"
 
 # Chart settings
 argocd_namespace: argocd
@@ -8,121 +10,6 @@ argocd_helm_repo_name: argo
 argocd_helm_repo_url: https://argoproj.github.io/argo-helm
 argocd_chart_name: argo/argo-cd
 argocd_chart_version: "7.6.12"   # pin like "6.9.4" if you want deterministic installs
-
-# Service exposure
-argocd_server_service_type: LoadBalancer
-argocd_server_service_annotations: {}
-# Example for AWS NLB:
-# argocd_server_service_annotations:
-#   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-
-# Server params
-argocd_server_insecure: true  # true = allow http for internal LB; set false in public setups
-
-# Argo CD controller/exec timeouts (leave blank to use chart defaults)
-argocd_reconciliation_timeout: ""
-argocd_exec_timeout: ""
-
-# Helm values merge (advanced/custom overrides)
-argocd_values_extra: {}  # dict merged into template values
-
-# Plugin: envsubst (GitOps)
-argocd_enable_envsubst_plugin: true
-argocd_envsubst_plugin_name: envsubst
-argocd_envsubst_image: khaledsaiidi/envsubst-helper:1.4.2
-argocd_envsubst_install_dir: /envsubst-bin
-# The command can be adjusted per-app with .spec.source.plugin, but a generic plugin is handy:
-argocd_envsubst_command: |
-  set -euo pipefail
-  REPO_ROOT="$ARGOCD_APP_SOURCE_PATH"
-  APP_PATH="{{ "{{" }} .path {{ "}}" }}"
-  SRC_DIR="${REPO_ROOT}/${APP_PATH}"
-
-  if [ ! -d "$SRC_DIR" ]; then
-    echo "Source path $SRC_DIR does not exist or is not a directory" >&2
-    exit 1
-  fi
-
-  TMP_ROOT="$(mktemp -d)"
-  trap 'rm -rf "$TMP_ROOT"' EXIT
-
-  tar -C "$REPO_ROOT" --exclude='.git' --exclude='.git/*' -cf - . | tar -C "$TMP_ROOT" -xf -
-
-  WORK_DIR="${TMP_ROOT}/${APP_PATH}"
-  if [ ! -d "$WORK_DIR" ]; then
-    echo "Application path $APP_PATH missing after preparation" >&2
-    exit 1
-  fi
-
-  find "$TMP_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
-    while IFS= read -r -d '' file; do
-      envsubst < "$file" > "${file}.rendered"
-      mv "${file}.rendered" "$file"
-    done
-
-  cd "$TMP_ROOT"
-
-  if [ -f "${APP_PATH}/kustomization.yaml" ] || [ -f "${APP_PATH}/kustomization.yml" ]; then
-    export KUSTOMIZE_ENABLE_HELM=true
-    if command -v kustomize >/dev/null 2>&1; then
-      kustomize build --enable-helm "$APP_PATH"
-    else
-      kubectl kustomize --enable-helm "$APP_PATH"
-    fi
-  else
-    find "$APP_PATH" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
-      sort -z |
-      while IFS= read -r -d '' file; do
-        printf -- "---\n"
-        cat "$file"
-        printf '\n'
-      done
-  fi
-
-# Plugin: lovely (multi-source config management)
-argocd_enable_lovely_plugin: true
-argocd_lovely_plugin_name: argocd-lovely-plugin-v1.0
-argocd_lovely_plugin_image: ghcr.io/akuity/argocd-lovely-plugin:v0.18.0
-argocd_lovely_plugin_image_pull_policy: IfNotPresent
-argocd_lovely_plugin_install_dir: /custom-tools
-argocd_lovely_plugin_source_binary_name: argocd-lovely-plugin
-argocd_lovely_plugin_binary_name: argocd-lovely-plugin-v1.0
-# init command is optional; leave blank to skip
-argocd_lovely_plugin_init_command: ""
-argocd_lovely_plugin_generate_command: |
-  set -euo pipefail
-  REPO_ROOT="$ARGOCD_APP_SOURCE_PATH"
-  APP_PATH="{{ "{{" }} .path {{ "}}" }}"
-  TMP_ROOT="$(mktemp -d)"
-  trap 'rm -rf "$TMP_ROOT"' EXIT
-
-  tar -C "$REPO_ROOT" --exclude='.git' --exclude='.git/*' -cf - . | tar -C "$TMP_ROOT" -xf -
-
-  find "$TMP_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 |
-    while IFS= read -r -d '' file; do
-      envsubst < "$file" > "${file}.rendered"
-      mv "${file}.rendered" "$file"
-    done
-
-  cat > "$TMP_ROOT/argocd-lovely.yaml" << 'HEREDOC'
-  apiVersion: argocd-lovely/v1alpha1
-  kind: Config
-  metadata:
-    name: auto-generated
-  spec:
-    sources:
-      - type: kustomize
-        path: "__APP_PATH__"
-  HEREDOC
-
-  sed -i "s#__APP_PATH__#${APP_PATH}#g" "$TMP_ROOT/argocd-lovely.yaml"
-
-  cd "$TMP_ROOT"
-
-  export KUSTOMIZE_ENABLE_HELM=true
-  {{ argocd_lovely_plugin_install_dir }}/{{ argocd_lovely_plugin_binary_name }} generate
-
-argocd_lovely_plugin_discover_file_name: argocd-lovely.yaml
 
 # Readiness wait
 argocd_wait_timeout: 600   # seconds

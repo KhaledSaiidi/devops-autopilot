@@ -1,21 +1,5 @@
 ---
-# Root Argo CD application configuration
 gitops_root_app_name: app-of-apps
 gitops_root_app_namespace: "{{ argocd_namespace | default('argocd') }}"
-gitops_root_app_project: default
-gitops_root_app_repo_url: "https://github.com/KhaledSaiidi/devops-autopilot.git"
-gitops_root_app_target_revision: main
-gitops_root_app_path: gitops/argo-apps/overlays/default/root
-gitops_root_app_destination_server: "https://kubernetes.default.svc"
-gitops_root_app_destination_namespace: "{{ argocd_namespace | default('argocd') }}"
-gitops_root_app_labels:
-  app.kubernetes.io/part-of: gitops-bootstrap
-  app.kubernetes.io/managed-by: ansible
-gitops_root_app_annotations: {}
-gitops_root_app_sync_options:
-  - CreateNamespace=true
-gitops_root_app_plugin_name: "envsubst"
-gitops_root_app_plugin_env: []
-gitops_root_app_auto_plugin_env: []
-
-gitops_root_app_manifest_path: /tmp/app-of-apps.yaml
+gitops_root_app_manifest_local_path: "{{ artifacts.gitops_root_app_manifest_local_path | default('') }}"
+gitops_root_app_manifest_remote_path: /tmp/app-of-apps.yaml

@@ -15,7 +15,6 @@ spec:
     targetRevision: main
     path: gitops/apps/cni-tuning
     plugin:
-      name: argocd-lovely-plugin-v1.0
       env:
         - name: AWS_REGION
           value: ${AWS_REGION}

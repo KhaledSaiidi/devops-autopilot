@@ -148,6 +148,7 @@ tokens/
 *.history/
 *.workspace
 *.project
+.codex
 *.pydevproject
 
 ############################################

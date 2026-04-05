@@ -15,7 +15,6 @@ spec:
     targetRevision: main
     path: gitops/apps/storage
     plugin:
-      name: argocd-lovely-plugin-v1.0
       env:
         - name: EBS_CSI_NAMESPACE
           value: ${EBS_CSI_NAMESPACE}
