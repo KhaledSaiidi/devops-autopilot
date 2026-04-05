@@ -1,0 +1,33 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: aws-secretsmanager
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: ${AWS_REGION}
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: ${EXTERNAL_SECRETS_SERVICE_ACCOUNT}
+            namespace: ${EXTERNAL_SECRETS_NAMESPACE}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: aws-parameterstore
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  provider:
+    aws:
+      service: ParameterStore
+      region: ${AWS_REGION}
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: ${EXTERNAL_SECRETS_SERVICE_ACCOUNT}
+            namespace: ${EXTERNAL_SECRETS_NAMESPACE}

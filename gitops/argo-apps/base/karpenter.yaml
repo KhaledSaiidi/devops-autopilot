@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-4'
+  labels:
+    app.kubernetes.io/name: karpenter
+    app.kubernetes.io/part-of: platform-baseline
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/KhaledSaiidi/devops-autopilot.git
+    targetRevision: main
+    path: gitops/apps/karpenter
+    plugin:
+      env:
+        - name: PROJECT_NAME
+          value: ${PROJECT_NAME}
+        - name: AWS_REGION
+          value: ${AWS_REGION}
+        - name: CLUSTER_NAME
+          value: ${CLUSTER_NAME}
+        - name: CLUSTER_ENDPOINT
+          value: ${CLUSTER_ENDPOINT}
+        - name: EKS_NODE_ROLE_NAME
+          value: ${EKS_NODE_ROLE_NAME}
+        - name: NODEGROUP_INSTANCE_TYPES_JSON
+          value: '${NODEGROUP_INSTANCE_TYPES_JSON}'
+        - name: NODEGROUP_CAPACITY_TYPES_JSON
+          value: '${NODEGROUP_CAPACITY_TYPES_JSON}'
+        - name: NODEGROUP_DISK_SIZE
+          value: ${NODEGROUP_DISK_SIZE}
+        - name: KARPENTER_AMI_FAMILY
+          value: ${KARPENTER_AMI_FAMILY}
+        - name: KARPENTER_NAMESPACE
+          value: ${KARPENTER_NAMESPACE}
+        - name: KARPENTER_SERVICE_ACCOUNT
+          value: ${KARPENTER_SERVICE_ACCOUNT}
+        - name: KARPENTER_ROLE_ARN
+          value: ${KARPENTER_ROLE_ARN}
+        - name: KARPENTER_INTERRUPTION_QUEUE_NAME
+          value: ${KARPENTER_INTERRUPTION_QUEUE_NAME}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${KARPENTER_NAMESPACE}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+    - SkipDryRunOnMissingResource=true

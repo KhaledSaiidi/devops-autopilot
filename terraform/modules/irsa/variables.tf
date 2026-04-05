@@ -167,6 +167,42 @@ variable "external_dns_service_account" {
   default     = "external-dns"
 }
 
+variable "create_external_secrets_role" {
+  description = "Create an IRSA role for External Secrets Operator."
+  type        = bool
+  default     = true
+}
+
+variable "external_secrets_namespace" {
+  description = "Namespace for the External Secrets Operator ServiceAccount."
+  type        = string
+  default     = "external-secrets"
+}
+
+variable "external_secrets_service_account" {
+  description = "ServiceAccount used by External Secrets Operator."
+  type        = string
+  default     = "external-secrets"
+}
+
+variable "external_secrets_secret_arns" {
+  description = "Secrets Manager secret ARNs the External Secrets Operator may read."
+  type        = list(string)
+  default     = []
+}
+
+variable "external_secrets_parameter_arns" {
+  description = "SSM Parameter Store parameter ARNs the External Secrets Operator may read."
+  type        = list(string)
+  default     = []
+}
+
+variable "external_secrets_kms_key_arns" {
+  description = "Optional KMS key ARNs that the External Secrets Operator may decrypt."
+  type        = list(string)
+  default     = []
+}
+
 variable "route53_zone_arns" {
   description = "Route53 hosted zone ARNs a DNS-integrated workload may manage."
   type        = list(string)

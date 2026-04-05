@@ -25,9 +25,6 @@ irsa:
   ebs_csi_role_arn: "${ebs_csi_role_arn}"
   ebs_csi_namespace: "${ebs_csi_namespace}"
   ebs_csi_service_account: "${ebs_csi_service_account}"
-  cluster_autoscaler_role_arn: "${ca_role_arn}"
-  cluster_autoscaler_namespace: "${cluster_autoscaler_namespace}"
-  cluster_autoscaler_service_account: "${cluster_autoscaler_service_account}"
   alb_controller_role_arn: "${alb_role_arn}"
   alb_controller_namespace: "${alb_controller_namespace}"
   alb_controller_service_account: "${alb_controller_service_account}"
@@ -48,6 +45,9 @@ irsa:
   external_dns_role_arn: "${external_dns_role_arn}"
   external_dns_namespace: "${external_dns_namespace}"
   external_dns_service_account: "${external_dns_service_account}"
+  external_secrets_role_arn: "${external_secrets_role_arn}"
+  external_secrets_namespace: "${external_secrets_namespace}"
+  external_secrets_service_account: "${external_secrets_service_account}"
 
 nodegroup:
   desired_size: ${nodegroup_desired_size}

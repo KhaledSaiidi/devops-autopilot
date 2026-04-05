@@ -6,7 +6,7 @@ resources:
   - ../../../base/crossplane.yaml
   - ../../../base/cert-manager.yaml
   - ../../../base/cni-tuning.yaml
-  - ../../../base/cluster-autoscaler.yaml
+  - ../../../base/karpenter.yaml
   - ../../../base/dns-infrastructure.yaml
   - ../../../base/gateway-api.yaml
   - ../../../base/external-dns.yaml

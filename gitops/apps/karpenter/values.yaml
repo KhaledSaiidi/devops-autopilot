@@ -1,0 +1,25 @@
+serviceAccount:
+  create: true
+  name: ${KARPENTER_SERVICE_ACCOUNT}
+  annotations:
+    eks.amazonaws.com/role-arn: ${KARPENTER_ROLE_ARN}
+
+settings:
+  clusterName: ${CLUSTER_NAME}
+  clusterEndpoint: ${CLUSTER_ENDPOINT}
+  interruptionQueue: ${KARPENTER_INTERRUPTION_QUEUE_NAME}
+
+replicas: 2
+
+controller:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+chart:
+  version: "1.7.2"
+  releaseName: karpenter

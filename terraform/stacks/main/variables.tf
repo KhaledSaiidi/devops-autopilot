@@ -104,24 +104,6 @@ variable "ebs_csi_service_account" {
   default = "ebs-csi-controller-sa"
 }
 
-variable "create_cluster_autoscaler_role" {
-  description = "Create an IRSA role for the Cluster Autoscaler."
-  type        = bool
-  default     = true
-}
-
-variable "cluster_autoscaler_namespace" {
-  description = "Namespace where the Cluster Autoscaler ServiceAccount lives."
-  type        = string
-  default     = "kube-system"
-}
-
-variable "cluster_autoscaler_service_account" {
-  description = "Name of the Cluster Autoscaler ServiceAccount."
-  type        = string
-  default     = "cluster-autoscaler"
-}
-
 variable "create_crossplane_core_role" {
   description = "Create an IRSA role for Crossplane core/provider controllers."
   type        = bool
@@ -198,6 +180,60 @@ variable "external_dns_service_account" {
   description = "ServiceAccount for external-dns."
   type        = string
   default     = "external-dns"
+}
+
+variable "create_external_secrets_role" {
+  description = "Create an IRSA role for External Secrets Operator."
+  type        = bool
+  default     = true
+}
+
+variable "external_secrets_namespace" {
+  description = "Namespace where External Secrets Operator runs."
+  type        = string
+  default     = "external-secrets"
+}
+
+variable "external_secrets_service_account" {
+  description = "ServiceAccount for External Secrets Operator."
+  type        = string
+  default     = "external-secrets"
+}
+
+variable "external_secrets_secret_arns" {
+  description = "Secrets Manager secret ARNs External Secrets Operator may read."
+  type        = list(string)
+  default     = []
+}
+
+variable "external_secrets_parameter_arns" {
+  description = "SSM parameter ARNs External Secrets Operator may read."
+  type        = list(string)
+  default     = []
+}
+
+variable "external_secrets_kms_key_arns" {
+  description = "KMS key ARNs External Secrets Operator may decrypt."
+  type        = list(string)
+  default     = []
+}
+
+variable "create_karpenter_controller_role" {
+  description = "Create the IRSA role and interruption infrastructure for Karpenter."
+  type        = bool
+  default     = true
+}
+
+variable "karpenter_namespace" {
+  description = "Namespace where Karpenter runs."
+  type        = string
+  default     = "karpenter"
+}
+
+variable "karpenter_service_account" {
+  description = "ServiceAccount for the Karpenter controller."
+  type        = string
+  default     = "karpenter"
 }
 
 ############################################

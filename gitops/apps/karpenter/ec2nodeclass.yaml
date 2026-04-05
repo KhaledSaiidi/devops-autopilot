@@ -1,0 +1,33 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  role: ${EKS_NODE_ROLE_NAME}
+  amiFamily: ${KARPENTER_AMI_FAMILY}
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ${CLUSTER_NAME}
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ${CLUSTER_NAME}
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: ${NODEGROUP_DISK_SIZE}Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+  tags:
+    Name: ${PROJECT_NAME}-karpenter
+    ManagedBy: gitops
+    "eks:eks-cluster-name": ${CLUSTER_NAME}
+    kubernetes.io/cluster/${CLUSTER_NAME}: owned
+    karpenter.sh/discovery: ${CLUSTER_NAME}

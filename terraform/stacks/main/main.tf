@@ -192,35 +192,61 @@ resource "aws_security_group_rule" "cluster_api_from_bastion" {
 # 6) IRSA roles (after cluster exists)
 ############################################
 module "irsa" {
-  source                             = "../../modules/irsa"
-  project_name                       = var.project_name
-  tags                               = var.tags
-  enable_irsa                        = var.enable_irsa
-  oidc_issuer_url                    = module.eks.oidc_issuer_url
-  create_alb_controller_role         = var.create_alb_controller_role
-  alb_controller_namespace           = var.alb_controller_namespace
-  alb_controller_service_account     = var.alb_controller_service_account
-  lbc_policy_url                     = var.lbc_policy_url
-  create_cluster_autoscaler_role     = var.create_cluster_autoscaler_role
-  cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
-  cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
-  create_ebs_csi_role                = var.create_ebs_csi_role
-  ebs_csi_namespace                  = var.ebs_csi_namespace
-  ebs_csi_service_account            = var.ebs_csi_service_account
-  create_crossplane_core_role        = var.create_crossplane_core_role
-  create_crossplane_data_role        = var.create_crossplane_data_role
-  crossplane_namespace               = var.crossplane_namespace
-  crossplane_core_service_accounts   = var.crossplane_core_service_accounts
-  crossplane_data_service_accounts   = var.crossplane_data_service_accounts
-  crossplane_core_passrole_arns      = var.crossplane_core_passrole_arns
-  crossplane_kms_key_arns            = length(var.crossplane_kms_key_arns) > 0 ? var.crossplane_kms_key_arns : [module.kms.key_arn]
-  create_cert_manager_role           = var.create_cert_manager_role
-  cert_manager_namespace             = var.cert_manager_namespace
-  cert_manager_service_account       = var.cert_manager_service_account
-  create_external_dns_role           = var.create_external_dns_role
-  external_dns_namespace             = var.external_dns_namespace
-  external_dns_service_account       = var.external_dns_service_account
-  route53_zone_arns                  = local.route53_zone_arns
+  source                           = "../../modules/irsa"
+  project_name                     = var.project_name
+  tags                             = var.tags
+  enable_irsa                      = var.enable_irsa
+  oidc_issuer_url                  = module.eks.oidc_issuer_url
+  create_alb_controller_role       = var.create_alb_controller_role
+  alb_controller_namespace         = var.alb_controller_namespace
+  alb_controller_service_account   = var.alb_controller_service_account
+  lbc_policy_url                   = var.lbc_policy_url
+  create_ebs_csi_role              = var.create_ebs_csi_role
+  ebs_csi_namespace                = var.ebs_csi_namespace
+  ebs_csi_service_account          = var.ebs_csi_service_account
+  create_crossplane_core_role      = var.create_crossplane_core_role
+  create_crossplane_data_role      = var.create_crossplane_data_role
+  crossplane_namespace             = var.crossplane_namespace
+  crossplane_core_service_accounts = var.crossplane_core_service_accounts
+  crossplane_data_service_accounts = var.crossplane_data_service_accounts
+  crossplane_core_passrole_arns    = var.crossplane_core_passrole_arns
+  crossplane_kms_key_arns          = length(var.crossplane_kms_key_arns) > 0 ? var.crossplane_kms_key_arns : [module.kms.key_arn]
+  create_cert_manager_role         = var.create_cert_manager_role
+  cert_manager_namespace           = var.cert_manager_namespace
+  cert_manager_service_account     = var.cert_manager_service_account
+  create_external_dns_role         = var.create_external_dns_role
+  external_dns_namespace           = var.external_dns_namespace
+  external_dns_service_account     = var.external_dns_service_account
+  create_external_secrets_role     = var.create_external_secrets_role
+  external_secrets_namespace       = var.external_secrets_namespace
+  external_secrets_service_account = var.external_secrets_service_account
+  external_secrets_secret_arns     = var.external_secrets_secret_arns
+  external_secrets_parameter_arns  = var.external_secrets_parameter_arns
+  external_secrets_kms_key_arns    = var.external_secrets_kms_key_arns
+  route53_zone_arns                = local.route53_zone_arns
+}
+
+module "karpenter" {
+  count = var.create_karpenter_controller_role ? 1 : 0
+
+  source = "../../modules/karpenter"
+
+  project_name      = var.project_name
+  cluster_name      = module.eks.cluster_name
+  oidc_provider_arn = module.irsa.oidc_provider_arn
+  oidc_issuer_url   = module.eks.oidc_issuer_url
+  namespace         = var.karpenter_namespace
+  service_account   = var.karpenter_service_account
+  node_role_arn     = module.iam.eks_node_role_arn
+  tags              = var.tags
+}
+
+resource "aws_ec2_tag" "karpenter_cluster_sg_discovery" {
+  count = var.create_karpenter_controller_role ? 1 : 0
+
+  resource_id = module.eks.cluster_security_group_id
+  key         = "karpenter.sh/discovery"
+  value       = module.eks.cluster_name
 }
 
 module "argocd" {
@@ -251,37 +277,42 @@ module "argocd" {
   iam_roles = {
     eks_cluster_role_arn = module.iam.eks_cluster_role_arn
     eks_node_role_arn    = module.iam.eks_node_role_arn
+    eks_node_role_name   = module.iam.eks_node_role_name
   }
 
   irsa = {
-    ebs_csi_role_arn                   = module.irsa.ebs_csi_role_arn
-    ebs_csi_namespace                  = var.ebs_csi_namespace
-    ebs_csi_service_account            = var.ebs_csi_service_account
-    cluster_autoscaler_role_arn        = module.irsa.cluster_autoscaler_role_arn
-    cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
-    cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
-    alb_controller_role_arn            = module.irsa.alb_controller_role_arn
-    alb_controller_namespace           = var.alb_controller_namespace
-    alb_controller_service_account     = var.alb_controller_service_account
-    crossplane_namespace               = var.crossplane_namespace
-    crossplane_core_role_arn           = module.irsa.crossplane_core_role_arn
-    crossplane_core_service_accounts   = var.crossplane_core_service_accounts
-    crossplane_data_role_arn           = module.irsa.crossplane_data_role_arn
-    crossplane_data_service_accounts   = var.crossplane_data_service_accounts
-    cert_manager_role_arn              = module.irsa.cert_manager_role_arn
-    cert_manager_namespace             = var.cert_manager_namespace
-    cert_manager_service_account       = var.cert_manager_service_account
-    external_dns_role_arn              = module.irsa.external_dns_role_arn
-    external_dns_namespace             = var.external_dns_namespace
-    external_dns_service_account       = var.external_dns_service_account
+    ebs_csi_role_arn                 = module.irsa.ebs_csi_role_arn
+    ebs_csi_namespace                = var.ebs_csi_namespace
+    ebs_csi_service_account          = var.ebs_csi_service_account
+    alb_controller_role_arn          = module.irsa.alb_controller_role_arn
+    alb_controller_namespace         = var.alb_controller_namespace
+    alb_controller_service_account   = var.alb_controller_service_account
+    crossplane_namespace             = var.crossplane_namespace
+    crossplane_core_role_arn         = module.irsa.crossplane_core_role_arn
+    crossplane_core_service_accounts = var.crossplane_core_service_accounts
+    crossplane_data_role_arn         = module.irsa.crossplane_data_role_arn
+    crossplane_data_service_accounts = var.crossplane_data_service_accounts
+    cert_manager_role_arn            = module.irsa.cert_manager_role_arn
+    cert_manager_namespace           = var.cert_manager_namespace
+    cert_manager_service_account     = var.cert_manager_service_account
+    external_dns_role_arn            = module.irsa.external_dns_role_arn
+    external_dns_namespace           = var.external_dns_namespace
+    external_dns_service_account     = var.external_dns_service_account
+    external_secrets_role_arn        = module.irsa.external_secrets_role_arn
+    external_secrets_namespace       = var.external_secrets_namespace
+    external_secrets_service_account = var.external_secrets_service_account
   }
 
   bastion_public_ip = module.nodegroup.bastion_public_ip
 
   nodegroup = {
-    desired_size = var.desired_size
-    min_size     = var.min_size
-    max_size     = var.max_size
+    desired_size   = var.desired_size
+    min_size       = var.min_size
+    max_size       = var.max_size
+    ami_type       = var.ami_type
+    instance_types = var.instance_types
+    capacity_type  = var.capacity_type
+    disk_size      = var.disk_size
   }
 
   dns = {
@@ -308,6 +339,13 @@ module "argocd" {
     log_level             = var.external_dns_log_level
     interval              = var.external_dns_interval
     trigger_loop_on_event = var.external_dns_trigger_loop_on_event
+  }
+
+  karpenter = {
+    namespace               = var.karpenter_namespace
+    service_account         = var.karpenter_service_account
+    controller_role_arn     = try(module.karpenter[0].controller_role_arn, "")
+    interruption_queue_name = try(module.karpenter[0].interruption_queue_name, "")
   }
 
   gateway_api = {
@@ -380,28 +418,28 @@ resource "local_file" "ansible_vars" {
     private_subnet_ids = module.vpc.private_subnet_ids
 
     # IRSA / roles
-    ebs_csi_role_arn                   = module.irsa.ebs_csi_role_arn
-    ebs_csi_namespace                  = var.ebs_csi_namespace
-    ebs_csi_service_account            = var.ebs_csi_service_account
-    ca_role_arn                        = module.irsa.cluster_autoscaler_role_arn
-    alb_role_arn                       = module.irsa.alb_controller_role_arn
-    alb_controller_namespace           = var.alb_controller_namespace
-    alb_controller_service_account     = var.alb_controller_service_account
-    cluster_autoscaler_namespace       = var.cluster_autoscaler_namespace
-    cluster_autoscaler_service_account = var.cluster_autoscaler_service_account
-    eks_cluster_role_arn               = module.iam.eks_cluster_role_arn
-    eks_node_role_arn                  = module.iam.eks_node_role_arn
-    crossplane_core_role_arn           = module.irsa.crossplane_core_role_arn
-    crossplane_data_role_arn           = module.irsa.crossplane_data_role_arn
-    crossplane_namespace               = var.crossplane_namespace
-    crossplane_core_service_accounts   = var.crossplane_core_service_accounts
-    crossplane_data_service_accounts   = var.crossplane_data_service_accounts
-    cert_manager_role_arn              = module.irsa.cert_manager_role_arn
-    cert_manager_namespace             = var.cert_manager_namespace
-    cert_manager_service_account       = var.cert_manager_service_account
-    external_dns_role_arn              = module.irsa.external_dns_role_arn
-    external_dns_namespace             = var.external_dns_namespace
-    external_dns_service_account       = var.external_dns_service_account
+    ebs_csi_role_arn                 = module.irsa.ebs_csi_role_arn
+    ebs_csi_namespace                = var.ebs_csi_namespace
+    ebs_csi_service_account          = var.ebs_csi_service_account
+    alb_role_arn                     = module.irsa.alb_controller_role_arn
+    alb_controller_namespace         = var.alb_controller_namespace
+    alb_controller_service_account   = var.alb_controller_service_account
+    eks_cluster_role_arn             = module.iam.eks_cluster_role_arn
+    eks_node_role_arn                = module.iam.eks_node_role_arn
+    crossplane_core_role_arn         = module.irsa.crossplane_core_role_arn
+    crossplane_data_role_arn         = module.irsa.crossplane_data_role_arn
+    crossplane_namespace             = var.crossplane_namespace
+    crossplane_core_service_accounts = var.crossplane_core_service_accounts
+    crossplane_data_service_accounts = var.crossplane_data_service_accounts
+    cert_manager_role_arn            = module.irsa.cert_manager_role_arn
+    cert_manager_namespace           = var.cert_manager_namespace
+    cert_manager_service_account     = var.cert_manager_service_account
+    external_dns_role_arn            = module.irsa.external_dns_role_arn
+    external_dns_namespace           = var.external_dns_namespace
+    external_dns_service_account     = var.external_dns_service_account
+    external_secrets_role_arn        = module.irsa.external_secrets_role_arn
+    external_secrets_namespace       = var.external_secrets_namespace
+    external_secrets_service_account = var.external_secrets_service_account
 
     # Tooling versions (optional)
     kubectl_version = var.kubectl_version

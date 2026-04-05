@@ -28,19 +28,24 @@ output "eks_node_role_arn" {
   description = "IAM role ARN for the EKS worker nodes."
 }
 
+output "eks_node_role_name" {
+  value       = module.iam.eks_node_role_name
+  description = "IAM role name for the EKS worker nodes."
+}
+
 output "ebs_csi_role_arn" {
   value       = module.irsa.ebs_csi_role_arn
   description = "IAM role ARN for the EBS CSI controller (IRSA)"
 }
 
-output "cluster_autoscaler_role_arn" {
-  description = "IRSA role ARN for Cluster Autoscaler (if created)."
-  value       = module.irsa.cluster_autoscaler_role_arn
-}
-
 output "alb_controller_role_arn" {
   description = "IRSA role ARN for AWS Load Balancer Controller."
   value       = module.irsa.alb_controller_role_arn
+}
+
+output "karpenter_controller_role_arn" {
+  description = "IRSA role ARN for the Karpenter controller."
+  value       = try(module.karpenter[0].controller_role_arn, null)
 }
 
 output "crossplane_core_role_arn" {
@@ -51,6 +56,11 @@ output "crossplane_core_role_arn" {
 output "crossplane_data_role_arn" {
   description = "IRSA role ARN for Crossplane data-plane controllers."
   value       = module.irsa.crossplane_data_role_arn
+}
+
+output "external_secrets_role_arn" {
+  description = "IRSA role ARN for External Secrets Operator."
+  value       = module.irsa.external_secrets_role_arn
 }
 
 ############################################

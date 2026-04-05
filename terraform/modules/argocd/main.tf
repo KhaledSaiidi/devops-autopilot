@@ -3,6 +3,9 @@ locals {
   effective_argocd_service_type   = trimspace(var.argocd_server_service_type) != "" ? trimspace(var.argocd_server_service_type) : "LoadBalancer"
   effective_argocd_exec_timeout   = trimspace(var.argocd_exec_timeout) != "" ? trimspace(var.argocd_exec_timeout) : "90s"
   argocd_repo_server_timeout_secs = try(tonumber(regexall("[0-9]+", local.effective_argocd_exec_timeout)[0]), 90)
+  karpenter_ami_family = can(regex("^AL2023", var.nodegroup.ami_type)) ? "AL2023" : (
+    can(regex("^BOTTLEROCKET", var.nodegroup.ami_type)) ? "Bottlerocket" : "AL2"
+  )
 
   argocd_values_artifact_path   = abspath("${var.artifacts_dir}/${var.project_name}-argocd-values.yaml")
   argocd_root_app_artifact_path = abspath("${var.artifacts_dir}/${var.project_name}-argocd-root-app.yaml")
@@ -49,12 +52,12 @@ resource "local_file" "argocd_root_app" {
     ebs_csi_role_arn                              = var.irsa.ebs_csi_role_arn
     ebs_csi_namespace                             = var.irsa.ebs_csi_namespace
     ebs_csi_service_account                       = var.irsa.ebs_csi_service_account
-    cluster_autoscaler_role_arn                   = var.irsa.cluster_autoscaler_role_arn
     alb_controller_role_arn                       = var.irsa.alb_controller_role_arn
     alb_controller_namespace                      = var.irsa.alb_controller_namespace
     alb_controller_service_account                = var.irsa.alb_controller_service_account
     eks_cluster_role_arn                          = var.iam_roles.eks_cluster_role_arn
     eks_node_role_arn                             = var.iam_roles.eks_node_role_arn
+    eks_node_role_name                            = var.iam_roles.eks_node_role_name
     bastion_public_ip                             = var.bastion_public_ip
     crossplane_namespace                          = var.irsa.crossplane_namespace
     crossplane_core_role_arn                      = var.irsa.crossplane_core_role_arn
@@ -67,6 +70,9 @@ resource "local_file" "argocd_root_app" {
     external_dns_namespace                        = var.irsa.external_dns_namespace
     external_dns_service_account                  = var.irsa.external_dns_service_account
     external_dns_role_arn                         = var.irsa.external_dns_role_arn
+    external_secrets_namespace                    = var.irsa.external_secrets_namespace
+    external_secrets_service_account              = var.irsa.external_secrets_service_account
+    external_secrets_role_arn                     = var.irsa.external_secrets_role_arn
     dns_base_domain                               = var.dns.base_domain
     dns_root_domain                               = var.dns.root_domain
     dns_external_label                            = var.dns.external_label
@@ -110,11 +116,16 @@ resource "local_file" "argocd_root_app" {
     gateway_api_internal_https_port               = tostring(var.gateway_api.internal_gateway.https_port)
     gateway_api_internal_hostname                 = var.gateway_api.internal_gateway.hostname
     gateway_api_internal_allowed_routes           = var.gateway_api.internal_gateway.allowed_routes_from
-    cluster_autoscaler_namespace                  = var.irsa.cluster_autoscaler_namespace
-    cluster_autoscaler_service_account            = var.irsa.cluster_autoscaler_service_account
-    cluster_autoscaler_role_arn                   = var.irsa.cluster_autoscaler_role_arn
     nodegroup_desired_size                        = tostring(var.nodegroup.desired_size)
     nodegroup_min_size                            = tostring(var.nodegroup.min_size)
     nodegroup_max_size                            = tostring(var.nodegroup.max_size)
+    nodegroup_instance_types_json                 = jsonencode(var.nodegroup.instance_types)
+    nodegroup_capacity_types_json                 = jsonencode([lower(replace(var.nodegroup.capacity_type, "_", "-"))])
+    nodegroup_disk_size                           = tostring(var.nodegroup.disk_size)
+    karpenter_ami_family                          = local.karpenter_ami_family
+    karpenter_namespace                           = var.karpenter.namespace
+    karpenter_service_account                     = var.karpenter.service_account
+    karpenter_role_arn                            = var.karpenter.controller_role_arn
+    karpenter_interruption_queue_name             = var.karpenter.interruption_queue_name
   })
 }

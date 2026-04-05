@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ${EXTERNAL_SECRETS_NAMESPACE}
+  name: ${KARPENTER_NAMESPACE}
   labels:
-    app.kubernetes.io/name: ${EXTERNAL_SECRETS_NAMESPACE}
+    app.kubernetes.io/name: ${KARPENTER_NAMESPACE}
     app.kubernetes.io/part-of: platform-baseline

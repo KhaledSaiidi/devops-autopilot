@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ${KARPENTER_NAMESPACE}
+resources:
+  - namespace.yaml
+  - ec2nodeclass.yaml
+  - nodepool.yaml
+helmCharts:
+  - name: karpenter-crd
+    repo: oci://public.ecr.aws/karpenter
+    version: 1.7.2
+    releaseName: karpenter-crd
+    namespace: ${KARPENTER_NAMESPACE}
+  - name: karpenter
+    repo: oci://public.ecr.aws/karpenter
+    version: 1.7.2
+    releaseName: karpenter
+    namespace: ${KARPENTER_NAMESPACE}
+    valuesFile: values.yaml

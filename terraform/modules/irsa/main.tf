@@ -20,6 +20,13 @@ locals {
   has_route53_zones          = length(var.route53_zone_arns) > 0
   cert_manager_subject       = "system:serviceaccount:${var.cert_manager_namespace}:${var.cert_manager_service_account}"
   external_dns_subject       = "system:serviceaccount:${var.external_dns_namespace}:${var.external_dns_service_account}"
+  external_secrets_subject   = "system:serviceaccount:${var.external_secrets_namespace}:${var.external_secrets_service_account}"
+  external_secrets_secret_arns = length(var.external_secrets_secret_arns) > 0 ? var.external_secrets_secret_arns : [
+    "arn:aws:secretsmanager:*:*:secret:${var.project_name}-*"
+  ]
+  external_secrets_parameter_arns = length(var.external_secrets_parameter_arns) > 0 ? var.external_secrets_parameter_arns : [
+    "arn:aws:ssm:*:*:parameter/${var.project_name}/*"
+  ]
 }
 
 # Get OIDC root CA fingerprint
@@ -696,4 +703,109 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
   count      = var.enable_irsa && var.create_external_dns_role && local.has_route53_zones ? 1 : 0
   role       = aws_iam_role.external_dns[0].name
   policy_arn = aws_iam_policy.external_dns[0].arn
+}
+
+############################################
+# external-secrets (Secrets Manager / SSM) IRSA
+############################################
+data "aws_iam_policy_document" "external_secrets_trust" {
+  count = var.enable_irsa && var.create_external_secrets_role ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks[0].arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = [local.external_secrets_subject]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "external_secrets" {
+  count = var.enable_irsa && var.create_external_secrets_role ? 1 : 0
+
+  statement {
+    sid    = "SecretsManagerRead"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecretVersionIds"
+    ]
+    resources = local.external_secrets_secret_arns
+  }
+
+  statement {
+    sid    = "ParameterStoreRead"
+    effect = "Allow"
+    actions = [
+      "ssm:DescribeParameters",
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath"
+    ]
+    resources = local.external_secrets_parameter_arns
+  }
+
+  dynamic "statement" {
+    for_each = length(var.external_secrets_kms_key_arns) > 0 ? [1] : []
+    content {
+      sid    = "KMSDecrypt"
+      effect = "Allow"
+      actions = [
+        "kms:Decrypt",
+        "kms:DescribeKey"
+      ]
+      resources = var.external_secrets_kms_key_arns
+    }
+  }
+}
+
+resource "aws_iam_policy" "external_secrets" {
+  count       = var.enable_irsa && var.create_external_secrets_role ? 1 : 0
+  name        = "${var.project_name}-external-secrets"
+  description = "Allows External Secrets Operator to read scoped AWS secrets and parameters."
+  policy      = data.aws_iam_policy_document.external_secrets[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-external-secrets-policy"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role" "external_secrets" {
+  count              = var.enable_irsa && var.create_external_secrets_role ? 1 : 0
+  name               = "${var.project_name}-external-secrets"
+  assume_role_policy = data.aws_iam_policy_document.external_secrets_trust[0].json
+
+  tags = merge(
+    {
+      Name      = "${var.project_name}-external-secrets-role"
+      ManagedBy = "Terraform"
+    },
+    var.tags
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets" {
+  count      = var.enable_irsa && var.create_external_secrets_role ? 1 : 0
+  role       = aws_iam_role.external_secrets[0].name
+  policy_arn = aws_iam_policy.external_secrets[0].arn
 }

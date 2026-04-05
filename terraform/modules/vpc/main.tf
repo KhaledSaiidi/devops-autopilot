@@ -17,6 +17,7 @@ locals {
   k8s_private_tags = var.add_k8s_tags ? {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"           = 1
+    "karpenter.sh/discovery"                    = var.cluster_name
   } : {}
 }
 

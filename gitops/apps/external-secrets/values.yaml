@@ -1,2 +1,25 @@
+installCRDs: true
+replicaCount: 2
+serviceAccount:
+  create: true
+  name: ${EXTERNAL_SECRETS_SERVICE_ACCOUNT}
+  annotations:
+    eks.amazonaws.com/role-arn: ${EXTERNAL_SECRETS_ROLE_ARN}
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+webhook:
+  create: true
+certController:
+  create: true
+crds:
+  createClusterExternalSecret: true
+  createClusterSecretStore: true
+  createPushSecret: false
 chart:
-  description: "Placeholder values for external-secrets chart."
+  version: "1.1.0"
+  releaseName: external-secrets

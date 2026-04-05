@@ -60,32 +60,33 @@ variable "iam_roles" {
   type = object({
     eks_cluster_role_arn = string
     eks_node_role_arn    = string
+    eks_node_role_name   = string
   })
 }
 
 variable "irsa" {
   description = "IRSA outputs and related namespace/service account metadata."
   type = object({
-    ebs_csi_role_arn                   = string
-    ebs_csi_namespace                  = string
-    ebs_csi_service_account            = string
-    cluster_autoscaler_role_arn        = string
-    cluster_autoscaler_namespace       = string
-    cluster_autoscaler_service_account = string
-    alb_controller_role_arn            = string
-    alb_controller_namespace           = string
-    alb_controller_service_account     = string
-    crossplane_namespace               = string
-    crossplane_core_role_arn           = string
-    crossplane_core_service_accounts   = list(string)
-    crossplane_data_role_arn           = string
-    crossplane_data_service_accounts   = list(string)
-    cert_manager_role_arn              = string
-    cert_manager_namespace             = string
-    cert_manager_service_account       = string
-    external_dns_role_arn              = string
-    external_dns_namespace             = string
-    external_dns_service_account       = string
+    ebs_csi_role_arn                 = string
+    ebs_csi_namespace                = string
+    ebs_csi_service_account          = string
+    alb_controller_role_arn          = string
+    alb_controller_namespace         = string
+    alb_controller_service_account   = string
+    crossplane_namespace             = string
+    crossplane_core_role_arn         = string
+    crossplane_core_service_accounts = list(string)
+    crossplane_data_role_arn         = string
+    crossplane_data_service_accounts = list(string)
+    cert_manager_role_arn            = string
+    cert_manager_namespace           = string
+    cert_manager_service_account     = string
+    external_dns_role_arn            = string
+    external_dns_namespace           = string
+    external_dns_service_account     = string
+    external_secrets_role_arn        = string
+    external_secrets_namespace       = string
+    external_secrets_service_account = string
   })
 }
 
@@ -95,11 +96,15 @@ variable "bastion_public_ip" {
 }
 
 variable "nodegroup" {
-  description = "Managed node group sizing used by autoscaler configuration."
+  description = "Managed node group settings exposed to GitOps applications."
   type = object({
-    desired_size = number
-    min_size     = number
-    max_size     = number
+    desired_size   = number
+    min_size       = number
+    max_size       = number
+    ami_type       = string
+    instance_types = list(string)
+    capacity_type  = string
+    disk_size      = number
   })
 }
 
@@ -135,6 +140,16 @@ variable "external_dns" {
     log_level             = string
     interval              = string
     trigger_loop_on_event = bool
+  })
+}
+
+variable "karpenter" {
+  description = "Karpenter controller bootstrap values."
+  type = object({
+    namespace               = string
+    service_account         = string
+    controller_role_arn     = string
+    interruption_queue_name = string
   })
 }
 

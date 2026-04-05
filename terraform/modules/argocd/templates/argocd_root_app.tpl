@@ -40,8 +40,6 @@ spec:
           value: "${ebs_csi_namespace}"
         - name: EBS_CSI_SERVICE_ACCOUNT
           value: "${ebs_csi_service_account}"
-        - name: CA_ROLE_ARN
-          value: "${cluster_autoscaler_role_arn}"
         - name: ALB_CONTROLLER_ROLE_ARN
           value: "${alb_controller_role_arn}"
         - name: ALB_CONTROLLER_NAMESPACE
@@ -52,6 +50,8 @@ spec:
           value: "${eks_cluster_role_arn}"
         - name: EKS_NODE_ROLE_ARN
           value: "${eks_node_role_arn}"
+        - name: EKS_NODE_ROLE_NAME
+          value: "${eks_node_role_name}"
         - name: BASTION_PUBLIC_IP
           value: "${bastion_public_ip}"
         - name: ARGOCD_NAMESPACE
@@ -80,6 +80,12 @@ spec:
           value: "${external_dns_service_account}"
         - name: EXTERNAL_DNS_ROLE_ARN
           value: "${external_dns_role_arn}"
+        - name: EXTERNAL_SECRETS_NAMESPACE
+          value: "${external_secrets_namespace}"
+        - name: EXTERNAL_SECRETS_SERVICE_ACCOUNT
+          value: "${external_secrets_service_account}"
+        - name: EXTERNAL_SECRETS_ROLE_ARN
+          value: "${external_secrets_role_arn}"
         - name: DNS_BASE_DOMAIN
           value: "${dns_base_domain}"
         - name: DNS_ROOT_DOMAIN
@@ -166,18 +172,28 @@ spec:
           value: "${gateway_api_internal_hostname}"
         - name: GATEWAY_API_INTERNAL_ALLOWED_ROUTES
           value: "${gateway_api_internal_allowed_routes}"
-        - name: CLUSTER_AUTOSCALER_NAMESPACE
-          value: "${cluster_autoscaler_namespace}"
-        - name: CLUSTER_AUTOSCALER_SERVICE_ACCOUNT
-          value: "${cluster_autoscaler_service_account}"
-        - name: CLUSTER_AUTOSCALER_ROLE_ARN
-          value: "${cluster_autoscaler_role_arn}"
         - name: NODEGROUP_DESIRED_SIZE
           value: "${nodegroup_desired_size}"
         - name: NODEGROUP_MIN_SIZE
           value: "${nodegroup_min_size}"
         - name: NODEGROUP_MAX_SIZE
           value: "${nodegroup_max_size}"
+        - name: NODEGROUP_INSTANCE_TYPES_JSON
+          value: '${nodegroup_instance_types_json}'
+        - name: NODEGROUP_CAPACITY_TYPES_JSON
+          value: '${nodegroup_capacity_types_json}'
+        - name: NODEGROUP_DISK_SIZE
+          value: "${nodegroup_disk_size}"
+        - name: KARPENTER_AMI_FAMILY
+          value: "${karpenter_ami_family}"
+        - name: KARPENTER_NAMESPACE
+          value: "${karpenter_namespace}"
+        - name: KARPENTER_SERVICE_ACCOUNT
+          value: "${karpenter_service_account}"
+        - name: KARPENTER_ROLE_ARN
+          value: "${karpenter_role_arn}"
+        - name: KARPENTER_INTERRUPTION_QUEUE_NAME
+          value: "${karpenter_interruption_queue_name}"
   destination:
     server: ${gitops_root_app_destination_server}
     namespace: ${gitops_root_app_destination_namespace}

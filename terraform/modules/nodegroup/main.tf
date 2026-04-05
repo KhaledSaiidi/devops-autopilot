@@ -53,11 +53,9 @@ resource "aws_eks_node_group" "this" {
 
   tags = merge(
     {
-      Name                                            = "${var.cluster_name}-node-group"
-      ManagedBy                                       = "Terraform"
-      Component                                       = "eks"
-      "k8s.io/cluster-autoscaler/enabled"             = "true"
-      "k8s.io/cluster-autoscaler/${var.cluster_name}" = "owned"
+      Name      = "${var.cluster_name}-node-group"
+      ManagedBy = "Terraform"
+      Component = "eks"
     },
     var.tags
   )
@@ -224,7 +222,13 @@ resource "aws_security_group" "worker_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge({ Name = "${var.project_name}-worker-sg" }, var.tags)
+  tags = merge(
+    {
+      Name                     = "${var.project_name}-worker-sg"
+      "karpenter.sh/discovery" = var.cluster_name
+    },
+    var.tags
+  )
 }
 data "aws_subnet" "pub0" {
   id = var.public_subnet_ids[0]

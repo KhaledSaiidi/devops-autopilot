@@ -17,3 +17,8 @@ output "ssh_private_key_path" {
   description = "Local path to the generated private key (if create_ssh_key=true)."
   value       = var.create_ssh_key ? abspath(local_file.private_key[0].filename) : null
 }
+
+output "worker_security_group_id" {
+  description = "Security group ID used by worker nodes."
+  value       = aws_security_group.worker_sg.id
+}
