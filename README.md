@@ -115,3 +115,5 @@ custom-config-infrastructure.yaml
    ```
 4. **Inspect** – Check `terraform/stacks/main/artifacts/`, run `terraform output`, and preview `kustomize build gitops/argo-apps/overlays/default/root`.
 5. **Iterate safely** – Update the config file, re-run apply scripts, and let Argo CD converge. Tear everything down with `scripts/destroy-iac.sh` when done.
+
+export TF_VAR_external_secrets_bootstrap_secret_values='{"username":"admin","password":"super-secret-value"}'

@@ -86,6 +86,16 @@ spec:
           value: "${external_secrets_service_account}"
         - name: EXTERNAL_SECRETS_ROLE_ARN
           value: "${external_secrets_role_arn}"
+        - name: EXTERNAL_SECRETS_BOOTSTRAP_SOURCE_SECRET_NAME
+          value: "${external_secrets_bootstrap_source_secret_name}"
+        - name: EXTERNAL_SECRETS_BOOTSTRAP_SECRET_STORE_NAME
+          value: "${external_secrets_bootstrap_secret_store_name}"
+        - name: EXTERNAL_SECRETS_BOOTSTRAP_REFRESH_INTERVAL
+          value: "${external_secrets_bootstrap_refresh_interval}"
+        - name: EXTERNAL_SECRETS_BOOTSTRAP_TARGET_NAMESPACE
+          value: "${external_secrets_bootstrap_target_namespace}"
+        - name: EXTERNAL_SECRETS_BOOTSTRAP_TARGET_SECRET_NAME
+          value: "${external_secrets_bootstrap_target_secret_name}"
         - name: DNS_BASE_DOMAIN
           value: "${dns_base_domain}"
         - name: DNS_ROOT_DOMAIN

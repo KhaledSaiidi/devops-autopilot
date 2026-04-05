@@ -63,6 +63,16 @@ output "external_secrets_role_arn" {
   value       = module.irsa.external_secrets_role_arn
 }
 
+output "external_secrets_bootstrap_secret_arn" {
+  description = "ARN of the bootstrap AWS Secrets Manager secret consumed by External Secrets."
+  value       = module.external_secrets_bootstrap_secret.arn
+}
+
+output "external_secrets_bootstrap_secret_name" {
+  description = "Name of the bootstrap AWS Secrets Manager secret consumed by External Secrets."
+  value       = module.external_secrets_bootstrap_secret.name
+}
+
 ############################################
 # Nodegroup / Bastion Outputs
 ############################################

@@ -153,6 +153,17 @@ variable "karpenter" {
   })
 }
 
+variable "external_secrets_bootstrap" {
+  description = "Bootstrap AWS secret and ExternalSecret sync values."
+  type = object({
+    source_secret_name = string
+    secret_store_name  = string
+    refresh_interval   = string
+    target_namespace   = string
+    target_secret_name = string
+  })
+}
+
 variable "gateway_api" {
   description = "Gateway API and AWS Load Balancer Controller values."
   type = object({

@@ -50,6 +50,14 @@ iam:
   external_secrets_parameter_arns:
   - "arn:aws:ssm:*:*:parameter/devops-autopilot/*"
   external_secrets_kms_key_arns: []
+  external_secrets_bootstrap_secret_name: "devops-autopilot-bootstrap"
+  external_secrets_bootstrap_secret_description: "Bootstrap secret synced into Kubernetes by External Secrets."
+  external_secrets_bootstrap_secret_kms_key_id: ""
+  external_secrets_bootstrap_secret_recovery_window_in_days: 7
+  external_secrets_bootstrap_secret_store_name: "aws-secretsmanager"
+  external_secrets_bootstrap_refresh_interval: "1h"
+  external_secrets_bootstrap_target_namespace: "platform-secrets"
+  external_secrets_bootstrap_target_secret_name: "platform-bootstrap"
 
 eks:
   cluster_name: "devops-autopilot-cluster"

@@ -73,6 +73,11 @@ resource "local_file" "argocd_root_app" {
     external_secrets_namespace                    = var.irsa.external_secrets_namespace
     external_secrets_service_account              = var.irsa.external_secrets_service_account
     external_secrets_role_arn                     = var.irsa.external_secrets_role_arn
+    external_secrets_bootstrap_source_secret_name = var.external_secrets_bootstrap.source_secret_name
+    external_secrets_bootstrap_secret_store_name  = var.external_secrets_bootstrap.secret_store_name
+    external_secrets_bootstrap_refresh_interval   = var.external_secrets_bootstrap.refresh_interval
+    external_secrets_bootstrap_target_namespace   = var.external_secrets_bootstrap.target_namespace
+    external_secrets_bootstrap_target_secret_name = var.external_secrets_bootstrap.target_secret_name
     dns_base_domain                               = var.dns.base_domain
     dns_root_domain                               = var.dns.root_domain
     dns_external_label                            = var.dns.external_label

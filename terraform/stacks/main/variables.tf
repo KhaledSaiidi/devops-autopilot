@@ -218,6 +218,60 @@ variable "external_secrets_kms_key_arns" {
   default     = []
 }
 
+variable "external_secrets_bootstrap_secret_name" {
+  description = "Name of the bootstrap AWS Secrets Manager secret created for External Secrets."
+  type        = string
+  default     = ""
+}
+
+variable "external_secrets_bootstrap_secret_description" {
+  description = "Description of the bootstrap AWS Secrets Manager secret."
+  type        = string
+  default     = ""
+}
+
+variable "external_secrets_bootstrap_secret_values" {
+  description = "Key/value pairs stored in the bootstrap AWS Secrets Manager secret."
+  type        = map(string)
+  sensitive   = true
+}
+
+variable "external_secrets_bootstrap_secret_kms_key_id" {
+  description = "Optional KMS key used to encrypt the bootstrap AWS Secrets Manager secret."
+  type        = string
+  default     = ""
+}
+
+variable "external_secrets_bootstrap_secret_recovery_window_in_days" {
+  description = "Deletion recovery window for the bootstrap AWS Secrets Manager secret."
+  type        = number
+  default     = 7
+}
+
+variable "external_secrets_bootstrap_secret_store_name" {
+  description = "ClusterSecretStore name used by the bootstrap ExternalSecret."
+  type        = string
+  default     = "aws-secretsmanager"
+}
+
+variable "external_secrets_bootstrap_refresh_interval" {
+  description = "Refresh interval for the bootstrap ExternalSecret."
+  type        = string
+  default     = "1h"
+}
+
+variable "external_secrets_bootstrap_target_namespace" {
+  description = "Namespace where the bootstrap ExternalSecret writes the Kubernetes Secret."
+  type        = string
+  default     = "platform-secrets"
+}
+
+variable "external_secrets_bootstrap_target_secret_name" {
+  description = "Name of the Kubernetes Secret created by the bootstrap ExternalSecret."
+  type        = string
+  default     = "platform-bootstrap"
+}
+
 variable "create_karpenter_controller_role" {
   description = "Create the IRSA role and interruption infrastructure for Karpenter."
   type        = bool

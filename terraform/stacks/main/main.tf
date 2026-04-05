@@ -220,7 +220,7 @@ module "irsa" {
   create_external_secrets_role     = var.create_external_secrets_role
   external_secrets_namespace       = var.external_secrets_namespace
   external_secrets_service_account = var.external_secrets_service_account
-  external_secrets_secret_arns     = var.external_secrets_secret_arns
+  external_secrets_secret_arns     = distinct(concat(var.external_secrets_secret_arns, [module.external_secrets_bootstrap_secret.arn]))
   external_secrets_parameter_arns  = var.external_secrets_parameter_arns
   external_secrets_kms_key_arns    = var.external_secrets_kms_key_arns
   route53_zone_arns                = local.route53_zone_arns
@@ -239,6 +239,18 @@ module "karpenter" {
   service_account   = var.karpenter_service_account
   node_role_arn     = module.iam.eks_node_role_arn
   tags              = var.tags
+}
+
+module "external_secrets_bootstrap_secret" {
+  source = "../../modules/secretsmanager"
+
+  project_name            = var.project_name
+  name                    = var.external_secrets_bootstrap_secret_name
+  description             = var.external_secrets_bootstrap_secret_description
+  secret_values           = var.external_secrets_bootstrap_secret_values
+  kms_key_id              = var.external_secrets_bootstrap_secret_kms_key_id
+  recovery_window_in_days = var.external_secrets_bootstrap_secret_recovery_window_in_days
+  tags                    = var.tags
 }
 
 resource "aws_ec2_tag" "karpenter_cluster_sg_discovery" {
@@ -346,6 +358,14 @@ module "argocd" {
     service_account         = var.karpenter_service_account
     controller_role_arn     = try(module.karpenter[0].controller_role_arn, "")
     interruption_queue_name = try(module.karpenter[0].interruption_queue_name, "")
+  }
+
+  external_secrets_bootstrap = {
+    source_secret_name = module.external_secrets_bootstrap_secret.name
+    secret_store_name  = var.external_secrets_bootstrap_secret_store_name
+    refresh_interval   = var.external_secrets_bootstrap_refresh_interval
+    target_namespace   = var.external_secrets_bootstrap_target_namespace
+    target_secret_name = var.external_secrets_bootstrap_target_secret_name
   }
 
   gateway_api = {

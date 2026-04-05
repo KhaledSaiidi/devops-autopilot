@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${EXTERNAL_SECRETS_BOOTSTRAP_TARGET_NAMESPACE}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: ${EXTERNAL_SECRETS_BOOTSTRAP_TARGET_NAMESPACE}
+    app.kubernetes.io/part-of: platform-baseline
